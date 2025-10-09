@@ -4,20 +4,19 @@ import time
 
 def settings():
     utils.clear_screen()
-    length = int(input("How long do you want your word? "))
+    length = 5 # TODO: Add more words... int(input("How long do you want your word? "))
     language = str(input("What language do you want your word? "))
     tries = int(input("How many tries do you want to have? "))
     return length, language, tries
 
 def random_word(length, language):
     words = utils.wordlist(language)
-    filtered = [word.strip() for word in words if len(word.strip()) == int(length)]
+    filtered = [word.strip().lower() for word in words if len(word.strip()) == int(length)]
     if not filtered:
         raise ValueError(f"No words found for {language} with length {length}")
     return random.choice(filtered), filtered
 
 def format_known_letters(letterpositions):
-    """Format known letters positions nicely"""
     if not letterpositions:
         return "None"
 
@@ -42,7 +41,6 @@ def format_unused_letters(letters):
 
 def game(word, filtered, tries, language):
     utils.clear_screen()
-    # TODO: WORDLE ASCII ART
     print("Starting the game!")
     time.sleep(1)
     utils.clear_screen()
@@ -54,14 +52,13 @@ def game(word, filtered, tries, language):
     game_status = 1
     while game_status == 1:
         if len(guesses) == tries - 1:
-            print("You lost!")
             game_status = 0
 
         utils.clear_screen()
         print("Current guesses:")
         for i in guesses:
             print(i)
-        print(f"Remaining guesses: {tries-len(guesses)}\n")
+        print(f"Remaining guesses: {tries-len(guesses)} \n")
         unused_letters = format_unused_letters(letters)
         print(f"Unused letters: {unused_letters}")
         formatted_letters = format_known_letters(letterpositions)
@@ -87,8 +84,18 @@ def game(word, filtered, tries, language):
                         print(f"Letter {ch} is not on position {i}")
                     if ch in letters:
                         letters.remove(ch)
+    return game_status, guesses
 
-def game1():
+def game_random():
     length, language, tries = settings()
     word, filtered = random_word(length, language)
-    game(word, filtered, tries, language)
+    game_status, guesses = game(word, filtered, tries, language)
+
+    utils.clear_screen()
+    if game_status == 2:
+        print(f"You won in {guesses} guesses!")
+    else:
+        print(f"You lost!")
+    print(f"The word was {word}")
+    time.sleep(1)
+    # TODO: export to stats

@@ -16,6 +16,30 @@ def random_word(length, language):
         raise ValueError(f"No words found for {language} with length {length}")
     return random.choice(filtered), filtered
 
+def format_known_letters(letterpositions):
+    """Format known letters positions nicely"""
+    if not letterpositions:
+        return "None"
+
+    result = []
+    for letter, positions in sorted(letterpositions.items()):
+        if positions['pos']:
+            for pos in sorted(positions['pos']):
+                result.append(f"{pos + 1} - {letter.upper()}")
+
+        if positions['not']:
+            for pos in sorted(positions['not']):
+                result.append(f"{pos + 1} - Not {letter.upper()}")
+
+    return ", ".join(sorted(result)) if sorted(result) else "None"
+
+def format_unused_letters(letters):
+    formatted_letters = ""
+    for letter in sorted(letters):
+        formatted_letters += letter
+    return formatted_letters
+
+
 def game(word, filtered, tries, language):
     utils.clear_screen()
     # TODO: WORDLE ASCII ART
@@ -29,7 +53,7 @@ def game(word, filtered, tries, language):
 
     game_status = 1
     while game_status == 1:
-        if len(guesses) == tries:
+        if len(guesses) == tries - 1:
             print("You lost!")
             game_status = 0
 
@@ -38,8 +62,11 @@ def game(word, filtered, tries, language):
         for i in guesses:
             print(i)
         print(f"Remaining guesses: {tries-len(guesses)}\n")
-        print(f"Remaining letters: {letters}")
-        print(f"Known letters: {letterpositions}")
+        unused_letters = format_unused_letters(letters)
+        print(f"Unused letters: {unused_letters}")
+        formatted_letters = format_known_letters(letterpositions)
+        print(f"Known letters: {formatted_letters}")
+
 
         guess = input(f"Write your {len(guesses)+1} guess:")
         if len(guess) == len(word) and guess in filtered:
@@ -48,15 +75,18 @@ def game(word, filtered, tries, language):
                 print("You won!")
                 game_status = 2
             else:
-                for i in range(len(guess)):
-                    if guess[i] == word[i]:
-                        letterpositions.append([guess[i], i])
-                        print(f"Letter {guess[i]} is on position {i+1}")
-                    elif guess[i] in word:
-                        letterpositions.merge([guess[i], f"Not {i+1}"])
-                        print(f"Letter {guess[i]} is not on position {i+1}")
-                    if guess[i] in letters:
-                        letters.remove(guess[i])
+                for i, ch in enumerate(guess):
+                    if ch == word[i]:
+                        info = letterpositions.setdefault(ch, {'pos': set(), 'not': set()})
+                        info['pos'].add(i)
+                        info['not'].discard(i)
+                        print(f"Letter {ch} is on position {i}")
+                    elif ch in word:
+                        info = letterpositions.setdefault(ch, {'pos': set(), 'not': set()})
+                        info['not'].add(i)
+                        print(f"Letter {ch} is not on position {i}")
+                    if ch in letters:
+                        letters.remove(ch)
 
 def game1():
     length, language, tries = settings()

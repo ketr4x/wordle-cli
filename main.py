@@ -1,5 +1,4 @@
 import time
-import os
 import utils
 
 from randomword import game_random
@@ -24,7 +23,7 @@ while True:
     utils.clear_screen()
     print(ascii_art)
 
-    print("1. Random Word\n2. Today's Word")
+    print("1. Random Word\n2. Today's Word\n3. Ranked")
     print("\nS. Settings")
     print("Q. Quit")
 
@@ -33,9 +32,11 @@ while True:
         game_random()
     elif option == '2':
         print("not implemented")
+    elif option == '3':
+        print("not implemented")
     elif option == 'S':
         print("not implemented")
-    elif option == 'Q':
-        exit
+    elif option == 'Q' or option == 'X':
+        exit()
     else:
         print("Invalid option")

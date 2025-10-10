@@ -2,6 +2,7 @@ import time
 import utils
 
 from randomword import game_random
+from todaysword import game_daily
 
 ascii_art = r"""
      /$$      /$$                           /$$ /$$                  /$$$$$$  /$$       /$$$$$$
@@ -24,15 +25,18 @@ while True:
     print(ascii_art)
 
     print("1. Random Word\n2. Today's Word\n3. Ranked")
-    print("\nS. Settings")
+    print("\nC. Configuration")
+    print("S. Statistics")
     print("Q. Quit")
 
     option = input("Choose the option you want...: ").upper()
     if option == '1':
         game_random()
     elif option == '2':
-        print("not implemented")
+        game_daily()
     elif option == '3':
+        print("not implemented")
+    elif option == 'C':
         print("not implemented")
     elif option == 'S':
         print("not implemented")

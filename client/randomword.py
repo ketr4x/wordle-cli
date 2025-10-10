@@ -101,12 +101,9 @@ def game(word, filtered, tries, language):
             formatted_guesses.append(format_guess(guess, word))
     return game_status, guesses
 
-def game_random(custom='', length='5', language='en', tries=6):
-    if not custom:
-        length, language, tries = settings()
+def game_random():
+    length, language, tries = settings()
     word, filtered = random_word(length, language)
-
-    if custom: word = custom
     game_status, guesses = game(word, filtered, tries, language)
 
     utils.clear_screen()
@@ -115,5 +112,5 @@ def game_random(custom='', length='5', language='en', tries=6):
     else:
         print(f"You lost!")
     print(f"The word was {word}")
-    time.sleep(1)
+    input("\nPress `Enter` to continue...")
     # TODO: export to stats

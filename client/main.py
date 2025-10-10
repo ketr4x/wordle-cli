@@ -29,7 +29,7 @@ while True:
     print("S. Statistics")
     print("Q. Quit")
 
-    option = input("Choose the option you want...: ").upper()
+    option = input("\nChoose the option you want...: ").upper()
     if option == '1':
         game_random()
     elif option == '2':

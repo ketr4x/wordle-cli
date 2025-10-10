@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Wordle</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header class="hero">
+        <h1>Wordle</h1>
+        <p class="tagline">A clean, fast, and fun word puzzle — play right here or download for your device.</p>
+        <div class="cta-row">
+            <a class="btn primary" href="/play">Play Fullscreen</a>
+            <a class="btn secondary" href="#downloads">Get the App</a>
+        </div>
+    </header>
+
+    <main>
+        <section class="features">
+            <div class="feature">
+                <h3>Daily Challenge</h3>
+                <p>One puzzle a day. Come back tomorrow for a fresh word!</p>
+            </div>
+            <div class="feature">
+                <h3>Keyboard Friendly</h3>
+                <p>Type on your keyboard or tap the on-screen keys.</p>
+            </div>
+            <div class="feature">
+                <h3>Lightweight</h3>
+                <p>Minimal, fast, and privacy-friendly — no trackers.</p>
+            </div>
+        </section>
+
+        <section id="game-embed">
+            <h2>Play Now</h2>
+            <div class="iframe-wrap">
+                <iframe title="Wordle Game" src="/play" loading="lazy" referrerpolicy="no-referrer" allow="fullscreen"></iframe>
+            </div>
+            <p class="embed-note">Prefer a larger view? Use the “Play Fullscreen” button above.</p>
+        </section>
+
+        <section id="downloads">
+            <h2>Download Wordle</h2>
+            <div class="download-buttons">
+                <a href="/play" class="btn primary">Play Online</a>
+                <a href="https://github.com/ketr4x/wordle-cli" class="btn">
+                    Download full Python project from GitHub
+                </a>
+                <a href="https://github.com/ketr4x/wordle-cli/releases" class="btn">
+                    Download the Android, Windows and Linux builds from GitHub
+                </a>
+            </div>
+        </section>
+
+        <section id="leaderboard">
+            <a class="btn" href="/leaderboard">View Leaderboard (Coming Soon)</a>
+        </section>
+    </main>
+
+    <footer>
+        <nav class="footer-links">
+            <a href="https://github.com/ketr4x/wordle-cli" target="_blank" rel="noopener">GitHub repository</a>
+            <a href="https://twitter.com/ketr4x" target="_blank" rel="noopener">Twitter</a>
+            <a href="mailto:mail@ketrax.ovh">Contact via email</a>
+        </nav>
+        <small>© {{ 2025 }} Wordle — An open source project</small>
+    </footer>
+</body>
+</html>

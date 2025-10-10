@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{ title or 'Coming soon' }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+  <main style="max-width:720px;margin:40px auto;padding:0 16px;">
+    <section>
+      <h2 style="margin-top:0;">{{ title or 'Coming soon' }}</h2>
+      <p>{{ message or 'This page is under construction. Check back later.' }}</p>
+      <div style="margin-top:16px;">
+        <a class="btn primary" href="/">Back to Home</a>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

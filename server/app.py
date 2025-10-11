@@ -22,7 +22,7 @@ class Game(db.Model):
     language = db.Column(db.String(80), nullable=False)
     word = db.Column(db.String(5), nullable=True)
     guesses = db.Column(db.JSON, nullable=True)
-    formated_guesses = db.Column(db.JSON, nullable=True)
+    formatted_guesses = db.Column(db.JSON, nullable=True)
     guess_number = db.Column(db.Integer, nullable=True)
     status = db.Column(db.Integer, nullable=True)
 
@@ -34,6 +34,15 @@ with app.app_context():
 def homepage():
     return render_template('index.html')
 
+@app.route('/auth_check')
+def auth_check():
+    user = request.args.get('user')
+    auth = request.args.get('auth')
+    existing_user = User.query.filter_by(username=user).first()
+    if existing_user:
+        if existing_user.auth == auth:
+            return "Authenticated", 200
+    return 'Invalid details', 401
 
 @app.route('/user_check/<username>')
 def user_check(username):
@@ -59,6 +68,9 @@ def play():
 def leaderboard():
     return render_template('placeholder.html', title='Leaderboard', message='Leaderboard is coming soon!')
 
+@app.route('/online/languages')
+def languages():
+    return ','.join(utils.languages())
 
 @app.route('/online/start')
 def start_online():
@@ -72,12 +84,14 @@ def start_online():
     existing_user = User.query.filter_by(username=user).first()
     if not existing_user:
         create_user(user, auth)
-        existing_user = User.query.filter_by(username=user).first()
     elif auth != existing_user.auth:
         return 'Wrong auth', 400
 
+    if language not in utils.languages():
+        return 'Language invalid', 400
+
     word = generate_word(language)
-    game = Game(username=user, word=word, language=language, status=1, guesses=[], formated_guesses=[], guess_number=0)
+    game = Game(username=user, word=word, language=language, status=1, guesses=[], formatted_guesses=[], guess_number=0)
     db.session.add(game)
     db.session.commit()
 
@@ -105,15 +119,15 @@ def guess_online():
         return 'Game ended', 400
 
     if len(guess) != 5 or guess not in utils.filtered(language=game.language):
-        return "Guess not valid", 400
+        return "Guess invalid", 400
 
-    game_status, letters, formated_guess = check_guess(game.word, guess, game.language, game.guess_number)
+    game_status, letters, formatted_guess = check_guess(game.word, guess, game.language, game.guess_number)
 
     updated_guesses = game.guesses + [guess]
-    updated_formated_guesses = game.formated_guesses + [formated_guess]
+    updated_formatted_guesses = game.formatted_guesses + [formatted_guess]
 
     game.guesses = updated_guesses
-    game.formated_guesses = updated_formated_guesses
+    game.formatted_guesses = updated_formatted_guesses
     game.status = game_status
     game.guess_number = game.guess_number + 1
     db.session.commit()
@@ -121,7 +135,8 @@ def guess_online():
     return jsonify({
         'game_status': game_status,
         'letters': letters,
-        'formatted_guesses': updated_formated_guesses,
+        'guesses': updated_guesses,
+        'formatted_guesses': updated_formatted_guesses,
         'guess_number': game.guess_number
     })
 

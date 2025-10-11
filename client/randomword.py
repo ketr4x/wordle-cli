@@ -15,21 +15,6 @@ def settings():
     tries = int(input("How many tries do you want to have? (default: 6) ") or 6)
     return length, language, tries
 
-def ordinal(n):
-    if 10 <= n % 100 <= 20:
-        suffix = 'th'
-    else:
-        suffix = {1: 'st', 2: 'nd', 3: 'rd'}.get(n % 10, 'th')
-    return f"{n}{suffix}"
-
-
-def random_word(length, language):
-    solutions = utils.solutions(language)
-    filtered = [word.strip().lower() for word in solutions if len(word.strip()) == int(length)]
-    if not filtered:
-        raise ValueError(f"No words found for {language} with length {length}")
-    return random.choice(filtered), utils.wordlist(language)
-
 def format_unused_letters(letters):
     formatted_letters = ""
     for letter in sorted(letters):
@@ -71,8 +56,8 @@ def game(word, filtered, tries, language):
     formatted_guesses = []
     letters = utils.letters(language)
     guesses = []
-
     game_status = 1
+
     while game_status == 1:
         if len(guesses) == tries - 1:
             game_status = 0
@@ -82,13 +67,11 @@ def game(word, filtered, tries, language):
             print("Current guesses:")
             for i in formatted_guesses:
                 print(i)
-            print("")
 
-        print(f"Remaining guesses: {tries-len(guesses)}")
-        unused_letters = format_unused_letters(letters)
-        print(f"Unused letters: {unused_letters}")
+        print(f"\nRemaining guesses: {tries-len(guesses)}")
+        print(f"Unused letters: {format_unused_letters(letters)}")
 
-        guess = input(f"\nWrite your {ordinal(len(guesses)+1)} guess: ").lower()
+        guess = input(f"\nWrite your {utils.ordinal(len(guesses)+1)} guess: ").lower()
         if len(guess) == len(word) and guess in filtered:
             guesses.append(guess)
             if guess == word:
@@ -103,7 +86,8 @@ def game(word, filtered, tries, language):
 
 def game_random():
     length, language, tries = settings()
-    word, filtered = random_word(length, language)
+    filtered = utils.filtered(length, language)
+    word = random.choice(filtered)
     game_status, guesses = game(word, filtered, tries, language)
 
     utils.clear_screen()

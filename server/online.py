@@ -25,17 +25,16 @@ def format_guess(guess, word):
 
     for i, char in enumerate(guess):
         if status[i] == 2:
-            output.append("2")
+            output.append(2)
         elif status[i] == 1:
-            output.append("1")
+            output.append(1)
         else:
-            output.append("0")
-    return "".join(output)
+            output.append(0)
+    return output
 
-def check_guess(word, guess, language, guess_number):
+def check_guess(word, guess, language, guess_number, letters):
     filtered = utils.filtered(language)
     tries = 6
-    letters = utils.letters(language)
     game_status = 1
 
     if guess_number == tries - 1:
@@ -45,7 +44,7 @@ def check_guess(word, guess, language, guess_number):
         if guess == word:
             game_status = 2
         else:
-            for i, char in enumerate(guess):
+            for char in set(guess):
                 if char in letters:
                     letters.remove(char)
     return game_status, letters, format_guess(guess, word)

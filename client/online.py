@@ -113,13 +113,15 @@ def game_online():
             return 1
         response = requests.get(f"{utils.read_config("server_url")}/online/auth_check?user={user}&auth={auth}")
 
+    utils.write_config("username", user)
+    utils.write_config("password", auth)
 
     language = utils.read_config("language")
     languages_response = requests.get(f"{utils.read_config("server_url")}/online/languages")
     languages = [lang.strip() for lang in languages_response.text.strip().split(',')] if languages_response.status_code == 200 else []
     while language not in languages:
         language = input(f"Choose the language ({','.join(languages)}): ").strip().lower()
-
+    utils.write_config("language", language)
 
     while True:
         utils.clear_screen()

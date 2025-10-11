@@ -2,6 +2,7 @@ import time
 import utils
 import os
 
+from configuration import configuration
 from randomword import game_random
 from todaysword import game_daily
 from online import game_online
@@ -39,7 +40,7 @@ while True:
     elif option == '3':
         game_online()
     elif option == 'C':
-        print("not implemented")
+        configuration()
     elif option == 'Q' or option == 'X':
         exit()
     else:

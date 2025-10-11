@@ -35,6 +35,10 @@ with app.app_context():
 def homepage():
     return render_template('index.html')
 
+@app.route('/server_check')
+def server_check():
+    return "Server is running", 200
+
 @app.route('/online/auth_check')
 def auth_check():
     user = request.args.get('user')

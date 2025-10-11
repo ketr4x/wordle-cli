@@ -24,7 +24,7 @@ def format_unused_letters(letters):
 
 
 def game(user, auth, language): #formatted_guesses, game_status, guess_number, guesses
-    response = requests.get(f"{utils.read_config("server_url")}/online/start?user={user}&auth={auth}&language={language}")
+    response = requests.get(f"{utils.read_config('server_url')}/online/start?user={user}&auth={auth}&language={language}")
     if response.status_code != 200:
         print("Invalid details. Please try again in a minute.")
         input("Press `Enter` to continue...")
@@ -49,10 +49,10 @@ def game(user, auth, language): #formatted_guesses, game_status, guess_number, g
             for i in decoded_guesses:
                 print(i)
             print()
-        
+    
         print(f"Remaining guesses: {6-guess_number}")
         print(f"Unused letters: {format_unused_letters(letters)}")
-    
+
         guess = input(f"\nWrite your {utils.ordinal(guess_number+1)} guess: ").lower()
         if len(guess) == 5 and guess in utils.filtered(language):
             response = requests.get(f"{utils.read_config('server_url')}/online/guess?user={user}&auth={auth}&guess={guess}")
@@ -69,15 +69,49 @@ def game(user, auth, language): #formatted_guesses, game_status, guess_number, g
                 time.sleep(1)
                 if guess_number >= 6:
                     game_status = 0
-    
+
     return letters, formatted_guesses, guess_number, decoded_guesses, game_status
 
 def game_online():
     user = utils.read_config("username")
     auth = utils.read_config("password")
+    server = utils.read_config("server_url")
 
     utils.clear_screen()
     print("Welcome to ranked!\n")
+
+    while not server:
+        server = input("Please enter your full server address (i.e., http://ketrax.ovh/dev/wordle): ").strip()
+
+        if server and not server.startswith(('http://', 'https://')):
+            server = 'http://' + server
+
+        try:
+            response = requests.get(f"{server}/server_check", timeout=5)
+            if response.text != "Server is running":
+                print(f"Server did not respond correctly. Please try again.")
+                server = None
+        except (requests.exceptions.ConnectionError, 
+                requests.exceptions.MissingSchema, 
+                requests.exceptions.Timeout,
+                requests.exceptions.RequestException) as e:
+            print(f"Could not connect to server: {e}")
+            server = None
+        
+        if server:
+            utils.write_config("server_url", server)
+
+    try:
+        response = requests.get(f"{server}/server_check", timeout=5)
+        if response.text != "Server is running":
+            print(f"The server ({server}) is not running. Please try again in a few minutes or change the address in configuration")
+            input("Press `Enter` to continue...")
+            return None
+    except requests.exceptions.RequestException as e:
+        print(f"Cannot connect to server ({server}): {e}")
+        input("Press `Enter` to continue...")
+        return None
+
     while not user or not auth:
         user = input("Please enter your username: ")
         if not user:
@@ -87,13 +121,13 @@ def game_online():
             print("Please specify your password")
     print("Checking details...")
 
-    response = requests.get(f"{utils.read_config("server_url")}/online/auth_check?user={user}&auth={auth}")
+    response = requests.get(f"{server}/online/auth_check?user={user}&auth={auth}")
     while response.status_code != 200:
         utils.clear_screen()
         if response.status_code == 401:
             inp = input("Account does not exist. Do you want to create one? (Y/N): ").strip().lower()
             if inp == "y":
-                create = requests.get(f"{utils.read_config("server_url")}/online/create_user?user={user}&auth={auth}")
+                create = requests.get(f"{server}/online/create_user?user={user}&auth={auth}")
                 if create.status_code == 200:
                     print("User created successfully!")
         elif response.status_code == 403:
@@ -111,13 +145,13 @@ def game_online():
             print("An error occured. Please try again in a few minutes.")
             input("Press `Enter` to continue...")
             return 1
-        response = requests.get(f"{utils.read_config("server_url")}/online/auth_check?user={user}&auth={auth}")
+        response = requests.get(f"{server}/online/auth_check?user={user}&auth={auth}")
 
     utils.write_config("username", user)
     utils.write_config("password", auth)
 
     language = utils.read_config("language")
-    languages_response = requests.get(f"{utils.read_config("server_url")}/online/languages")
+    languages_response = requests.get(f"{server}/online/languages")
     languages = [lang.strip() for lang in languages_response.text.strip().split(',')] if languages_response.status_code == 200 else []
     while language not in languages:
         language = input(f"Choose the language ({','.join(languages)}): ").strip().lower()
@@ -141,7 +175,7 @@ def game_online():
                 print(f"Your guesses were:")
                 for i in decoded_guesses:
                     print(i)
-                print(f"The word was: {requests.get(f"{utils.read_config("server_url")}/online/word?user={user}&auth={auth}").text}")
+                print(f"The word was: {requests.get(f"{server}/online/word?user={user}&auth={auth}").text}")
                 print(f"You had {len(letters)} letters remaining")
                 input("Press `Enter` to continue...")
         elif option == 'L':

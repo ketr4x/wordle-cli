@@ -42,6 +42,9 @@ while True:
     elif option == 'C':
         configuration()
     elif option == 'Q' or option == 'X':
+        utils.clear_screen()
+        print("See you next time!")
+        time.sleep(1)
         exit()
     else:
         print("Invalid option")

@@ -12,7 +12,7 @@ def json_decode(param):
     return json.loads(param)
 
 def read_config(param):
-    with open('user/config.json') as config_file:
+    with open('config.json') as config_file:
         config = json.load(config_file)
     if param in config:
         return config[param]
@@ -20,10 +20,10 @@ def read_config(param):
         return None
 
 def write_config(param, value):
-    with open('user/config.json') as config_file:
+    with open('config.json') as config_file:
         config = json.load(config_file)
     config[param] = value
-    with open('user/config.json', 'w') as config_file:
+    with open('config.json', 'w') as config_file:
         json.dump(config, config_file)
 
 def get_language_name(symbol):

@@ -32,14 +32,15 @@ def stats():
     
     avg_time, matches, points, wins, word_freq, registered_on = result
     print(f"Registered on {registered_on}")
-    print(f"Average time per game: {avg_time}")
+    print(f"Average time per game: {avg_time:.2f}s")
     print(f"Total matches: {matches}")
     print(f"Total wins: {wins}")
     print(f"Total losses: {matches - wins}")
+    print(f"Winrate: {wins / (matches - wins) * 100:.2f}%")
     print(f"ELO: {points}")
     if word_freq:
         print("Most used words:")
-        for word in sorted(word_freq, key=word_freq.get):
+        for word in reversed(sorted(word_freq, key=word_freq.get)):
             print(f"{word}: {word_freq[word]}")
     else:
         print("No words recorded yet.")

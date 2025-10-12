@@ -19,9 +19,9 @@ def read_config(param):
         return None
 
 def languages():
-    letters = set(os.listdir('data/letters'))
-    solutions = set(os.listdir('data/solutions'))
-    wordlist = set(os.listdir('data/wordlist'))
+    letters = set(os.listdir('../data/letters'))
+    solutions = set(os.listdir('../data/solutions'))
+    wordlist = set(os.listdir('../data/wordlist'))
     return sorted(letters & solutions & wordlist)
 
 def wordlist(language):

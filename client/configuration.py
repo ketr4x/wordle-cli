@@ -3,12 +3,11 @@ import utils
 import json
 
 def configuration():
-    utils.clear_screen()
-
     while True:
+        utils.clear_screen()
         print("Current configuration:")
 
-        with open('user/config.json') as config_file:
+        with open('config.json') as config_file:
             config = json.load(config_file)
         for key, value in config.items():
             print(f"{key}: {value}")
@@ -23,9 +22,9 @@ def configuration():
         if len(args) == 2:
             if utils.read_config(args[0]) is not None:
                 utils.write_config(args[0], args[1])
+                print(f"Parameter {args[0]} set to {args[1] if args[1] != "" else None}")
             else:
                 print("Please enter a valid argument")
-                time.sleep(1)
         else:
             print("Please enter a valid argument")
-            time.sleep(1)
+        time.sleep(1)

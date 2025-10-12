@@ -73,6 +73,54 @@ def user_check(username):
     else:
         return 'User not found', 404
 
+@app.route('/online/leaderboard')
+def get_leaderboard():
+    state = request.args.get('state')
+    user = request.args.get('user')
+    auth = str(request.args.get('auth'))
+
+    if not state or not user or not auth:
+        return 'Missing required parameters: state, user and auth', 400
+    existing_user = User.query.filter_by(username=user).first()
+    if not existing_user:
+        return 'User not found', 401
+    if not check_password_hash(existing_user.auth, auth):
+        return 'Wrong auth', 403
+
+    if state == "basic":
+        top_points = Stats.query.order_by(Stats.points.desc()).limit(10).all()
+        top_matches = Stats.query.order_by(Stats.matches.desc()).limit(10).all()
+        top_avg_time = Stats.query.filter(Stats.avg_time > 0).order_by(Stats.avg_time.asc()).limit(10).all()
+        top_winrate = Stats.query.filter(Stats.matches > 0).all()
+        top_winrate = sorted(top_winrate, key=lambda s: s.wins / s.matches if s.matches > 0 else 0, reverse=True)[:10]
+
+        user_stats = Stats.query.filter_by(username=user).first()
+        points_position = Stats.query.filter(Stats.points > user_stats.points).count() + 1
+        matches_position = Stats.query.filter(Stats.matches > user_stats.matches).count() + 1
+        avg_time_position = Stats.query.filter(
+            Stats.avg_time > 0,
+            Stats.avg_time < user_stats.avg_time
+        ).count() + 1 if user_stats.avg_time > 0 else None
+
+        user_winrate = user_stats.wins / user_stats.matches if user_stats.matches > 0 else 0
+        winrate_position = Stats.query.filter(Stats.matches > 0).all()
+        winrate_position = sum(1 for s in winrate_position if (s.wins / s.matches) > user_winrate) + 1
+
+        return jsonify({
+            'top_points': [{'username': s.username, 'points': s.points} for s in top_points],
+            'top_matches': [{'username': s.username, 'matches': s.matches} for s in top_matches],
+            'top_avg_time': [{'username': s.username, 'avg_time': s.avg_time} for s in top_avg_time],
+            'top_winrate': [{'username': s.username, 'winrate': s.wins / s.matches if s.matches > 0 else 0} for s in top_winrate],
+            'user_position': {
+                'points': points_position,
+                'matches': matches_position,
+                'avg_time': avg_time_position,
+                'winrate': winrate_position
+            }
+        })
+
+    return "Wrong state", 404
+
 @app.route('/online/stats')
 def get_stats():
     user = request.args.get('user')
@@ -138,7 +186,7 @@ def play():
     return render_template('play.html')
 
 
-@app.route('/online/leaderboard')
+@app.route('/leaderboard')
 def leaderboard():
     return render_template('placeholder.html', title='Leaderboard', message='Leaderboard is coming soon!')
 

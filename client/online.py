@@ -3,6 +3,7 @@ import requests
 import time
 from statistics import stats
 from configuration import configuration
+from leaderboard import leaderboard
 
 def guess_decoder(guesses, formatted_guesses):
     output = []
@@ -25,7 +26,7 @@ def format_unused_letters(letters):
     return formatted_letters
 
 
-def game(user, auth, language): #formatted_guesses, game_status, guess_number, guesses
+def game(user, auth, language):
     response = requests.get(f"{utils.read_config('server_url')}/online/start?user={user}&auth={auth}&language={language}")
     if response.status_code != 200:
         print("Invalid details. Please try again in a minute.")
@@ -42,7 +43,6 @@ def game(user, auth, language): #formatted_guesses, game_status, guess_number, g
     decoded_guesses = []
     formatted_guesses = []
     letters = utils.letters(language)
-    guesses = []
     game_status = 1
 
     while game_status == 1:
@@ -191,11 +191,11 @@ def game_online():
                 print(f"You had {len(letters)} letters remaining")
                 input("Press `Enter` to continue...")
         elif option == 'L':
-            print("Not implemented yet")
-            input("Press `Enter` to continue...")
+            leaderboard()
         elif option == 'S':
             stats()
         elif option == 'C':
             configuration()
+            break
         elif option == 'Q':
             break

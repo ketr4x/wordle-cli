@@ -1,6 +1,8 @@
 import utils
 import requests
 import time
+from statistics import stats
+from configuration import configuration
 
 def guess_decoder(guesses, formatted_guesses):
     output = []
@@ -35,6 +37,7 @@ def game(user, auth, language): #formatted_guesses, game_status, guess_number, g
     time.sleep(1)
     utils.clear_screen()
 
+    game_time = 0
     guess_number = 0
     decoded_guesses = []
     formatted_guesses = []
@@ -63,6 +66,7 @@ def game(user, auth, language): #formatted_guesses, game_status, guess_number, g
                 formatted_guesses = decoded["formatted_guesses"]
                 guess_number = decoded["guess_number"]
                 decoded_guesses = guess_decoder(guesses, formatted_guesses)
+                game_time = decoded["time"]
                 game_status = decoded["game_status"]
             else:
                 print(f"Error: {response.text}")
@@ -70,7 +74,7 @@ def game(user, auth, language): #formatted_guesses, game_status, guess_number, g
                 if guess_number >= 6:
                     game_status = 0
 
-    return letters, formatted_guesses, guess_number, decoded_guesses, game_status
+    return letters, formatted_guesses, guess_number, decoded_guesses, game_status, game_time
 
 def game_online():
     user = utils.read_config("username")
@@ -158,20 +162,28 @@ def game_online():
     utils.write_config("language", language)
 
     while True:
+        statistics = requests.get(f"{utils.read_config('server_url')}/online/stats?user={user}&auth={auth}")
+        if response.status_code != 200:
+            elo = None
+            print("Cannot get statistics")
+        else:
+            elo = statistics.json()["points"]
+
         utils.clear_screen()
         print(f"Welcome to ranked, {user}!\n")
-        print(f"Your ELO is {None}\n") # TODO: add elo system
+        print(f"Your ELO is {elo}\n")
         print("P. Play \nL. Leaderboard \nS. Statistics \nC. Configuration \nQ. Quit to lobby")
         option = input("\nChoose the option you want...: ").upper()
         if option == 'P':
             result = game(user, auth, language)
             if result[0] is not None:
-                letters, formatted_guesses, guess_number, decoded_guesses, game_status = result
+                letters, formatted_guesses, guess_number, decoded_guesses, game_status, game_time = result
                 utils.clear_screen()
                 if game_status == 2:
                     print(f"Congratulations, {user}! You won in {guess_number} guesses!")
                 else:
                     print("You lost! Better luck next time!")
+                print(f"Your time was {game_time} seconds")
                 print(f"Your guesses were:")
                 for i in decoded_guesses:
                     print(i)
@@ -182,10 +194,8 @@ def game_online():
             print("Not implemented yet")
             input("Press `Enter` to continue...")
         elif option == 'S':
-            print("Not implemented yet")
-            input("Press `Enter` to continue...")
+            stats()
         elif option == 'C':
-            print("Not implemented yet")
-            input("Press `Enter` to continue...")
+            configuration()
         elif option == 'Q':
             break

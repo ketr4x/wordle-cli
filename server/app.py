@@ -6,6 +6,8 @@ from flask import jsonify
 import utils
 from online import generate_word, check_guess
 from werkzeug.security import generate_password_hash, check_password_hash
+import datetime
+from sqlalchemy.ext.mutable import MutableDict
 
 load_dotenv()
 app = Flask(__name__)
@@ -21,16 +23,27 @@ class Game(db.Model):
     game_id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), nullable=False)
     language = db.Column(db.String(80), nullable=False)
+    start_time = db.Column(db.DateTime, nullable=False)
     word = db.Column(db.String(5), nullable=True)
     guesses = db.Column(db.JSON, nullable=True)
     formatted_guesses = db.Column(db.JSON, nullable=True)
     letters = db.Column(db.JSON, nullable=True)
     guess_number = db.Column(db.Integer, nullable=True)
+    time = db.Column(db.Float, nullable=True)
     status = db.Column(db.Integer, nullable=True)
+
+class Stats(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), nullable=False)
+    points = db.Column(db.Integer, nullable=True)
+    matches = db.Column(db.Integer, nullable=True)
+    wins = db.Column(db.Integer, nullable=True)
+    avg_time = db.Column(db.Float, nullable=True)
+    word_freq = db.Column(MutableDict.as_mutable(db.JSON), nullable=True)
+    registered_on = db.Column(db.DateTime, nullable=False)
 
 with app.app_context():
     db.create_all()
-
 
 @app.route('/')
 def homepage():
@@ -43,7 +56,7 @@ def server_check():
 @app.route('/online/auth_check')
 def auth_check():
     user = request.args.get('user')
-    auth = request.args.get('auth')
+    auth = str(request.args.get('auth'))
     existing_user = User.query.filter_by(username=user).first()
     if existing_user:
         if check_password_hash(existing_user.auth, auth):
@@ -60,22 +73,64 @@ def user_check(username):
     else:
         return 'User not found', 404
 
+@app.route('/online/stats')
+def get_stats():
+    user = request.args.get('user')
+    auth = str(request.args.get('auth'))
+
+    if not user or not auth:
+        return 'Missing required parameters: user and auth', 400
+
+    existing_user = User.query.filter_by(username=user).first()
+    if not existing_user:
+        return 'User not found', 401
+
+    if not check_password_hash(existing_user.auth, auth):
+        return 'Wrong auth', 403
+
+    stats = Stats.query.filter_by(username=user).first()
+    if not stats:
+        return 'Stats not found', 404
+
+    return jsonify({
+        'username': stats.username,
+        'points': stats.points,
+        'matches': stats.matches,
+        'wins': stats.wins,
+        'avg_time': stats.avg_time,
+        'word_freq': stats.word_freq,
+        'registered_on': stats.registered_on
+    })
+
+def update_elo(current_elo, won):
+    system_elo = utils.read_config("base_elo")
+    win_bonus = utils.read_config("win_bonus")
+    k_win = utils.read_config("k_win")
+    k_loss = utils.read_config("k_loss")
+    expected_score = 1 / (1 + 10 ** ((system_elo - current_elo) / 400))
+    actual_score = 1 if won else 0
+    k = k_win if won else k_loss
+    new_elo = int(current_elo + k * (actual_score - expected_score))
+    if won:
+        new_elo += win_bonus
+    return max(new_elo, 0)
+
 @app.route('/online/create_user')
 def create_user():
-    user = request.args.get('user')
-    auth = request.args.get('auth')
+    user = str(request.args.get('user'))
+    auth = str(request.args.get('auth'))
 
     if not user or not auth:
         return "Data cannot be null", 400
 
-    user = User(username=user, auth=generate_password_hash(auth))
-    db.session.add(user)
-    db.session.commit()
+    fn_create_user(user, auth)
     return "User created", 200
 
 def fn_create_user(user, auth):
     user_table = User(username=user, auth=generate_password_hash(auth))
     db.session.add(user_table)
+    stats = Stats(username=user, points=utils.read_config("base_elo"), matches=0, wins=0, avg_time=0, word_freq={}, registered_on=datetime.datetime.now())
+    db.session.add(stats)
     db.session.commit()
 
 @app.route('/play')
@@ -94,7 +149,7 @@ def languages():
 @app.route('/online/start')
 def start_online():
     user = request.args.get('user')
-    auth = request.args.get('auth')
+    auth = str(request.args.get('auth'))
     language = request.args.get('language')
 
     if not user or not auth:
@@ -110,7 +165,7 @@ def start_online():
         return 'Language invalid', 400
 
     word = generate_word(language)
-    game = Game(username=user, word=word, language=language, status=1, guesses=[], formatted_guesses=[], guess_number=0, letters=utils.letters(language))
+    game = Game(username=user, word=word, language=language, time=0, status=1, guesses=[], formatted_guesses=[], guess_number=0, letters=utils.letters(language), start_time=datetime.datetime.now())
     db.session.add(game)
     db.session.commit()
 
@@ -134,14 +189,17 @@ def guess_online():
 
     game = Game.query.filter_by(username=user).order_by(Game.game_id.desc()).first()
 
-    if game.guess_number >= 6:
+    if not game:
+        return "The game doesn't exist", 404
+
+    if game.guess_number >= 6 or game.word in game.guesses or game.status != 1:
         return 'Game ended', 400
 
     if len(guess) != 5 or guess not in utils.wordlist(language=game.language):
         return "Guess invalid", 400
 
     game_status, letters, formatted_guess = check_guess(game.word, guess, game.language, game.guess_number, game.letters.copy())
-
+    game.time = (datetime.datetime.now() - game.start_time).total_seconds()
     updated_guesses = game.guesses + [guess]
     updated_formatted_guesses = game.formatted_guesses + [formatted_guess]
     game.letters = letters
@@ -151,13 +209,28 @@ def guess_online():
     game.guess_number = game.guess_number + 1
     db.session.commit()
 
+    if game.guess_number >= 6 or game.word in game.guesses or game.status != 1:
+        stats = Stats.query.filter_by(username=user).first()
+        stats.points = update_elo(stats.points, game.status == 2)
+        stats.matches += 1
+        if game.status == 2:
+            stats.wins += 1
+        stats.avg_time = (stats.avg_time + game.time) / stats.matches
+
+        if not isinstance(stats.word_freq, dict):
+            stats.word_freq = {}
+        for each_guess in game.guesses:
+            stats.word_freq[each_guess] = stats.word_freq.get(each_guess, 0) + 1
+        db.session.commit()
+
     return jsonify({
-        'game_status': game_status,
-        'letters': letters,
-        'guesses': updated_guesses,
-        'formatted_guesses': updated_formatted_guesses,
-        'guess_number': game.guess_number
-    })
+            'game_status': game_status,
+            'letters': letters,
+            'guesses': updated_guesses,
+            'formatted_guesses': updated_formatted_guesses,
+            'guess_number': game.guess_number,
+            'time': game.time,
+        })
 
 @app.route('/online/word')
 def get_word():

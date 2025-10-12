@@ -1,4 +1,5 @@
 import os
+import json
 
 def get_language_name(symbol):
     LANGUAGE_NAMES = {
@@ -8,6 +9,14 @@ def get_language_name(symbol):
     }
 
     return LANGUAGE_NAMES[symbol]
+
+def read_config(param):
+    with open('config.json') as config_file:
+        config = json.load(config_file)
+    if param in config:
+        return config[param]
+    else:
+        return None
 
 def languages():
     letters = set(os.listdir('data/letters'))

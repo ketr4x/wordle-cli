@@ -1,0 +1,6 @@
+{
+  "base_elo": 1000,
+  "win_bonus": 10,
+  "k_win": 48,
+  "k_loss": 24
+}

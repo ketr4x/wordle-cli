@@ -16,7 +16,9 @@ class _SettingsPageState extends State<SettingsPage> {
         title: const Text('Settings'),
       ),
       body: Column(
-
+        children: [
+          Text('Settings will be here'),
+        ],
       )
     );
   }

@@ -25,7 +25,7 @@ def letters(language):
     return open(f'../data/letters/{language}').read().lower().split()
 
 def filtered(language):
-    filtered_words = [word.strip().lower() for word in wordlist(language) if len(word.strip()) == 5]
+    filtered_words = [word.strip().lower() for word in solutions(language) if len(word.strip()) == 5]
     if not filtered_words:
         raise ValueError(f"No words found for {language} with length 5")
     return filtered_words

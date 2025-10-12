@@ -82,19 +82,23 @@ def game(word, filtered, tries, language):
                     if char in letters:
                         letters.remove(char)
             formatted_guesses.append(format_guess(guess, word))
-    return game_status, guesses
+    return game_status, guesses, formatted_guesses, letters
 
 def game_random():
     length, language, tries = settings()
-    filtered = utils.filtered(length, language)
+    filtered = utils.filtered(language, length)
     word = random.choice(filtered)
-    game_status, guesses = game(word, filtered, tries, language)
+    game_status, guesses, formatted_guesses, letters = game(word, filtered, tries, language)
 
     utils.clear_screen()
     if game_status == 2:
         print(f"You won in {len(guesses)} guesses!")
     else:
         print(f"You lost!")
+    print(f"Your guesses were:")
+    for i in formatted_guesses:
+        print(i)
     print(f"The word was {word}")
+    print(f"You had {len(letters)} letters remaining")
     input("\nPress `Enter` to continue...")
     # TODO: export to stats

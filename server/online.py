@@ -33,14 +33,13 @@ def format_guess(guess, word):
     return output
 
 def check_guess(word, guess, language, guess_number, letters):
-    filtered = utils.filtered(language)
     tries = 6
     game_status = 1
 
     if guess_number == tries - 1:
         game_status = 0
 
-    if len(guess) == len(word) and guess in filtered:
+    if len(guess) == len(word) and guess in utils.wordlist(language):
         if guess == word:
             game_status = 2
         else:

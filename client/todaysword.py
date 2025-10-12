@@ -20,12 +20,16 @@ def game_daily():
     length, language = settings()
     word = get_word(language)
     filtered = sorted(utils.wordlist(language))
-    game_status, guesses = game(word, filtered, 6, language)
+    game_status, guesses, formatted_guesses, letters = game(word, filtered, 6, language)
 
     utils.clear_screen()
     if game_status == 2:
         print(f"You won in {len(guesses)} guesses!")
     else:
         print(f"You lost!")
+    print(f"Your guesses were:")
+    for i in formatted_guesses:
+        print(i)
     print(f"The word was {word}")
+    print(f"You had {len(letters)} letters remaining")
     input("\nPress `Enter` to continue...")

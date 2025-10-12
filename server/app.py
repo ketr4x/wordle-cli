@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from flask import jsonify
 import utils
 from online import generate_word, check_guess
+from werkzeug.security import generate_password_hash, check_password_hash
 
 load_dotenv()
 app = Flask(__name__)
@@ -45,7 +46,7 @@ def auth_check():
     auth = request.args.get('auth')
     existing_user = User.query.filter_by(username=user).first()
     if existing_user:
-        if existing_user.auth == auth:
+        if check_password_hash(existing_user.auth, auth):
             return "Authenticated", 200
         else:
             return "Invalid auth", 403
@@ -67,13 +68,13 @@ def create_user():
     if not user or not auth:
         return "Data cannot be null", 400
 
-    user = User(username=user, auth=auth)
+    user = User(username=user, auth=generate_password_hash(auth))
     db.session.add(user)
     db.session.commit()
     return "User created", 200
 
 def fn_create_user(user, auth):
-    user_table = User(username=user, auth=auth)
+    user_table = User(username=user, auth=generate_password_hash(auth))
     db.session.add(user_table)
     db.session.commit()
 
@@ -102,7 +103,7 @@ def start_online():
     existing_user = User.query.filter_by(username=user).first()
     if not existing_user:
         fn_create_user(user, auth)
-    elif auth != existing_user.auth:
+    elif not check_password_hash(existing_user.auth, auth):
         return 'Wrong auth', 400
 
     if language not in utils.languages():
@@ -128,7 +129,7 @@ def guess_online():
     if not existing_user:
         return 'User not found', 401
 
-    if auth != existing_user.auth:
+    if not check_password_hash(existing_user.auth, auth):
         return 'Wrong auth', 403
 
     game = Game.query.filter_by(username=user).order_by(Game.game_id.desc()).first()
@@ -136,7 +137,7 @@ def guess_online():
     if game.guess_number >= 6:
         return 'Game ended', 400
 
-    if len(guess) != 5 or guess not in utils.filtered(language=game.language):
+    if len(guess) != 5 or guess not in utils.wordlist(language=game.language):
         return "Guess invalid", 400
 
     game_status, letters, formatted_guess = check_guess(game.word, guess, game.language, game.guess_number, game.letters.copy())
@@ -170,7 +171,7 @@ def get_word():
     existing_user = User.query.filter_by(username=user).first()
     if not existing_user:
         return 'User not found', 401
-    if auth != existing_user.auth:
+    if not check_password_hash(existing_user.auth, auth):
         return 'Wrong auth', 403
 
     if game.status != 1:

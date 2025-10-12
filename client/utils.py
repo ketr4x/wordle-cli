@@ -14,7 +14,10 @@ def json_decode(param):
 def read_config(param):
     with open('user/config.json') as config_file:
         config = json.load(config_file)
-    return config[param]
+    if param in config:
+        return config[param]
+    else:
+        return None
 
 def write_config(param, value):
     with open('user/config.json') as config_file:

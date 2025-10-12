@@ -15,7 +15,12 @@ jobs:
       - uses: dart-lang/setup-dart@9a04e6d73cca37bd455e0608d7e5092f881fd603
       - name: Install dependencies
         run: dart pub get
+        working-directory: ./flutter/
+
       - name: Analyze project source
-        run: dart analyze
+        run: dart analyze .
+        working-directory: ./flutter/
+
       - name: Run tests
-        run: flutter test
+        run: flutter test .
+        working-directory: ./flutter/

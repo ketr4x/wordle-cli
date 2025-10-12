@@ -24,5 +24,5 @@
 - An app and website with a GUI
 - Rankings
 
-This project was made for the [Moonshot](https://moonshot.hack.club/1016) hackathon by HackClub.
+This project was made for the [Moonshot](https://moonshot.hack.club/1016) hackathon orgainzed by HackClub.
 ![Hackatime Badge](https://hackatime-badge.hackclub.com/U08RQEP53HA/wordle-cli)

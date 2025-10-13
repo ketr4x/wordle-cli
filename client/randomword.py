@@ -95,4 +95,3 @@ def game_random():
     print(f"The word was {word}")
     print(f"You had {len(letters)} letters remaining")
     input("\nPress `Enter` to continue...")
-    # TODO: export to stats

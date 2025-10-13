@@ -13,7 +13,7 @@ void showErrorToast(String message) {
     msg: message,
     toastLength: Toast.LENGTH_SHORT,
     gravity: ToastGravity.BOTTOM,
-    backgroundColor: Colors.red[600],
+    backgroundColor: Colors.red,
     textColor: Colors.white,
     fontSize: 16.0,
   );
@@ -185,8 +185,8 @@ class WordleLetterBoxes extends StatelessWidget {
     super.key,
     required this.letters,
     this.statuses,
-    this.boxSize = 48,
-    this.textStyle = const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+    this.boxSize = 54,
+    this.textStyle = const TextStyle(fontSize: 28, fontWeight: FontWeight.bold), // Increased from 24
   });
 
   Color _getBoxColor(LetterStatus? status, BuildContext context) {
@@ -221,7 +221,7 @@ class WordleLetterBoxes extends StatelessWidget {
         return Container(
           width: boxSize,
           height: boxSize,
-          margin: const EdgeInsets.symmetric(horizontal: 4),
+          margin: const EdgeInsets.symmetric(horizontal: 6), // Increased from 4
           decoration: BoxDecoration(
             color: _getBoxColor(status, context),
             border: Border.all(
@@ -338,14 +338,22 @@ class WordleKeyboard extends StatelessWidget {
       ['ENTER', ...keyboardLayout.sublist(19, 26), 'BACKSPACE'],
     ];
 
-    return Container(
-      padding: const EdgeInsets.all(8),
-      child: Column(
-        children: rows.map((row) =>
-          Row(
-            children: row.map((key) => _buildKey(key, context)).toList(),
-          )
-        ).toList(),
+    return Align(
+      alignment: Alignment.center,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width < 800 ? double.infinity : 800,
+        ),
+        child: Container(
+          padding: const EdgeInsets.all(8),
+          child: Column(
+            children: rows.map((row) =>
+              Row(
+                children: row.map((key) => _buildKey(key, context)).toList(),
+              )
+            ).toList(),
+          ),
+        ),
       ),
     );
   }
@@ -361,6 +369,8 @@ Widget buildGame({
   required VoidCallback onEnterTap,
   required VoidCallback onBackspaceTap,
   Duration? elapsed,
+  VoidCallback? onNewGame,
+  required BuildContext context,
 }) {
   String formatDuration(Duration d) {
     final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
@@ -372,30 +382,32 @@ Widget buildGame({
     padding: const EdgeInsets.fromLTRB(10, 25, 10, 8),
     child: Column(
       children: [
-        Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: List.generate(6, (index) {
-            if (index < guesses.length && answer != null) {
-              List<LetterStatus> statuses = checkGuess(guesses[index], answer);
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: WordleLetterBoxes(
-                  letters: guesses[index],
-                  statuses: statuses,
-                ),
-              );
-            } else if (index == guesses.length && currentGuess.isNotEmpty) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: WordleLetterBoxes(letters: currentGuess),
-              );
-            } else {
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: const WordleLetterBoxes(letters: ''),
-              );
-            }
-          }),
+        Expanded(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: List.generate(6, (index) {
+              if (index < guesses.length && answer != null) {
+                List<LetterStatus> statuses = checkGuess(guesses[index], answer);
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: WordleLetterBoxes(
+                    letters: guesses[index],
+                    statuses: statuses,
+                  ),
+                );
+              } else if (index == guesses.length && currentGuess.isNotEmpty) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: WordleLetterBoxes(letters: currentGuess),
+                );
+              } else {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: const WordleLetterBoxes(letters: ''),
+                );
+              }
+            }),
+          ),
         ),
         WordleKeyboard(
           letterStatuses: letterStatuses,
@@ -404,14 +416,37 @@ Widget buildGame({
           onEnterTap: onEnterTap,
           onBackspaceTap: onBackspaceTap,
         ),
-        if (elapsed != null)
-          Padding(
-            padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
-            child: Text(
-              "Time: ${formatDuration(elapsed)}",
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-            ),
+        SizedBox(
+          height: 48,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (elapsed != null)
+                Text(
+                  "Time: ${formatDuration(elapsed)}",
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                ),
+              if (onNewGame != null && !(guesses.isEmpty && currentGuess.isEmpty))
+                Padding(
+                  padding: const EdgeInsets.only(left: 16.0),
+                  child: ElevatedButton(
+                    onPressed: onNewGame,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                      minimumSize: const Size(0, 36),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                    ),
+                    child: const Text('New Game'),
+                  ),
+                ),
+            ],
           ),
+        ),
       ],
     ),
   );

@@ -1,4 +1,4 @@
-name: Dart
+name: Flutter
 
 on:
   push:
@@ -9,7 +9,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
       - uses: dart-lang/setup-dart@9a04e6d73cca37bd455e0608d7e5092f881fd603
@@ -25,6 +24,6 @@ jobs:
         run: dart analyze .
         working-directory: ./flutter/
 
-      - name: Run tests
-        run: flutter test .
-        working-directory: ./flutter/
+      #- name: Run tests TODO: Add tests
+      #  run: flutter test .
+      #  working-directory: ./flutter/test

@@ -141,7 +141,7 @@ def game_online():
                     print("Please specify your password")
             print("Checking details...")
         else:
-            print("An error occured. Please try again in a few minutes.")
+            print("An error has occurred. Please try again in a few minutes.")
             input("Press `Enter` to continue...")
             return 1
         response = requests.get(f"{server}/online/auth_check?user={user}&auth={auth}")

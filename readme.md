@@ -5,6 +5,8 @@
 - Online game
 - Multi-language support
 - Statistics
+- Leaderboards
+- A flutter version for all platforms
 
 ## Installation
 ### Client
@@ -21,8 +23,7 @@
 - `pip -m requirements.txt`
 - `flask run`
 ## Planned features
-- An app and website with a GUI
-- Rankings
+- ?
 
-This project was made for the [Moonshot](https://moonshot.hack.club/1016) hackathon orgainzed by HackClub.
+This project was made for the [Moonshot](https://moonshot.hack.club/1016) hackathon organized by HackClub.
 ![Hackatime Badge](https://hackatime-badge.hackclub.com/U08RQEP53HA/wordle-cli)

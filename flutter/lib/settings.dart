@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:adaptive_theme/adaptive_theme.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -31,6 +32,20 @@ class _SettingsPageState extends State<SettingsPage> {
               },
             ),
           ),
+          const ListTile(
+            title: Text('About'),
+            subtitle: Text('Wordle made with Flutter.'),
+            trailing: Text('v1.0'),
+          ),
+          ListTile(
+            title: const Text('GitHub'),
+            onTap: () async {
+              final url = Uri.parse('https://github.com/ketr4x/wordle-cli');
+              if (await canLaunchUrl(url)) {
+                await launchUrl(url, mode: LaunchMode.externalApplication);
+              }
+            },
+          )
         ],
       )
     );

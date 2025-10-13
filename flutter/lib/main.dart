@@ -1,22 +1,43 @@
 import 'package:flutter/material.dart';
 import 'package:wordle/random.dart';
+import 'package:adaptive_theme/adaptive_theme.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  AdaptiveThemeMode? savedThemeMode;
+  try {
+    savedThemeMode = await AdaptiveTheme.getThemeMode();
+  } catch (e) {
+    savedThemeMode = AdaptiveThemeMode.light;
+  }
+  runApp(MyApp(savedThemeMode: savedThemeMode,));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final AdaptiveThemeMode? savedThemeMode;
+  const MyApp({super.key, this.savedThemeMode});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Wordle',
-      theme: ThemeData(
+    return AdaptiveTheme(
+      light: ThemeData(
+        brightness: Brightness.light,
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blueAccent),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Wordle'),
+      dark: ThemeData(
+        brightness: Brightness.dark,
+        colorScheme: ColorScheme.fromSeed(
+            seedColor: Colors.blueAccent, brightness: Brightness.dark),
+        useMaterial3: true,
+      ),
+      initial: savedThemeMode ?? AdaptiveThemeMode.light,
+      builder: (theme, darkTheme) => MaterialApp(
+        title: 'Wordle',
+        theme: theme,
+        darkTheme: darkTheme,
+        home: MyHomePage(title: 'Wordle'),
+      ),
     );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:adaptive_theme/adaptive_theme.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -17,7 +18,19 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
       body: Column(
         children: [
-          Text('Settings will be here'),
+          ListTile(
+            title: const Text('Dark Mode'),
+            trailing: Switch.adaptive(
+              value: AdaptiveTheme.of(context).mode.isDark,
+              onChanged: (value) {
+                if (value) {
+                  AdaptiveTheme.of(context).setDark();
+                } else {
+                  AdaptiveTheme.of(context).setLight();
+                }
+              },
+            ),
+          ),
         ],
       )
     );

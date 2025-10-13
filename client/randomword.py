@@ -5,8 +5,7 @@ from collections import Counter
 
 def settings():
     utils.clear_screen()
-    length = 5 # TODO int(input("How long do you want your word? ") or 5)
-
+    length = 5
     language = ""
     languages = list(map(str, utils.languages()))
     while language not in languages:
@@ -15,11 +14,6 @@ def settings():
     tries = int(input("How many tries do you want to have? (default: 6) ") or 6)
     return length, language, tries
 
-def format_unused_letters(letters):
-    formatted_letters = ""
-    for letter in sorted(letters):
-        formatted_letters += letter
-    return formatted_letters
 
 def format_guess(guess, word):
     if not guess or len(guess) != len(word):
@@ -69,7 +63,7 @@ def game(word, filtered, tries, language):
                 print(i)
 
         print(f"\nRemaining guesses: {tries-len(guesses)}")
-        print(f"Unused letters: {format_unused_letters(letters)}")
+        print(f"Unused letters: {utils.format_unused_letters(letters)}")
 
         guess = input(f"\nWrite your {utils.ordinal(len(guesses)+1)} guess: ").lower()
         if len(guess) == len(word) and guess in filtered:

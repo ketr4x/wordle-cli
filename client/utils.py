@@ -50,6 +50,15 @@ def solutions(language="en"):
 def letters(language="en"):
     return open(f'../data/letters/{language}').read().lower().split()
 
+# Sorts the remaining letters
+def format_unused_letters(letters):
+    formatted_letters = ""
+    for letter in sorted(letters):
+        formatted_letters += letter
+    return formatted_letters
+
+
+
 def filtered(language, length=5):
     filtered_words = [word.strip().lower() for word in wordlist(language) if len(word.strip()) == length]
     if not filtered_words:

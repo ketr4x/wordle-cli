@@ -1,6 +1,7 @@
 from randomword import *
 import datetime
 
+# Generates a random word from solutions based on a seed
 def get_word(language):
     random.seed(f"HackClub {datetime.date.today()}")
     solutions = utils.solutions(language)
@@ -8,8 +9,7 @@ def get_word(language):
 
 def settings():
     utils.clear_screen()
-    length = 5 # TODO int(input("How long do you want your word? ") or 5)
-
+    length = 5
     language = ""
     languages = list(map(str, utils.languages()))
     while language not in languages:

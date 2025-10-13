@@ -18,6 +18,7 @@ def read_config(param):
     else:
         return None
 
+# Get list of the available languages
 def languages():
     letters = set(os.listdir('../data/letters'))
     solutions = set(os.listdir('../data/solutions'))
@@ -30,9 +31,11 @@ def wordlist(language):
 def solutions(language):
     return open(f'../data/solutions/{language}').read().lower().split()
 
+# Get the letters for a specified language
 def letters(language):
     return open(f'../data/letters/{language}').read().lower().split()
 
+# Get words with length of 5
 def filtered(language):
     filtered_words = [word.strip().lower() for word in solutions(language) if len(word.strip()) == 5]
     if not filtered_words:

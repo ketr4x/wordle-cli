@@ -1,6 +1,7 @@
 import utils
 import requests
 
+# Fetches user statistics from the server
 def get_stats(user, auth):
     response = requests.get(f"{utils.read_config('server_url')}/online/stats?user={user}&auth={auth}")
     if response.status_code != 200:

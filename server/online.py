@@ -2,10 +2,12 @@ import random
 from collections import Counter
 import utils
 
+# Random word generation
 def generate_word(language):
     filtered = utils.filtered(language)
     return random.choice(filtered)
 
+# Guess formatting
 def format_guess(guess, word):
     if not guess or len(guess) != len(word):
         return None
@@ -32,6 +34,7 @@ def format_guess(guess, word):
             output.append(0)
     return output
 
+# Guess checking
 def check_guess(word, guess, language, guess_number, letters):
     tries = 6
     game_status = 1

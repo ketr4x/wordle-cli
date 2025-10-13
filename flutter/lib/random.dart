@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'utils.dart';
 import 'daily.dart';
 
@@ -10,7 +11,7 @@ class RandomPage extends StatefulWidget {
   State<RandomPage> createState() => _RandomPageState();
 }
 
-class _RandomPageState extends State<RandomPage> {
+class _RandomPageState extends State<RandomPage> with WidgetsBindingObserver {
   final int _selectedIndex = 0;
 
   String? answer;
@@ -21,11 +22,40 @@ class _RandomPageState extends State<RandomPage> {
   bool gameOver = false;
   String? resultMessage;
   String? errorMessage;
+  DateTime? _startTime;
+  Duration _elapsed = Duration.zero;
+  late final Ticker _ticker;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _ticker = Ticker(_onTick);
     _initializeGame();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _ticker.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+      _ticker.stop();
+    } else if (state == AppLifecycleState.resumed && !gameOver) {
+      _ticker.start();
+    }
+  }
+
+  void _onTick(Duration elapsed) {
+    if (!gameOver) {
+      setState(() {
+        _elapsed = elapsed;
+      });
+    }
   }
 
   Future<void> _initializeGame() async {
@@ -43,6 +73,10 @@ class _RandomPageState extends State<RandomPage> {
       gameOver = false;
       resultMessage = null;
       errorMessage = null;
+      _startTime = DateTime.now();
+      _elapsed = Duration.zero;
+      _ticker.stop();
+      _ticker.start();
     });
   }
 
@@ -57,7 +91,6 @@ class _RandomPageState extends State<RandomPage> {
         LetterStatus currentStatus = letterStatuses[letter] ?? LetterStatus.absent;
         LetterStatus newStatus = statuses[i];
 
-        // Priority: correct > present > absent
         if (newStatus == LetterStatus.correct ||
             (newStatus == LetterStatus.present && currentStatus != LetterStatus.correct)) {
           letterStatuses[letter] = newStatus;
@@ -90,16 +123,18 @@ class _RandomPageState extends State<RandomPage> {
         setState(() {
           errorMessage = 'Word must be 5 letters long';
         });
+        showErrorToast('Word must be 5 letters long');
       }
       return;
     }
 
-    // Validate word
     bool isValid = await isValidWord(currentGuess);
     if (!isValid) {
       setState(() {
+        currentGuess = '';
         errorMessage = 'Not a valid word';
       });
+      showErrorToast('Not a valid word');
       return;
     }
 
@@ -110,18 +145,19 @@ class _RandomPageState extends State<RandomPage> {
 
       _updateLetterStatuses();
 
-      if (guesses.last.toLowerCase() == answer!.toLowerCase()) {
+      if (guesses.last.toLowerCase() == answer!.toLowerCase() || guesses.length == 6) {
         gameOver = true;
-        resultMessage = 'You win!';
-      } else if (guesses.length == 6) {
-        gameOver = true;
-        resultMessage = 'You lose! Answer: ${answer!}';
+        _ticker.stop();
+        resultMessage = guesses.last.toLowerCase() == answer!.toLowerCase()
+          ? 'You win!'
+          : 'You lose! Answer: ${answer!}';
       }
     });
   }
 
   void _onItemTapped(int index) {
     if (index == _selectedIndex) return;
+    _ticker.stop();
 
     Widget page;
     switch (index) {
@@ -148,10 +184,16 @@ class _RandomPageState extends State<RandomPage> {
     _initializeGame();
   }
 
+  String _formatDuration(Duration d) {
+    final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return "$m:$s";
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: buildAppBar(context, widget),
+      appBar: buildAppBar(context, "Random Wordle"),
       body: Column(
         children: [
           Expanded(
@@ -164,16 +206,9 @@ class _RandomPageState extends State<RandomPage> {
               onLetterTap: gameOver ? (_) {} : _onLetterTap,
               onEnterTap: gameOver ? () {} : _onEnterTap,
               onBackspaceTap: gameOver ? () {} : _onBackspaceTap,
+              elapsed: _elapsed,
             ),
           ),
-          if (errorMessage != null)
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                errorMessage!,
-                style: const TextStyle(color: Colors.red, fontSize: 16),
-              ),
-            ),
           if (resultMessage != null)
             Padding(
               padding: const EdgeInsets.all(12.0),

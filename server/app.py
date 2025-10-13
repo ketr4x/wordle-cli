@@ -1,3 +1,4 @@
+# Imports
 from flask import Flask, render_template, request
 from flask_sqlalchemy import SQLAlchemy
 import os
@@ -9,16 +10,19 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import datetime
 from sqlalchemy.ext.mutable import MutableDict
 
+# Initialization
 load_dotenv()
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
 db = SQLAlchemy(app)
 
+# User DB
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     auth = db.Column(db.String(80), nullable=False)
 
+# Game DB
 class Game(db.Model):
     game_id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), nullable=False)
@@ -32,6 +36,7 @@ class Game(db.Model):
     time = db.Column(db.Float, nullable=True)
     status = db.Column(db.Integer, nullable=True)
 
+# Stats DB
 class Stats(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), nullable=False)
@@ -42,17 +47,21 @@ class Stats(db.Model):
     word_freq = db.Column(MutableDict.as_mutable(db.JSON), nullable=True)
     registered_on = db.Column(db.DateTime, nullable=False)
 
+# DB Creation
 with app.app_context():
     db.create_all()
 
+# TODO: Landing page
 @app.route('/')
 def homepage():
     return render_template('index.html')
 
+# Server status check
 @app.route('/server_check')
 def server_check():
     return "Server is running", 200
 
+# User auth check
 @app.route('/online/auth_check')
 def auth_check():
     user = request.args.get('user')
@@ -65,6 +74,7 @@ def auth_check():
             return "Invalid auth", 403
     return 'Invalid details', 401
 
+# User existence check
 @app.route('/online/user_check/<username>')
 def user_check(username):
     user = User.query.filter_by(username=username).first()
@@ -73,6 +83,7 @@ def user_check(username):
     else:
         return 'User not found', 404
 
+# Backend leaderboard endpoint
 @app.route('/online/leaderboard')
 def get_leaderboard():
     state = request.args.get('state')
@@ -121,6 +132,7 @@ def get_leaderboard():
 
     return "Wrong state", 404
 
+# Backend stats endpoint
 @app.route('/online/stats')
 def get_stats():
     user = request.args.get('user')
@@ -148,8 +160,10 @@ def get_stats():
         'avg_time': stats.avg_time,
         'word_freq': stats.word_freq,
         'registered_on': stats.registered_on
-    })
+    }) # {"avg_time": float,"matches": number,"points": ELO,"registered_on":time and date,"username":username,"wins":number,"word_freq":{"word": numberofoccurences}}
 
+# ELO calculation system
+# You can customize it in config.json
 def update_elo(current_elo, won):
     system_elo = utils.read_config("base_elo")
     win_bonus = utils.read_config("win_bonus")
@@ -163,6 +177,7 @@ def update_elo(current_elo, won):
         new_elo += win_bonus
     return max(new_elo, 0)
 
+# User creation endpoint
 @app.route('/online/create_user')
 def create_user():
     user = str(request.args.get('user'))
@@ -174,6 +189,7 @@ def create_user():
     fn_create_user(user, auth)
     return "User created", 200
 
+# User creation function
 def fn_create_user(user, auth):
     user_table = User(username=user, auth=generate_password_hash(auth))
     db.session.add(user_table)
@@ -181,19 +197,22 @@ def fn_create_user(user, auth):
     db.session.add(stats)
     db.session.commit()
 
+# TODO: Add a working play page
 @app.route('/play')
 def play():
     return render_template('play.html')
 
-
+# TODO: Add a working leaderboard page
 @app.route('/leaderboard')
 def leaderboard():
     return render_template('placeholder.html', title='Leaderboard', message='Leaderboard is coming soon!')
 
+# Language availability check endpoint
 @app.route('/online/languages')
 def languages():
     return ','.join(utils.languages())
 
+# Game start endpoint
 @app.route('/online/start')
 def start_online():
     user = request.args.get('user')
@@ -219,6 +238,7 @@ def start_online():
 
     return 'Started', 200
 
+# Take a guess endpoint
 @app.route('/online/guess')
 def guess_online():
     user = str(request.args.get('user'))
@@ -280,6 +300,7 @@ def guess_online():
             'time': game.time,
         })
 
+# Check what was the word after the game has ended
 @app.route('/online/word')
 def get_word():
     user = str(request.args.get('user'))

@@ -6,6 +6,18 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io';
 import 'dart:convert';
 import 'package:path_provider/path_provider.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+
+void showErrorToast(String message) {
+  Fluttertoast.showToast(
+    msg: message,
+    toastLength: Toast.LENGTH_SHORT,
+    gravity: ToastGravity.BOTTOM,
+    backgroundColor: Colors.red[600],
+    textColor: Colors.white,
+    fontSize: 16.0,
+  );
+}
 
 Future<void> setConfig(String key, String value) async {
   final prefs = await SharedPreferences.getInstance();
@@ -108,10 +120,10 @@ List<LetterStatus> checkGuess(String guess, String answer) {
   return result;
 }
 
-AppBar buildAppBar(BuildContext context, widget) {
+AppBar buildAppBar(BuildContext context, String title) {
   return AppBar(
     backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-    title: Text(widget.title),
+    title: Text(title),
     actions: [
       IconButton(
         icon: const Icon(Icons.settings),
@@ -183,17 +195,17 @@ class WordleLetterBoxes extends StatelessWidget {
     }
     switch (status) {
       case LetterStatus.correct:
-        return Colors.green;
+        return const Color(0xFF6AAA64);
       case LetterStatus.present:
-        return Colors.orange;
+        return const Color(0xFFC9B458);
       case LetterStatus.absent:
-        return Colors.grey;
+        return const Color(0xFF787C7E);
     }
   }
 
-  Color _getTextColor(LetterStatus? status) {
+  Color _getTextColor(LetterStatus? status, BuildContext context) {
     if (status == null) {
-      return Colors.black;
+      return Theme.of(context).colorScheme.onSurface;
     }
     return Colors.white;
   }
@@ -213,7 +225,9 @@ class WordleLetterBoxes extends StatelessWidget {
           decoration: BoxDecoration(
             color: _getBoxColor(status, context),
             border: Border.all(
-              color: status == null ? Colors.grey : Colors.transparent,
+              color: status == null
+                ? Theme.of(context).colorScheme.outline
+                : Colors.transparent,
               width: 2
             ),
             borderRadius: BorderRadius.circular(8),
@@ -221,7 +235,7 @@ class WordleLetterBoxes extends StatelessWidget {
           alignment: Alignment.center,
           child: Text(
             letter.toUpperCase(),
-            style: textStyle.copyWith(color: _getTextColor(status)),
+            style: textStyle.copyWith(color: _getTextColor(status, context)),
           ),
         );
       }),
@@ -248,24 +262,27 @@ class WordleKeyboard extends StatelessWidget {
   Color _getKeyColor(String letter, BuildContext context) {
     final status = letterStatuses[letter.toLowerCase()];
     if (status == null) {
-      return Theme.of(context).colorScheme.surface;
+      return Theme.of(context).colorScheme.surfaceContainerHighest;
     }
     switch (status) {
       case LetterStatus.correct:
-        return Colors.green;
+        return const Color(0xFF6AAA64);
       case LetterStatus.present:
-        return Colors.orange;
+        return const Color(0xFFC9B458);
       case LetterStatus.absent:
-        return Colors.grey;
+        return const Color(0xFF787C7E);
     }
   }
 
-  Color _getKeyTextColor(String letter) {
+  Color _getKeyTextColor(String letter, BuildContext context) {
     final status = letterStatuses[letter.toLowerCase()];
-    return status == null ? Colors.black : Colors.white;
+    if (status == null) {
+      return Theme.of(context).colorScheme.onSurface;
+    }
+    return Colors.white;
   }
 
-  Widget _buildKey(String key, BuildContext context, {double? width}) {
+  Widget _buildKey(String key, BuildContext context) {
     final isSpecial = key == 'ENTER' || key == 'BACKSPACE';
     return Expanded(
       flex: isSpecial ? 3 : 2,
@@ -278,12 +295,13 @@ class WordleKeyboard extends StatelessWidget {
               ? Theme.of(context).colorScheme.primary
               : _getKeyColor(key, context),
             foregroundColor: isSpecial
-              ? Colors.white
-              : _getKeyTextColor(key),
+              ? Theme.of(context).colorScheme.onPrimary
+              : _getKeyTextColor(key, context),
             padding: const EdgeInsets.all(0),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(4),
             ),
+            elevation: 0,
           ),
           onPressed: () {
             if (key == 'ENTER') {
@@ -305,11 +323,19 @@ class WordleKeyboard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Standard QWERTY layout
+    if (keyboardLayout.length < 26) {
+      return Container(
+        padding: const EdgeInsets.all(8),
+        child: const Center(
+          child: Text('Loading keyboard...'),
+        ),
+      );
+    }
+
     final List<List<String>> rows = [
-      keyboardLayout.sublist(0, 10), // Q-P
-      keyboardLayout.sublist(10, 19), // A-L
-      ['ENTER', ...keyboardLayout.sublist(19, 26), 'BACKSPACE'], // Z-M with special keys
+      keyboardLayout.sublist(0, 10),
+      keyboardLayout.sublist(10, 19),
+      ['ENTER', ...keyboardLayout.sublist(19, 26), 'BACKSPACE'],
     ];
 
     return Container(
@@ -325,7 +351,7 @@ class WordleKeyboard extends StatelessWidget {
   }
 }
 
-Padding buildGame({
+Widget buildGame({
   required List<String> guesses,
   required String currentGuess,
   String? answer,
@@ -334,37 +360,42 @@ Padding buildGame({
   required Function(String) onLetterTap,
   required VoidCallback onEnterTap,
   required VoidCallback onBackspaceTap,
+  Duration? elapsed,
 }) {
+  String formatDuration(Duration d) {
+    final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return "$m:$s";
+  }
+
   return Padding(
     padding: const EdgeInsets.fromLTRB(10, 25, 10, 8),
     child: Column(
       children: [
-        Expanded(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: List.generate(6, (index) {
-              if (index < guesses.length && answer != null) {
-                List<LetterStatus> statuses = checkGuess(guesses[index], answer);
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: WordleLetterBoxes(
-                    letters: guesses[index],
-                    statuses: statuses,
-                  ),
-                );
-              } else if (index == guesses.length && currentGuess.isNotEmpty) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: WordleLetterBoxes(letters: currentGuess),
-                );
-              } else {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: const WordleLetterBoxes(letters: ''),
-                );
-              }
-            }),
-          ),
+        Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: List.generate(6, (index) {
+            if (index < guesses.length && answer != null) {
+              List<LetterStatus> statuses = checkGuess(guesses[index], answer);
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: WordleLetterBoxes(
+                  letters: guesses[index],
+                  statuses: statuses,
+                ),
+              );
+            } else if (index == guesses.length && currentGuess.isNotEmpty) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: WordleLetterBoxes(letters: currentGuess),
+              );
+            } else {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: const WordleLetterBoxes(letters: ''),
+              );
+            }
+          }),
         ),
         WordleKeyboard(
           letterStatuses: letterStatuses,
@@ -373,6 +404,14 @@ Padding buildGame({
           onEnterTap: onEnterTap,
           onBackspaceTap: onBackspaceTap,
         ),
+        if (elapsed != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
+            child: Text(
+              "Time: ${formatDuration(elapsed)}",
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+            ),
+          ),
       ],
     ),
   );

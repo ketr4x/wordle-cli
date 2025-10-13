@@ -5,6 +5,7 @@ from statistics import stats
 from configuration import configuration
 from leaderboard import leaderboard
 
+# Translates the data received from the server for strings with the formatted guesses
 def guess_decoder(guesses, formatted_guesses):
     output = []
     for j, guess in enumerate(guesses):
@@ -18,12 +19,6 @@ def guess_decoder(guesses, formatted_guesses):
                 guess_output.append(f"\033[91m{char}\033[0m")
         output.append("".join(guess_output))
     return output
-
-def format_unused_letters(letters):
-    formatted_letters = ""
-    for letter in sorted(letters):
-        formatted_letters += letter
-    return formatted_letters
 
 
 def game(user, auth, language):
@@ -54,7 +49,7 @@ def game(user, auth, language):
             print()
     
         print(f"Remaining guesses: {6-guess_number}")
-        print(f"Unused letters: {format_unused_letters(letters)}")
+        print(f"Unused letters: {utils.format_unused_letters(letters)}")
 
         guess = input(f"\nWrite your {utils.ordinal(guess_number+1)} guess: ").lower()
         if len(guess) == 5 and guess in utils.filtered(language):

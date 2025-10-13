@@ -27,26 +27,29 @@ class _RandomPageState extends State<RandomPage> {
     return Scaffold(
       appBar: buildAppBar(context, widget),
       body: Padding(
-        padding: const EdgeInsets.fromLTRB(8, 25, 8, 8),
+        padding: const EdgeInsets.fromLTRB(10, 25, 10, 8),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
           children: [
-            WordleLetterBoxes(letters: ''),
-            Padding(
-              padding: const EdgeInsets.only(top: 25),
-              child: Container(
-                alignment: Alignment.bottomCenter,
-                child: TextField(
-                  maxLength: 5,
-                  onChanged: (value) {
-                    setState(() {
-                      currentGuess = value;
-                    });
-                  },
-                  decoration: const InputDecoration(
-                    labelText: 'Enter your guess',
-                    border: OutlineInputBorder(),
-                  ),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  WordleLetterBoxes(letters: ''),
+                ],
+              ),
+            ),
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: TextField(
+                maxLength: 5,
+                onChanged: (value) {
+                  setState(() {
+                    currentGuess = value;
+                  });
+                },
+                decoration: const InputDecoration(
+                  labelText: 'Enter your guess',
+                  border: OutlineInputBorder(),
                 ),
               ),
             ),

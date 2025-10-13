@@ -31,6 +31,8 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
   Duration _elapsed = Duration.zero;
   late final Ticker _ticker;
   final FocusNode _focusNode = FocusNode();
+  bool _shouldTick = false;
+  bool _isActive = true;
 
   String get _prefsPrefix => widget.mode == GameMode.daily ? 'daily' : 'random';
 
@@ -60,11 +62,14 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+      _isActive = false;
       _ticker.stop();
       _saveGameState();
-    } else if (state == AppLifecycleState.resumed && !gameOver) {
-      _restoreGameState();
-      _ticker.start();
+    } else if (state == AppLifecycleState.resumed) {
+      _isActive = true;
+      if (_shouldTick && !gameOver && !_ticker.isActive) {
+        _ticker.start();
+      }
     }
   }
 
@@ -83,10 +88,10 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
       gameOver = false;
       resultMessage = null;
       errorMessage = null;
-      _startTime = DateTime.now();
+      _startTime = null;
       _elapsed = Duration.zero;
+      _shouldTick = false;
       _ticker.stop();
-      _ticker.start();
     });
     _saveGameState();
   }
@@ -115,6 +120,14 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
     setState(() {
       currentGuess += letter.toLowerCase();
       errorMessage = null;
+      if (!_shouldTick) {
+        _shouldTick = true;
+        _startTime = DateTime.now();
+        _elapsed = Duration.zero;
+        if (_isActive) _ticker.start();
+      } else if (_isActive && !_ticker.isActive) {
+        _ticker.start();
+      }
     });
     _saveGameState();
   }
@@ -158,6 +171,7 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
       if (guesses.last.toLowerCase() == answer!.toLowerCase() || guesses.length == 6) {
         gameOver = true;
         _ticker.stop();
+        _shouldTick = false;
         resultMessage = guesses.last.toLowerCase() == answer!.toLowerCase()
           ? 'You win!'
           : 'You lose! Answer: ${answer!}';
@@ -193,16 +207,16 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
       gameOver = false;
       resultMessage = null;
       errorMessage = null;
-      _startTime = DateTime.now();
+      _startTime = null;
       _elapsed = Duration.zero;
+      _shouldTick = false;
       _ticker.stop();
-      _ticker.start();
     });
     _saveGameState();
   }
 
   void _onTick(Duration elapsed) {
-    if (!gameOver && _startTime != null) {
+    if (_shouldTick && !gameOver && _startTime != null && _isActive) {
       setState(() {
         _elapsed = DateTime.now().difference(_startTime!);
       });
@@ -264,20 +278,20 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
       resultMessage = (savedResultMessage?.isEmpty ?? true) ? null : savedResultMessage;
       errorMessage = null;
 
-      if (savedStartTime != null) {
+      if (savedStartTime != null && savedElapsed != null && savedElapsed > 0) {
         _startTime = DateTime.fromMillisecondsSinceEpoch(savedStartTime);
-        final currentTime = DateTime.now();
-        final actualElapsed = currentTime.difference(_startTime!);
-        _elapsed = actualElapsed;
+        _elapsed = DateTime.now().difference(_startTime!);
+        _shouldTick = true;
       } else {
-        _startTime = DateTime.now();
-        _elapsed = Duration(seconds: savedElapsed ?? 0);
+        _startTime = null;
+        _elapsed = Duration.zero;
+        _shouldTick = false;
       }
 
       _updateLetterStatuses();
 
-      if (!gameOver) {
-        _ticker.stop();
+      _ticker.stop();
+      if (_shouldTick && !gameOver) {
         _ticker.start();
       }
     });
@@ -306,7 +320,9 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
                   onBackspaceTap: gameOver ? () {} : _onBackspaceTap,
                   elapsed: _elapsed,
                   onNewGame: widget.mode == GameMode.daily ? _resetGuesses : _restartGame,
-                  context: context
+                  context: context,
+                  mode: widget.mode,
+                  gameOver: gameOver,
                 ),
               ),
               if (resultMessage != null)
@@ -315,14 +331,6 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
                   child: Text(
                     resultMessage!,
                     style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              if (gameOver)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 16.0),
-                  child: ElevatedButton(
-                    onPressed: widget.mode == GameMode.daily ? _resetGuesses : _restartGame,
-                    child: Text(widget.mode == GameMode.daily ? 'Try Again' : 'Play Again'),
                   ),
                 ),
             ],

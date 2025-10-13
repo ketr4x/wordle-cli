@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:wordle/universal_game.dart';
 import 'settings.dart';
 import 'dart:math';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -14,6 +15,17 @@ void showErrorToast(String message) {
     toastLength: Toast.LENGTH_SHORT,
     gravity: ToastGravity.BOTTOM,
     backgroundColor: Colors.red,
+    textColor: Colors.white,
+    fontSize: 16.0,
+  );
+}
+
+void showDailyLimitToast() {
+  Fluttertoast.showToast(
+    msg: "You can play tomorrow.",
+    toastLength: Toast.LENGTH_SHORT,
+    gravity: ToastGravity.BOTTOM,
+    backgroundColor: Colors.orange,
     textColor: Colors.white,
     fontSize: 16.0,
   );
@@ -186,7 +198,7 @@ class WordleLetterBoxes extends StatelessWidget {
     required this.letters,
     this.statuses,
     this.boxSize = 54,
-    this.textStyle = const TextStyle(fontSize: 28, fontWeight: FontWeight.bold), // Increased from 24
+    this.textStyle = const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
   });
 
   Color _getBoxColor(LetterStatus? status, BuildContext context) {
@@ -221,7 +233,7 @@ class WordleLetterBoxes extends StatelessWidget {
         return Container(
           width: boxSize,
           height: boxSize,
-          margin: const EdgeInsets.symmetric(horizontal: 6), // Increased from 4
+          margin: const EdgeInsets.symmetric(horizontal: 6),
           decoration: BoxDecoration(
             color: _getBoxColor(status, context),
             border: Border.all(
@@ -371,11 +383,29 @@ Widget buildGame({
   Duration? elapsed,
   VoidCallback? onNewGame,
   required BuildContext context,
+  GameMode? mode,
+  bool gameOver = false,
 }) {
   String formatDuration(Duration d) {
     final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
     final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
     return "$m:$s";
+  }
+
+  bool showNewGameButton = false;
+  if (mode == GameMode.daily) {
+    DateTime? startTime;
+    if (elapsed != null && elapsed > Duration.zero) {
+      startTime = DateTime.now().subtract(elapsed);
+    }
+    if (startTime != null) {
+      final now = DateTime.now();
+      showNewGameButton = now.day != startTime.day ||
+          now.month != startTime.month ||
+          now.year != startTime.year;
+    }
+  } else {
+    showNewGameButton = onNewGame != null && !(guesses.isEmpty && currentGuess.isEmpty);
   }
 
   return Padding(
@@ -409,13 +439,14 @@ Widget buildGame({
             }),
           ),
         ),
-        WordleKeyboard(
-          letterStatuses: letterStatuses,
-          keyboardLayout: keyboardLayout,
-          onLetterTap: onLetterTap,
-          onEnterTap: onEnterTap,
-          onBackspaceTap: onBackspaceTap,
-        ),
+        if (!gameOver)
+          WordleKeyboard(
+            letterStatuses: letterStatuses,
+            keyboardLayout: keyboardLayout,
+            onLetterTap: onLetterTap,
+            onEnterTap: onEnterTap,
+            onBackspaceTap: onBackspaceTap,
+          ),
         SizedBox(
           height: 48,
           child: Row(
@@ -426,11 +457,13 @@ Widget buildGame({
                   "Time: ${formatDuration(elapsed)}",
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                 ),
-              if (onNewGame != null && !(guesses.isEmpty && currentGuess.isEmpty))
+              if (showNewGameButton)
                 Padding(
                   padding: const EdgeInsets.only(left: 16.0),
                   child: ElevatedButton(
-                    onPressed: onNewGame,
+                    onPressed: (mode == GameMode.daily)
+                      ? showDailyLimitToast
+                      : onNewGame,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Theme.of(context).colorScheme.primary,
                       foregroundColor: Theme.of(context).colorScheme.onPrimary,

@@ -8,6 +8,7 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:path_provider/path_provider.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:http/http.dart' as http;
 
 void showErrorToast(String message) {
   Fluttertoast.showToast(
@@ -401,8 +402,6 @@ Widget buildGame({
                now.year != startTime.year;
   }
 
-  bool showNewGameButton = true;
-
   return Padding(
     padding: const EdgeInsets.fromLTRB(10, 25, 10, 8),
     child: Column(
@@ -483,4 +482,51 @@ Widget buildGame({
       ],
     ),
   );
+}
+
+class LeaderboardData {
+  final List<Map<String, dynamic>> topAvgTime;
+  final List<Map<String, dynamic>> topMatches;
+  final List<Map<String, dynamic>> topPoints;
+  final List<Map<String, dynamic>> topWinrate;
+  final Map<String, dynamic> userPosition;
+
+  LeaderboardData({
+    required this.topAvgTime,
+    required this.topMatches,
+    required this.topPoints,
+    required this.topWinrate,
+    required this.userPosition,
+  });
+
+  factory LeaderboardData.fromJson(Map<String, dynamic> json) {
+    return LeaderboardData(
+      topAvgTime: List<Map<String, dynamic>>.from(json['top_avg_time'] ?? []),
+      topMatches: List<Map<String, dynamic>>.from(json['top_matches'] ?? []),
+      topPoints: List<Map<String, dynamic>>.from(json['top_points'] ?? []),
+      topWinrate: List<Map<String, dynamic>>.from(json['top_winrate'] ?? []),
+      userPosition: Map<String, dynamic>.from(json['user_position'] ?? {}),
+    );
+  }
+}
+
+Future<LeaderboardData?> getLeaderboard(String state, String user, String auth) async {
+  try {
+    final serverUrl = await getConfig('server_url');
+    if (serverUrl == null) {
+      throw Exception('Server URL not configured');
+    }
+    
+    final url = '$serverUrl/online/leaderboard?state=$state&user=$user&auth=$auth';
+    final response = await http.get(Uri.parse(url));
+    
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> data = json.decode(response.body);
+      return LeaderboardData.fromJson(data);
+    } else {
+      throw Exception('Failed to load leaderboard: ${response.statusCode}');
+    }
+  } catch (e) {
+    throw Exception('Error fetching leaderboard: $e');
+  }
 }

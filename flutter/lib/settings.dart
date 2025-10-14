@@ -13,12 +13,14 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
   String _username = '';
   String _password = '';
+  String _serverUrl = '';
 
   @override
   void initState() {
     super.initState();
     _loadUsername();
     _loadPassword();
+    _loadServerUrl();
   }
 
   Future<void> _loadUsername() async {
@@ -32,6 +34,13 @@ class _SettingsPageState extends State<SettingsPage> {
     final password = await getConfig("password");
     setState(() {
       _password = password ?? '';
+    });
+  }
+
+  Future<void> _loadServerUrl() async {
+    final serverUrl = await getConfig("server_url");
+    setState(() {
+      _serverUrl = serverUrl ?? '';
     });
   }
 
@@ -99,6 +108,27 @@ class _SettingsPageState extends State<SettingsPage> {
                 },
               ),
             )
+          ),
+          ListTile(
+              title: const Text('Server URL'),
+              trailing: SizedBox(
+                width: 180,
+                child: TextField(
+                  controller: TextEditingController(text: _serverUrl)
+                    ..selection = TextSelection.fromPosition(
+                      TextPosition(offset: _serverUrl.length),
+                    ),
+                  decoration: InputDecoration(
+                    hintText: _serverUrl.isNotEmpty ? _serverUrl : 'Enter your server URL',
+                  ),
+                  onChanged: (value) async {
+                    setState(() {
+                      _serverUrl = value;
+                    });
+                    await setConfig("server_url", value);
+                  },
+                ),
+              )
           ),
           const ListTile(
             title: Text('About'),

@@ -26,8 +26,8 @@
 - Go to http://ketrax.ovh/dev/wordle
 ### Server
 - Clone the repository
-- Go to server/
 - `pip -m requirements.txt`
+- Go to server/
 - `flask run`
 ## Planned features
 - ?

@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'universal_game.dart';
 
 class RandomPage extends StatelessWidget {
-  final String title;
-  const RandomPage({super.key, required this.title});
+  const RandomPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return GamePage(title: title, mode: GameMode.random);
+    return GamePage(title: "Random Wordle", mode: GameMode.random);
   }
 }

@@ -20,10 +20,10 @@ class _RankedPageState extends State<RankedPage> {
     Widget page;
     switch (index) {
       case 0:
-        page = const RandomPage(title: "Random Wordle");
+        page = const RandomPage();
         break;
       case 1:
-        page = const DailyPage(title: "Daily Wordle");
+        page = const DailyPage();
         break;
       case 2:
         page = const RankedPage();

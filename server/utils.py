@@ -18,7 +18,7 @@ def read_config(param):
     else:
         return None
 
-# Get list of the available languages
+# Get a list of the available languages
 def languages():
     letters = set(os.listdir('../data/letters'))
     solutions = set(os.listdir('../data/solutions'))

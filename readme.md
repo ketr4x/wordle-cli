@@ -9,7 +9,7 @@
 - A flutter version for all platforms
 
 ## Installation
-### Client
+### Python CLI
 #### Cloning the repository
 - Click the Code button
 - Download zip
@@ -17,6 +17,13 @@
 - Go to client/
 - `pip -m requirements.txt`
 - `python3 main.py`
+### Flutter app
+#### App
+- Click releases
+- Download the latest file for your OS
+- Install it
+#### Website
+- Go to http://ketrax.ovh/dev/wordle
 ### Server
 - Clone the repository
 - Go to server/

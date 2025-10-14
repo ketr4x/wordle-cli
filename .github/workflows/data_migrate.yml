@@ -5,6 +5,10 @@ on:
     branches: [ "master" ]
     paths:
       - 'data/**'
+  pull_request:
+    branches: [ "master" ]
+    paths:
+      - 'data/**'
 
 jobs:
   migrate:

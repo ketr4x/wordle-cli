@@ -19,13 +19,12 @@ def get_stats(user, auth):
 
 def stats():
     user = utils.read_config("username")
-    auth = utils.read_config("password")  # Changed from "auth" to "password"
+    auth = utils.read_config("password")
 
     utils.clear_screen()
     print(f"{user}'s statistics:\n")
     result = get_stats(user, auth)
-    
-    # Handle potential errors
+
     if result[0] is None:
         print("Failed to fetch statistics. Please try again later.")
         input("\nPress `Enter` to exit...")

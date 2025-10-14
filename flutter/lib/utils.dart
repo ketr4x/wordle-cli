@@ -392,21 +392,16 @@ Widget buildGame({
     return "$m:$s";
   }
 
-  bool showNewGameButton = false;
-  if (mode == GameMode.daily) {
-    DateTime? startTime;
-    if (elapsed != null && elapsed > Duration.zero) {
-      startTime = DateTime.now().subtract(elapsed);
-    }
-    if (startTime != null) {
-      final now = DateTime.now();
-      showNewGameButton = now.day != startTime.day ||
-          now.month != startTime.month ||
-          now.year != startTime.year;
-    }
-  } else {
-    showNewGameButton = onNewGame != null && !(guesses.isEmpty && currentGuess.isEmpty);
+  bool isNewDay = true;
+  if (mode == GameMode.daily && elapsed != null && elapsed > Duration.zero) {
+    final now = DateTime.now();
+    final startTime = now.subtract(elapsed);
+    isNewDay = now.day != startTime.day ||
+               now.month != startTime.month ||
+               now.year != startTime.year;
   }
+
+  bool showNewGameButton = true;
 
   return Padding(
     padding: const EdgeInsets.fromLTRB(10, 25, 10, 8),
@@ -457,26 +452,31 @@ Widget buildGame({
                   "Time: ${formatDuration(elapsed)}",
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                 ),
-              if (showNewGameButton)
-                Padding(
-                  padding: const EdgeInsets.only(left: 16.0),
-                  child: ElevatedButton(
-                    onPressed: (mode == GameMode.daily)
-                      ? showDailyLimitToast
-                      : onNewGame,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).colorScheme.primary,
-                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-                      minimumSize: const Size(0, 36),
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6),
-                      ),
+              Padding(
+                padding: const EdgeInsets.only(left: 16.0),
+                child: ElevatedButton(
+                  onPressed: (mode == GameMode.daily)
+                    ? () {
+                        if (isNewDay) {
+                          if (onNewGame != null) onNewGame();
+                        } else {
+                          showDailyLimitToast();
+                        }
+                      }
+                    : onNewGame,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                    minimumSize: const Size(0, 36),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6),
                     ),
-                    child: const Text('New Game'),
                   ),
+                  child: const Text('New Game'),
                 ),
+              ),
             ],
           ),
         ),

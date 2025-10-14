@@ -4,6 +4,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'utils.dart';
+import 'ranked.dart';
+import 'leaderboard.dart';
+import 'statistics.dart';
 
 enum GameMode { random, daily }
 
@@ -183,14 +186,29 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
   void _onItemTapped(int index) {
     if (index == _selectedIndex) return;
     _ticker.stop();
+    Widget page;
+    switch (index) {
+      case 0:
+        page = GamePage(title: "Random Wordle", mode: GameMode.random);
+        break;
+      case 1:
+        page = GamePage(title: "Daily Wordle", mode: GameMode.daily);
+        break;
+      case 2:
+        page = const RankedPage();
+        break;
+      case 3:
+        page = const LeaderboardPage();
+        break;
+      case 4:
+        page = const StatsPage();
+        break;
+      default:
+        return;
+    }
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(
-        builder: (context) => GamePage(
-          title: index == 1 ? "Daily Wordle" : "Random Wordle",
-          mode: index == 1 ? GameMode.daily : GameMode.random,
-        ),
-      ),
+      MaterialPageRoute(builder: (context) => page),
     );
   }
 

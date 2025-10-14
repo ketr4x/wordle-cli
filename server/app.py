@@ -4,11 +4,8 @@ from flask_sqlalchemy import SQLAlchemy
 import os
 from dotenv import load_dotenv
 from flask import jsonify
-import utils
-try:
-    from server import online
-except ImportError:
-    import online
+from server import utils
+from server import online
 from werkzeug.security import generate_password_hash, check_password_hash
 import datetime
 from sqlalchemy.ext.mutable import MutableDict

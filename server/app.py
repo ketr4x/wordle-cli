@@ -5,7 +5,10 @@ import os
 from dotenv import load_dotenv
 from flask import jsonify
 import utils
-from online import generate_word, check_guess
+try:
+    from server import online
+except ImportError:
+    import online
 from werkzeug.security import generate_password_hash, check_password_hash
 import datetime
 from sqlalchemy.ext.mutable import MutableDict
@@ -231,7 +234,7 @@ def start_online():
     if language not in utils.languages():
         return 'Language invalid', 400
 
-    word = generate_word(language)
+    word = online.generate_word(language)
     game = Game(username=user, word=word, language=language, time=0, status=1, guesses=[], formatted_guesses=[], guess_number=0, letters=utils.letters(language), start_time=datetime.datetime.now())
     db.session.add(game)
     db.session.commit()
@@ -266,7 +269,7 @@ def guess_online():
     if len(guess) != 5 or guess not in utils.wordlist(language=game.language):
         return "Guess invalid", 400
 
-    game_status, letters, formatted_guess = check_guess(game.word, guess, game.language, game.guess_number, game.letters.copy())
+    game_status, letters, formatted_guess = online.check_guess(game.word, guess, game.language, game.guess_number, game.letters.copy())
     game.time = (datetime.datetime.now() - game.start_time).total_seconds()
     updated_guesses = game.guesses + [guess]
     updated_formatted_guesses = game.formatted_guesses + [formatted_guess]

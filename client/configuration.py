@@ -13,7 +13,7 @@ def configuration():
             print(f"{key}: {value}")
 
         print("To change a value, type the key and enter the new value. Type Q to quit.")
-        print("Example: server_url http://ketrax.ovh/dev/wordle")
+        print("Example: server_url http://wordle.ketrax.ovh")
         args = input(">").split()
         if args[0].lower() == "q" or args[0].lower() == "quit" or args[0].lower() == "exit":
             break

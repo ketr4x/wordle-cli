@@ -10,3 +10,4 @@
 ## Heroku setup finalization 43min:21s - 14.10.2025 @ 21:30
 ### Footage lost :C
 - I have successfully deployed the server to Heroku
+## Getting the DNS records set up - 10mins - 16.10.2025 @00:00

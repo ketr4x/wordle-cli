@@ -137,7 +137,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       TextPosition(offset: _serverUrl.length),
                     ),
                   decoration: InputDecoration(
-                    hintText: _serverUrl.isNotEmpty ? _serverUrl : 'Enter your server URL',
+                    hintText: _serverUrl.isNotEmpty ? _serverUrl : 'Enter your server URL (like http://wordle.ketrax.ovh)',
                   ),
                   onChanged: (value) async {
                     setState(() {

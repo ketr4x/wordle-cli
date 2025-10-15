@@ -2,7 +2,7 @@ import json
 import os
 
 def read_file(path):
-    with open(path, 'r', encoding='utf-8') as f:
+    with open(f"data/{path}.json", 'r', encoding='utf-8') as f:
         return json.load(f)
 
 def languages():

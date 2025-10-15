@@ -24,9 +24,9 @@
 - Download the latest file for your OS
 - Install it
 #### Website
-- Go to http://ketrax.ovh/dev/wordle
+- Go to http://wordle.ketrax.ovh/ or https://afternoon-waters-00138-898a825f9a47.herokuapp.com/
 ### Server
-#### https://afternoon-waters-00138-898a825f9a47.herokuapp.com/
+#### `http://wordle.ketrax.ovh/` or `https://afternoon-waters-00138-898a825f9a47.herokuapp.com/`
 #### Custom installation
 - Clone the repository
 - Install python and pip

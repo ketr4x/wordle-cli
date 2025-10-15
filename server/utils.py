@@ -14,13 +14,13 @@ def languages():
     return sorted(set(filename.removesuffix('.json') for filename in os.listdir('data')))
 
 def wordlist(language):
-    return json.load(open(f'{language}.json'))["wordlist"]
+    return json.load(open(f'data/{language}.json'))["wordlist"]
 
 def solutions(language):
-    return json.load(open(f'{language}.json'))["solutions"]
+    return json.load(open(f'data/{language}.json'))["solutions"]
 
 def letters(language):
-    return json.load(open(f'{language}.json'))["letters"]
+    return json.load(open(f'data/{language}.json'))["letters"]
 
 # Get words with length of 5
 def filtered(language):

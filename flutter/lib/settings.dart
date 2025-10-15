@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:wordle/utils.dart';
+import 'package:provider/provider.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -14,6 +16,7 @@ class _SettingsPageState extends State<SettingsPage> {
   String _username = '';
   String _password = '';
   String _serverUrl = '';
+  late PackageInfo packageInfo;
 
   @override
   void initState() {
@@ -21,8 +24,15 @@ class _SettingsPageState extends State<SettingsPage> {
     _loadUsername();
     _loadPassword();
     _loadServerUrl();
+    _loadPackageInfo();
   }
 
+  Future<void> _loadPackageInfo() async {
+    final info = await PackageInfo.fromPlatform();
+    setState(() {
+      packageInfo = info;
+    });
+  }
   Future<void> _loadUsername() async {
     final username = await getConfig("username");
     setState(() {
@@ -82,7 +92,11 @@ class _SettingsPageState extends State<SettingsPage> {
                   setState(() {
                     _username = value;
                   });
+                  final connProvider = Provider.of<ConnectionStateProvider>(context, listen: false);
+                  final accProvider = Provider.of<AccountStateProvider>(context, listen: false);
                   await setConfig("username", value);
+                  connProvider.forceCheck();
+                  accProvider.forceCheck();
                 },
               ),
             )
@@ -104,7 +118,11 @@ class _SettingsPageState extends State<SettingsPage> {
                   setState(() {
                     _password = value;
                   });
+                  final connProvider = Provider.of<ConnectionStateProvider>(context, listen: false);
+                  final accProvider = Provider.of<AccountStateProvider>(context, listen: false);
                   await setConfig("password", value);
+                  connProvider.forceCheck();
+                  accProvider.forceCheck();
                 },
               ),
             )
@@ -125,15 +143,32 @@ class _SettingsPageState extends State<SettingsPage> {
                     setState(() {
                       _serverUrl = value;
                     });
+                    final connProvider = Provider.of<ConnectionStateProvider>(context, listen: false);
+                    final accProvider = Provider.of<AccountStateProvider>(context, listen: false);
                     await setConfig("server_url", value);
+                    connProvider.forceCheck();
+                    accProvider.forceCheck();
                   },
                 ),
               )
           ),
-          const ListTile(
-            title: Text('About'),
-            subtitle: Text('Wordle made with Flutter.'),
-            trailing: Text('v1.0'),
+          ListTile(
+            title: const Text('About'),
+            trailing: Text(packageInfo.version),
+            onTap: () {
+              showAboutDialog(
+                context: context,
+                applicationName: 'Wordix',
+                applicationVersion: packageInfo.version,
+                /*applicationIcon: Image.asset( TODO: add app icon
+                  'assets/app_icon.png',
+                  width: 48,
+                  height: 48,
+                ),*/
+                applicationLegalese: 'Copyright ketr4x, 2025. '
+                    '\nLicensed under BSD-3-Clause License.',
+              );
+            },
           ),
           ListTile(
             title: const Text('GitHub'),

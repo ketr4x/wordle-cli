@@ -34,8 +34,11 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
       initial: savedThemeMode ?? AdaptiveThemeMode.light,
-      builder: (theme, darkTheme) => ChangeNotifierProvider(
-        create: (context) => ConnectionStateProvider(),
+      builder: (theme, darkTheme) => MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => ConnectionStateProvider()),
+          ChangeNotifierProvider(create: (_) => AccountStateProvider()),
+        ],
         child: MaterialApp(
           title: 'Wordle',
           theme: theme,

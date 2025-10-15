@@ -16,6 +16,7 @@ import 'package:http/http.dart' as http;
 import 'dart:async';
 import 'package:provider/provider.dart';
 import 'statistics.dart';
+import 'connectivity.dart';
 
 void showErrorToast(String message) {
   Fluttertoast.showToast(
@@ -176,21 +177,67 @@ class ConnectionStateProvider extends ChangeNotifier {
   }
 }
 
+class AccountStateProvider extends ChangeNotifier {
+  int _accountState = HttpStatus.internalServerError;
+  Timer? _accountTimer;
+
+  int get connectionState => _accountState;
+
+  AccountStateProvider() {
+    _startPeriodicCheck();
+  }
+
+  void _startPeriodicCheck() {
+    _accountTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
+      _checkAccount();
+    });
+    _checkAccount();
+  }
+
+  Future<void> _checkAccount() async {
+    final newState = await checkAccountState();
+    if (_accountState != newState) {
+      _accountState = newState;
+      notifyListeners();
+    }
+  }
+
+  Future<void> forceCheck() async {
+    await _checkAccount();
+  }
+
+  @override
+  void dispose() {
+    _accountTimer?.cancel();
+    super.dispose();
+  }
+}
 
 AppBar buildAppBar(BuildContext context, String title) {
   return AppBar(
     backgroundColor: Theme.of(context).colorScheme.inversePrimary,
     title: Text(title),
     actions: [
-      Consumer<ConnectionStateProvider>(
-        builder: (context, provider, child) {
+      Consumer2<ConnectionStateProvider, AccountStateProvider>(
+        builder: (context, connProvider, accProvider, child) {
           return IconButton(
             icon: Icon(
-              provider.connectionState == HttpStatus.ok
+              connProvider.connectionState == HttpStatus.ok &&
+                      accProvider.connectionState == HttpStatus.ok
                   ? Icons.cloud_done
+                  : connProvider.connectionState == HttpStatus.ok &&
+                  accProvider.connectionState == HttpStatus.notFound
+                  ? Icons.manage_accounts
+                  : connProvider.connectionState == HttpStatus.ok &&
+                  accProvider.connectionState == HttpStatus.unauthorized
+                  ? Icons.login
                   : Icons.cloud_off,
-              color: provider.connectionState == HttpStatus.ok
+              color: connProvider.connectionState == HttpStatus.ok &&
+                      accProvider.connectionState == HttpStatus.ok
                   ? Colors.green
+                  : connProvider.connectionState == HttpStatus.ok &&
+                  accProvider.connectionState != HttpStatus.ok
+                  ? Colors.orange
                   : Colors.red,
             ),
             onPressed: () {
@@ -214,7 +261,6 @@ AppBar buildAppBar(BuildContext context, String title) {
     ],
   );
 }
-
 
 BottomNavigationBar buildBottomNavigationBar(
     BuildContext context, {
@@ -320,24 +366,26 @@ class WordleLetterBoxes extends StatelessWidget {
         String letter = index < letters.length ? letters[index] : '';
         LetterStatus? status = statuses != null && index < statuses!.length ? statuses![index] : null;
 
-        return Container(
-          width: boxSize,
-          height: boxSize,
-          margin: const EdgeInsets.symmetric(horizontal: 6),
-          decoration: BoxDecoration(
-            color: _getBoxColor(status, context),
-            border: Border.all(
-              color: status == null
-                ? Theme.of(context).colorScheme.outline
-                : Colors.transparent,
-              width: 2
+        return Flexible(
+          child: Container(
+            width: boxSize,
+            height: boxSize,
+            margin: const EdgeInsets.symmetric(horizontal: 6),
+            decoration: BoxDecoration(
+              color: _getBoxColor(status, context),
+              border: Border.all(
+                color: status == null
+                  ? Theme.of(context).colorScheme.outline
+                  : Colors.transparent,
+                width: 2
+              ),
+              borderRadius: BorderRadius.circular(8),
             ),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            letter.toUpperCase(),
-            style: textStyle.copyWith(color: _getTextColor(status, context)),
+            alignment: Alignment.center,
+            child: Text(
+              letter.toUpperCase(),
+              style: textStyle.copyWith(color: _getTextColor(status, context)),
+            ),
           ),
         );
       }),
@@ -619,74 +667,27 @@ Future<int> checkConnectionState() async {
   }
 }
 
-class ConnectivityPage extends StatefulWidget {
-  const ConnectivityPage({super.key});
+Future<int> checkAccountState() async {
+  try {
+    final serverUrl = await getConfig('server_url');
+    if (serverUrl == null) {
+      return HttpStatus.notFound;
+    }
 
-  @override
-  State<ConnectivityPage> createState() => _ConnectivityPageState();
-}
+    final url = '$serverUrl/online/auth_check?user=${await getConfig("username")}&auth=${await getConfig("password")}';
+    final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 5));
 
-class _ConnectivityPageState extends State<ConnectivityPage> {
-  String _serverUrl = '';
-  //String _username = '';
-
-  @override
-  void initState() {
-    super.initState();
-    //_loadUsername();
-    _loadServerUrl();
-  }
-
-  /*Future<void> _loadUsername() async {
-    final username = await getConfig("username");
-    setState(() {
-      _username = username ?? '';
-    });
-  }*/
-
-  Future<void> _loadServerUrl() async {
-    final serverUrl = await getConfig("server_url");
-    setState(() {
-      _serverUrl = serverUrl ?? '';
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-        appBar: AppBar(
-          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-          title: const Text('Connectivity'),
-        ),
-        body: Column(
-          children: [
-            ListTile(
-              title: const Text('Server URL'),
-              subtitle: Text(_serverUrl.isNotEmpty ? _serverUrl : 'Not configured'),
-              trailing: Consumer<ConnectionStateProvider>(
-                builder: (context, provider, child) {
-                  return IconButton(
-                    icon: Icon(
-                      provider.connectionState == HttpStatus.ok
-                          ? Icons.cloud_done
-                          : Icons.cloud_off,
-                      color: provider.connectionState == HttpStatus.ok
-                          ? Colors.green
-                          : Colors.red,
-                    ),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const ConnectivityPage()),
-                      );
-                    },
-                  );
-                },
-              ),
-            )
-          ],
-        )
-    );
+    if (response.statusCode == 200) {
+      return HttpStatus.ok;
+    } else if (response.statusCode == 401) {
+      return HttpStatus.notFound;
+    } else if (response.statusCode == 403) {
+      return HttpStatus.unauthorized;
+    } else {
+      return HttpStatus.internalServerError;
+    }
+  } catch (e) {
+    return HttpStatus.internalServerError;
   }
 }
 

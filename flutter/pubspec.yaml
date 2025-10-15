@@ -1,5 +1,5 @@
 name: wordle
-description: "A cross-compatible wordle game"
+description: "A cross-compatible wordle-like game"
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -17,6 +17,8 @@ dependencies:
   url_launcher: ^6.1.10
   http: ^0.13.5
   provider: ^6.1.2
+  package_info_plus: ^9.0.0
+  win32: ^5.0.0
 
 dev_dependencies:
   flutter_test:

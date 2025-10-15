@@ -14,10 +14,11 @@
 - Click the Code button
 - Download zip
 - Unpack the file
+- Install python and pip
 - Go to client/
 - `pip -m requirements.txt`
 - `python3 main.py`
-### Flutter app
+### Flutter version
 #### App
 - Click releases
 - Download the latest file for your OS
@@ -25,10 +26,13 @@
 #### Website
 - Go to http://ketrax.ovh/dev/wordle
 ### Server
+#### https://afternoon-waters-00138-898a825f9a47.herokuapp.com/
+#### Custom installation
 - Clone the repository
+- Install python and pip
+- Install heroku cli (optional)
 - `pip -m requirements.txt`
-- Go to server/
-- `flask run`
+- `heroku local --port 5006 -f Procfile.windows` or `flask --app server/app.py run`
 ## Planned features
 - ?
 

@@ -1,9 +1,5 @@
 import 'package:flutter/material.dart';
 import 'utils.dart';
-import 'random.dart';
-import 'daily.dart';
-import 'leaderboard.dart';
-import 'ranked.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
@@ -53,8 +49,7 @@ class _StatsPageState extends State<StatsPage> {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode != 200) {
         setState(() {
-          error = 'Error fetching stats: ${response.statusCode}\n'
-                  'If you are running Flutter Web, check CORS settings on your server.';
+          error = 'Error fetching stats: ${response.statusCode}\n';
           loading = false;
         });
         return;
@@ -81,39 +76,10 @@ class _StatsPageState extends State<StatsPage> {
       });
     } catch (e) {
       setState(() {
-        error = 'Failed to fetch statistics: $e\n'
-                'If you are running Flutter Web, check CORS settings on your server.';
+        error = 'Failed to fetch statistics: $e\n';
         loading = false;
       });
     }
-  }
-
-  void _onItemTapped(int index) {
-    if (index == _selectedIndex) return;
-    Widget page;
-    switch (index) {
-      case 0:
-        page = const RandomPage();
-        break;
-      case 1:
-        page = const DailyPage();
-        break;
-      case 2:
-        page = const RankedPage();
-        break;
-      case 3:
-        page = const LeaderboardPage();
-        break;
-      case 4:
-        page = const StatsPage();
-        break;
-      default:
-        return;
-    }
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => page),
-    );
   }
 
   @override
@@ -123,7 +89,19 @@ class _StatsPageState extends State<StatsPage> {
       body: loading
           ? const Center(child: CircularProgressIndicator())
           : error != null
-              ? Center(child: Text(error!))
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(error!),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: fetchStats,
+                        child: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                )
               : SingleChildScrollView(
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
@@ -131,20 +109,20 @@ class _StatsPageState extends State<StatsPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "Registered on ${registeredOn ?? '-'}",
+                          "Registered on ${registeredOn ?? '0'}",
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          "Average time per game: ${avgTime != null ? avgTime!.toStringAsFixed(2) : '-'}s",
+                          "Average time per game: ${avgTime != null ? avgTime!.toStringAsFixed(2) : '0'}s",
                         ),
-                        Text("Total matches: ${matches ?? '-'}"),
-                        Text("Total wins: ${wins ?? '-'}"),
-                        Text("Total losses: ${(matches != null && wins != null) ? (matches! - wins!) : '-'}"),
+                        Text("Total matches: ${matches ?? '0'}"),
+                        Text("Total wins: ${wins ?? '0'}"),
+                        Text("Total losses: ${(matches != null && wins != null) ? (matches! - wins!) : '0'}"),
                         Text(
-                          "Winrate: ${(matches != null && wins != null && matches! > 0) ? ((wins! / matches!) * 100).toStringAsFixed(2) : '-'}%",
+                          "Winrate: ${(matches != null && wins != null && matches! > 0) ? ((wins! / matches!) * 100).toStringAsFixed(2) : '0'}%",
                         ),
-                        Text("ELO: ${points ?? '-'}"),
+                        Text("ELO: ${points ?? '0'}"),
                         const SizedBox(height: 16),
                         Text("Most used words:", style: Theme.of(context).textTheme.titleMedium),
                         if (wordFreq != null && wordFreq!.isNotEmpty)
@@ -164,7 +142,7 @@ class _StatsPageState extends State<StatsPage> {
       bottomNavigationBar: buildBottomNavigationBar(
         context,
         currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
+        widget: widget,
       ),
     );
   }

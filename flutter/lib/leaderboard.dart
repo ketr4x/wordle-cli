@@ -1,9 +1,5 @@
 import 'package:flutter/material.dart';
 import 'utils.dart';
-import 'random.dart';
-import 'daily.dart';
-import 'ranked.dart';
-import 'statistics.dart';
 
 class LeaderboardPage extends StatefulWidget {
   const LeaderboardPage({super.key});
@@ -37,7 +33,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
       
       if (user == null || auth == null) {
         setState(() {
-          error = 'Username or password not configured';
+          error = 'Missing configuration. Please check your settings.';
           loading = false;
         });
         return;
@@ -45,7 +41,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
 
       currentUser = user;
       final data = await getLeaderboard('basic', user, auth);
-      
+
       setState(() {
         leaderboardData = data;
         loading = false;
@@ -58,33 +54,6 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
     }
   }
 
-  void _onItemTapped(int index) {
-    if (index == _selectedIndex) return;
-    Widget page;
-    switch (index) {
-      case 0:
-        page = const RandomPage();
-        break;
-      case 1:
-        page = const DailyPage();
-        break;
-      case 2:
-        page = const RankedPage();
-        break;
-      case 3:
-        page = const LeaderboardPage();
-        break;
-      case 4:
-        page = const StatsPage();
-        break;
-      default:
-        return;
-    }
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => page),
-    );
-  }
 
   Widget buildLeaderboardColumn(String title, String emoji, List<Map<String, dynamic>> data, String valueKey, String? unit) {
     return Expanded(
@@ -112,7 +81,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                 margin: const EdgeInsets.symmetric(vertical: 2),
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: isCurrentUser ? Colors.yellow.withOpacity(0.3) : null,
+                  color: isCurrentUser ? Colors.yellow.withValues(alpha: 0.3) : null,
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Row(
@@ -163,7 +132,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text('Error: $error'),
+                      Text(error!),
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: fetchLeaderboard,
@@ -207,10 +176,10 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                                   children: [
                                     Text('Your Rankings', style: Theme.of(context).textTheme.titleMedium),
                                     const SizedBox(height: 8),
-                                    Text('ELO: #${leaderboardData!.userPosition['points'] ?? '-'}'),
-                                    Text('Matches: #${leaderboardData!.userPosition['matches'] ?? '-'}'),
-                                    Text('Avg Time: #${leaderboardData!.userPosition['avg_time'] ?? '-'}'),
-                                    Text('Winrate: #${leaderboardData!.userPosition['winrate'] ?? '-'}'),
+                                    Text('ELO: ${leaderboardData!.userPosition['points'] != null ? '#${leaderboardData!.userPosition['points']}' : 'N/A'}'),
+                                    Text('Matches: ${leaderboardData!.userPosition['matches'] != null ? '#${leaderboardData!.userPosition['matches']}' : 'N/A'}'),
+                                    Text('Avg Time: ${leaderboardData!.userPosition['avg_time'] != null ? '#${leaderboardData!.userPosition['avg_time']}' : 'N/A'}'),
+                                    Text('Winrate: ${leaderboardData!.userPosition['winrate'] != null ? '#${leaderboardData!.userPosition['winrate']}' : 'N/A'}'),
                                   ],
                                 ),
                               ),
@@ -222,7 +191,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
       bottomNavigationBar: buildBottomNavigationBar(
         context,
         currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
+        widget: widget,
       ),
     );
   }

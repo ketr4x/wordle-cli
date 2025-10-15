@@ -4,24 +4,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'utils.dart';
-import 'ranked.dart';
-import 'leaderboard.dart';
-import 'statistics.dart';
 
-enum GameMode { random, daily }
+enum GameMode { random, daily, ranked }
 
-class GamePage extends StatefulWidget {
-  final String title;
+class WordleGameController extends ChangeNotifier with WidgetsBindingObserver {
   final GameMode mode;
-
-  const GamePage({super.key, required this.title, required this.mode});
-
-  @override
-  State<GamePage> createState() => _GamePageState();
-}
-
-class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
-  late final int _selectedIndex;
+  late final int selectedIndex;
   String? answer;
   List<String> guesses = [];
   String currentGuess = '';
@@ -30,76 +18,80 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
   bool gameOver = false;
   String? resultMessage;
   String? errorMessage;
-  DateTime? _startTime;
-  Duration _elapsed = Duration.zero;
-  late final Ticker _ticker;
-  final FocusNode _focusNode = FocusNode();
-  bool _shouldTick = false;
-  bool _isActive = true;
+  DateTime? startTime;
+  Duration elapsed = Duration.zero;
+  late final Ticker ticker;
+  bool shouldTick = false;
+  bool isActive = true;
 
-  String get _prefsPrefix => widget.mode == GameMode.daily ? 'daily' : 'random';
-
-  @override
-  void initState() {
-    super.initState();
-    _selectedIndex = widget.mode == GameMode.daily ? 1 : 0;
-    WidgetsBinding.instance.addObserver(this);
-    _ticker = Ticker(_onTick);
-    _restoreGameState();
-    if (kIsWeb) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _focusNode.requestFocus();
-      });
+  String get prefsPrefix {
+    switch (mode) {
+      case GameMode.daily:
+        return 'daily';
+      case GameMode.ranked:
+        return 'ranked';
+      default:
+        return 'random';
     }
   }
 
-  @override
-  void dispose() {
+  WordleGameController({required this.mode}) {
+    selectedIndex = mode == GameMode.daily
+        ? 1
+        : mode == GameMode.ranked
+            ? 2
+            : 0;
+    ticker = Ticker(_onTick);
+    WidgetsBinding.instance.addObserver(this);
+    restoreGameState();
+  }
+
+  void disposeController() {
     WidgetsBinding.instance.removeObserver(this);
-    _ticker.dispose();
-    _focusNode.dispose();
-    _saveGameState();
+    ticker.stop();
+    ticker.dispose();
+    saveGameState();
     super.dispose();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
-      _isActive = false;
-      _ticker.stop();
-      _saveGameState();
+      isActive = false;
+      ticker.stop();
+      saveGameState();
     } else if (state == AppLifecycleState.resumed) {
-      _isActive = true;
-      if (_shouldTick && !gameOver && !_ticker.isActive) {
-        _ticker.start();
+      isActive = true;
+
+      if (shouldTick && !gameOver && !ticker.isActive) {
+        ticker.start();
       }
     }
   }
 
-  Future<void> _initializeGame() async {
+  Future<void> initializeGame() async {
     final lang = await getConfig("game_lang") ?? "en";
     final pack = await readLanguagePack(lang);
     final letters = pack['letters'] as List<dynamic>;
-    final answerWord = await getRandomAnswer(daily: widget.mode == GameMode.daily);
+    final answerWord = await getRandomAnswer(daily: mode == GameMode.daily);
 
-    setState(() {
-      answer = answerWord;
-      keyboardLayout = letters.cast<String>();
-      guesses.clear();
-      currentGuess = '';
-      letterStatuses.clear();
-      gameOver = false;
-      resultMessage = null;
-      errorMessage = null;
-      _startTime = null;
-      _elapsed = Duration.zero;
-      _shouldTick = false;
-      _ticker.stop();
-    });
-    _saveGameState();
+    answer = answerWord;
+    keyboardLayout = letters.cast<String>();
+    guesses.clear();
+    currentGuess = '';
+    letterStatuses.clear();
+    gameOver = false;
+    resultMessage = null;
+    errorMessage = null;
+    startTime = null;
+    elapsed = Duration.zero;
+    shouldTick = false;
+    ticker.stop();
+    notifyListeners();
+    saveGameState();
   }
 
-  void _updateLetterStatuses() {
+  void updateLetterStatuses() {
     if (answer == null) return;
     letterStatuses.clear();
     for (String guess in guesses) {
@@ -118,168 +110,132 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
     }
   }
 
-  void _onLetterTap(String letter) {
+  void onLetterTap(String letter) {
     if (gameOver || currentGuess.length >= 5) return;
-    setState(() {
-      currentGuess += letter.toLowerCase();
-      errorMessage = null;
-      if (!_shouldTick) {
-        _shouldTick = true;
-        _startTime = DateTime.now();
-        _elapsed = Duration.zero;
-        if (_isActive) _ticker.start();
-      } else if (_isActive && !_ticker.isActive) {
-        _ticker.start();
-      }
-    });
-    _saveGameState();
+    currentGuess += letter.toLowerCase();
+    errorMessage = null;
+    if (!shouldTick) {
+      shouldTick = true;
+      startTime = DateTime.now();
+      elapsed = Duration.zero;
+      if (isActive) ticker.start();
+    } else if (isActive && !ticker.isActive) {
+      ticker.start();
+    }
+    notifyListeners();
+    saveGameState();
   }
 
-  void _onBackspaceTap() {
+  void onBackspaceTap() {
     if (gameOver || currentGuess.isEmpty) return;
-    setState(() {
-      currentGuess = currentGuess.substring(0, currentGuess.length - 1);
-      errorMessage = null;
-    });
-    _saveGameState();
+    currentGuess = currentGuess.substring(0, currentGuess.length - 1);
+    errorMessage = null;
+    notifyListeners();
+    saveGameState();
   }
 
-  void _onEnterTap() async {
+  Future<void> onEnterTap() async {
     if (gameOver || answer == null || currentGuess.length != 5) {
       if (currentGuess.length != 5) {
-        setState(() {
-          errorMessage = 'Word must be 5 letters long';
-        });
+        errorMessage = 'Word must be 5 letters long';
         showErrorToast('Word must be 5 letters long');
+        notifyListeners();
       }
       return;
     }
 
     bool isValid = await isValidWord(currentGuess);
     if (!isValid) {
-      setState(() {
-        currentGuess = '';
-        errorMessage = 'Not a valid word';
-      });
+      currentGuess = '';
+      errorMessage = 'Not a valid word';
       showErrorToast('Not a valid word');
-      _saveGameState();
+      notifyListeners();
+      saveGameState();
       return;
     }
 
-    setState(() {
-      guesses.add(currentGuess);
-      currentGuess = '';
-      errorMessage = null;
-      _updateLetterStatuses();
-      if (guesses.last.toLowerCase() == answer!.toLowerCase() || guesses.length == 6) {
-        gameOver = true;
-        _ticker.stop();
-        _shouldTick = false;
-        resultMessage = guesses.last.toLowerCase() == answer!.toLowerCase()
+    guesses.add(currentGuess);
+    currentGuess = '';
+    errorMessage = null;
+    updateLetterStatuses();
+    if (guesses.last.toLowerCase() == answer!.toLowerCase() || guesses.length == 6) {
+      gameOver = true;
+      ticker.stop();
+      shouldTick = false;
+      resultMessage = guesses.last.toLowerCase() == answer!.toLowerCase()
           ? 'You win!'
           : 'You lose! Answer: ${answer!}';
-      }
-    });
-    _saveGameState();
-  }
-
-  void _onItemTapped(int index) {
-    if (index == _selectedIndex) return;
-    _ticker.stop();
-    Widget page;
-    switch (index) {
-      case 0:
-        page = GamePage(title: "Random Wordle", mode: GameMode.random);
-        break;
-      case 1:
-        page = GamePage(title: "Daily Wordle", mode: GameMode.daily);
-        break;
-      case 2:
-        page = const RankedPage();
-        break;
-      case 3:
-        page = const LeaderboardPage();
-        break;
-      case 4:
-        page = const StatsPage();
-        break;
-      default:
-        return;
     }
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => page),
-    );
+    notifyListeners();
+    saveGameState();
   }
 
-  void _restartGame() {
-    _initializeGame();
-    _saveGameState();
+  void restartGame() {
+    initializeGame();
+    saveGameState();
   }
 
-  void _resetGuesses() {
-    setState(() {
-      guesses.clear();
-      currentGuess = '';
-      letterStatuses.clear();
-      gameOver = false;
-      resultMessage = null;
-      errorMessage = null;
-      _startTime = null;
-      _elapsed = Duration.zero;
-      _shouldTick = false;
-      _ticker.stop();
-    });
-    _saveGameState();
+  void resetGuesses() {
+    guesses.clear();
+    currentGuess = '';
+    letterStatuses.clear();
+    gameOver = false;
+    resultMessage = null;
+    errorMessage = null;
+    startTime = null;
+    elapsed = Duration.zero;
+    shouldTick = false;
+    ticker.stop();
+    notifyListeners();
+    saveGameState();
   }
 
-  void _onTick(Duration elapsed) {
-    if (_shouldTick && !gameOver && _startTime != null && _isActive) {
-      setState(() {
-        _elapsed = DateTime.now().difference(_startTime!);
-      });
+  void _onTick(Duration elapsedTick) {
+    if (shouldTick && !gameOver && startTime != null && isActive) {
+      elapsed = DateTime.now().difference(startTime!);
+      notifyListeners();
     }
   }
 
-  void _handleKeyEvent(KeyEvent event) {
+  void handleKeyEvent(KeyEvent event) {
     if (!kIsWeb || gameOver) return;
     if (event is KeyDownEvent) {
       final key = event.logicalKey;
       if (key == LogicalKeyboardKey.enter) {
-        _onEnterTap();
+        onEnterTap();
       } else if (key == LogicalKeyboardKey.backspace) {
-        _onBackspaceTap();
+        onBackspaceTap();
       } else if (key.keyLabel.length == 1 && RegExp(r'^[a-zA-Z]$').hasMatch(key.keyLabel)) {
-        _onLetterTap(key.keyLabel.toLowerCase());
+        onLetterTap(key.keyLabel.toLowerCase());
       }
     }
   }
 
-  Future<void> _saveGameState() async {
+  Future<void> saveGameState() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList('${_prefsPrefix}_guesses', guesses);
-    await prefs.setString('${_prefsPrefix}_currentGuess', currentGuess);
-    if (answer != null) await prefs.setString('${_prefsPrefix}_answer', answer!);
-    await prefs.setInt('${_prefsPrefix}_elapsed', _elapsed.inSeconds);
-    if (_startTime != null) {
-      await prefs.setInt('${_prefsPrefix}_startTime', _startTime!.millisecondsSinceEpoch);
+    await prefs.setStringList('${prefsPrefix}_guesses', guesses);
+    await prefs.setString('${prefsPrefix}_currentGuess', currentGuess);
+    if (answer != null) await prefs.setString('${prefsPrefix}_answer', answer!);
+    await prefs.setInt('${prefsPrefix}_elapsed', elapsed.inSeconds);
+    if (startTime != null) {
+      await prefs.setInt('${prefsPrefix}_startTime', startTime!.millisecondsSinceEpoch);
     }
-    await prefs.setBool('${_prefsPrefix}_gameOver', gameOver);
-    await prefs.setString('${_prefsPrefix}_resultMessage', resultMessage ?? '');
+    await prefs.setBool('${prefsPrefix}_gameOver', gameOver);
+    await prefs.setString('${prefsPrefix}_resultMessage', resultMessage ?? '');
   }
 
-  Future<void> _restoreGameState() async {
+  Future<void> restoreGameState() async {
     final prefs = await SharedPreferences.getInstance();
-    final savedGuesses = prefs.getStringList('${_prefsPrefix}_guesses');
-    final savedCurrentGuess = prefs.getString('${_prefsPrefix}_currentGuess');
-    final savedAnswer = prefs.getString('${_prefsPrefix}_answer');
-    final savedElapsed = prefs.getInt('${_prefsPrefix}_elapsed');
-    final savedStartTime = prefs.getInt('${_prefsPrefix}_startTime');
-    final savedGameOver = prefs.getBool('${_prefsPrefix}_gameOver');
-    final savedResultMessage = prefs.getString('${_prefsPrefix}_resultMessage');
+    final savedGuesses = prefs.getStringList('${prefsPrefix}_guesses');
+    final savedCurrentGuess = prefs.getString('${prefsPrefix}_currentGuess');
+    final savedAnswer = prefs.getString('${prefsPrefix}_answer');
+    final savedElapsed = prefs.getInt('${prefsPrefix}_elapsed');
+    final savedStartTime = prefs.getInt('${prefsPrefix}_startTime');
+    final savedGameOver = prefs.getBool('${prefsPrefix}_gameOver');
+    final savedResultMessage = prefs.getString('${prefsPrefix}_resultMessage');
 
     if (savedGuesses == null || savedAnswer == null) {
-      await _initializeGame();
+      await initializeGame();
       return;
     }
 
@@ -287,67 +243,106 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
     final pack = await readLanguagePack(lang);
     final letters = pack['letters'] as List<dynamic>;
 
-    setState(() {
-      guesses = savedGuesses;
-      currentGuess = savedCurrentGuess ?? '';
-      answer = savedAnswer;
-      keyboardLayout = letters.cast<String>();
-      gameOver = savedGameOver ?? false;
-      resultMessage = (savedResultMessage?.isEmpty ?? true) ? null : savedResultMessage;
-      errorMessage = null;
+    guesses = savedGuesses;
+    currentGuess = savedCurrentGuess ?? '';
+    answer = savedAnswer;
+    keyboardLayout = letters.cast<String>();
+    gameOver = savedGameOver ?? false;
+    resultMessage = (savedResultMessage?.isEmpty ?? true) ? null : savedResultMessage;
+    errorMessage = null;
 
-      if (savedStartTime != null && savedElapsed != null && savedElapsed > 0) {
-        _startTime = DateTime.fromMillisecondsSinceEpoch(savedStartTime);
-        _elapsed = DateTime.now().difference(_startTime!);
-        _shouldTick = true;
-      } else {
-        _startTime = null;
-        _elapsed = Duration.zero;
-        _shouldTick = false;
-      }
+    if (savedStartTime != null && savedElapsed != null && savedElapsed > 0) {
+      startTime = DateTime.fromMillisecondsSinceEpoch(savedStartTime);
+      elapsed = DateTime.now().difference(startTime!);
+      shouldTick = true;
+    } else {
+      startTime = null;
+      elapsed = Duration.zero;
+      shouldTick = false;
+    }
 
-      _updateLetterStatuses();
+    updateLetterStatuses();
 
-      _ticker.stop();
-      if (_shouldTick && !gameOver) {
-        _ticker.start();
-      }
-    });
+    ticker.stop();
+    if (shouldTick && !gameOver) {
+      ticker.start();
+    }
+    notifyListeners();
+  }
+}
+
+class WordleGameView extends StatefulWidget {
+  final String title;
+  final WordleGameController controller;
+
+  const WordleGameView({super.key, required this.title, required this.controller});
+
+  @override
+  State<WordleGameView> createState() => _WordleGameViewState();
+}
+
+class _WordleGameViewState extends State<WordleGameView> {
+  final FocusNode _focusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    widget.controller.addListener(_onControllerChanged);
+    if (kIsWeb) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _focusNode.requestFocus();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_onControllerChanged);
+    _focusNode.dispose();
+    widget.controller.disposeController(); // Ensure controller is disposed
+    super.dispose();
+  }
+
+  void _onControllerChanged() {
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final c = widget.controller;
     return Scaffold(
       appBar: buildAppBar(context, widget.title),
       body: KeyboardListener(
         focusNode: _focusNode,
-        onKeyEvent: _handleKeyEvent,
+        onKeyEvent: c.handleKeyEvent,
         child: GestureDetector(
           onTap: () => _focusNode.requestFocus(),
           child: Column(
             children: [
               Expanded(
                 child: buildGame(
-                  guesses: guesses,
-                  currentGuess: currentGuess,
-                  answer: answer,
-                  letterStatuses: letterStatuses,
-                  keyboardLayout: keyboardLayout,
-                  onLetterTap: gameOver ? (_) {} : _onLetterTap,
-                  onEnterTap: gameOver ? () {} : _onEnterTap,
-                  onBackspaceTap: gameOver ? () {} : _onBackspaceTap,
-                  elapsed: _elapsed,
-                  onNewGame: widget.mode == GameMode.daily ? _resetGuesses : _restartGame,
+                  guesses: c.guesses,
+                  currentGuess: c.currentGuess,
+                  answer: c.answer,
+                  letterStatuses: c.letterStatuses,
+                  keyboardLayout: c.keyboardLayout,
+                  onLetterTap: c.gameOver ? (_) {} : c.onLetterTap,
+                  onEnterTap: c.gameOver ? () {} : c.onEnterTap,
+                  onBackspaceTap: c.gameOver ? () {} : c.onBackspaceTap,
+                  elapsed: c.elapsed,
+                  onNewGame: c.mode == GameMode.daily ? c.resetGuesses : c.restartGame,
                   context: context,
-                  mode: widget.mode,
-                  gameOver: gameOver,
+                  mode: c.mode,
+                  gameOver: c.gameOver,
                 ),
               ),
-              if (resultMessage != null)
+              if (c.resultMessage != null)
                 Padding(
                   padding: const EdgeInsets.all(12.0),
                   child: Text(
-                    resultMessage!,
+                    c.resultMessage!,
                     style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -357,8 +352,8 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
       ),
       bottomNavigationBar: buildBottomNavigationBar(
         context,
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
+        currentIndex: c.selectedIndex,
+        widget: widget,
       ),
     );
   }

@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:wordle/universal_game.dart';
+import 'daily.dart';
+import 'leaderboard.dart';
+import 'random.dart';
+import 'ranked.dart';
 import 'settings.dart';
 import 'dart:math';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -9,6 +13,9 @@ import 'dart:convert';
 import 'package:path_provider/path_provider.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
+import 'dart:async';
+import 'package:provider/provider.dart';
+import 'statistics.dart';
 
 void showErrorToast(String message) {
   Fluttertoast.showToast(
@@ -133,11 +140,68 @@ List<LetterStatus> checkGuess(String guess, String answer) {
   return result;
 }
 
+class ConnectionStateProvider extends ChangeNotifier {
+  int _connectionState = HttpStatus.internalServerError;
+  Timer? _connectionTimer;
+
+  int get connectionState => _connectionState;
+
+  ConnectionStateProvider() {
+    _startPeriodicCheck();
+  }
+
+  void _startPeriodicCheck() {
+    _connectionTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
+      _checkConnection();
+    });
+    _checkConnection();
+  }
+
+  Future<void> _checkConnection() async {
+    final newState = await checkConnectionState();
+    if (_connectionState != newState) {
+      _connectionState = newState;
+      notifyListeners();
+    }
+  }
+
+  Future<void> forceCheck() async {
+    await _checkConnection();
+  }
+
+  @override
+  void dispose() {
+    _connectionTimer?.cancel();
+    super.dispose();
+  }
+}
+
+
 AppBar buildAppBar(BuildContext context, String title) {
   return AppBar(
     backgroundColor: Theme.of(context).colorScheme.inversePrimary,
     title: Text(title),
     actions: [
+      Consumer<ConnectionStateProvider>(
+        builder: (context, provider, child) {
+          return IconButton(
+            icon: Icon(
+              provider.connectionState == HttpStatus.ok
+                  ? Icons.cloud_done
+                  : Icons.cloud_off,
+              color: provider.connectionState == HttpStatus.ok
+                  ? Colors.green
+                  : Colors.red,
+            ),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ConnectivityPage()),
+              );
+            },
+          );
+        },
+      ),
       IconButton(
         icon: const Icon(Icons.settings),
         onPressed: () {
@@ -151,17 +215,42 @@ AppBar buildAppBar(BuildContext context, String title) {
   );
 }
 
+
 BottomNavigationBar buildBottomNavigationBar(
     BuildContext context, {
-    required int currentIndex,
-    required ValueChanged<int> onTap,
+      required int currentIndex,
+      required widget,
     }
-    )
-{
+    ) {
   return BottomNavigationBar(
       type: BottomNavigationBarType.fixed,
       currentIndex: currentIndex,
-      onTap: onTap,
+      onTap: (index) {
+        Widget page;
+        switch (index) {
+          case 0:
+            page = RandomPage();
+            break;
+          case 1:
+            page = DailyPage();
+            break;
+          case 2:
+            page = RankedPage();
+            break;
+          case 3:
+            page = LeaderboardPage();
+            break;
+          case 4:
+            page = StatsPage();
+            break;
+          default:
+            return;
+        }
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => page),
+        );
+      },
       backgroundColor: Theme.of(context).colorScheme.primaryContainer,
       items: const [
         BottomNavigationBarItem(
@@ -506,6 +595,97 @@ class LeaderboardData {
       topPoints: List<Map<String, dynamic>>.from(json['top_points'] ?? []),
       topWinrate: List<Map<String, dynamic>>.from(json['top_winrate'] ?? []),
       userPosition: Map<String, dynamic>.from(json['user_position'] ?? {}),
+    );
+  }
+}
+
+Future<int> checkConnectionState() async {
+  try {
+    final serverUrl = await getConfig('server_url');
+    if (serverUrl == null) {
+      return HttpStatus.notFound;
+    }
+
+    final url = '$serverUrl/server_check';
+    final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 5));
+
+    if (response.statusCode == 200) {
+      return HttpStatus.ok;
+    } else {
+      return HttpStatus.badRequest;
+    }
+  } catch (e) {
+    return HttpStatus.internalServerError;
+  }
+}
+
+class ConnectivityPage extends StatefulWidget {
+  const ConnectivityPage({super.key});
+
+  @override
+  State<ConnectivityPage> createState() => _ConnectivityPageState();
+}
+
+class _ConnectivityPageState extends State<ConnectivityPage> {
+  String _serverUrl = '';
+  //String _username = '';
+
+  @override
+  void initState() {
+    super.initState();
+    //_loadUsername();
+    _loadServerUrl();
+  }
+
+  /*Future<void> _loadUsername() async {
+    final username = await getConfig("username");
+    setState(() {
+      _username = username ?? '';
+    });
+  }*/
+
+  Future<void> _loadServerUrl() async {
+    final serverUrl = await getConfig("server_url");
+    setState(() {
+      _serverUrl = serverUrl ?? '';
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        appBar: AppBar(
+          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+          title: const Text('Connectivity'),
+        ),
+        body: Column(
+          children: [
+            ListTile(
+              title: const Text('Server URL'),
+              subtitle: Text(_serverUrl.isNotEmpty ? _serverUrl : 'Not configured'),
+              trailing: Consumer<ConnectionStateProvider>(
+                builder: (context, provider, child) {
+                  return IconButton(
+                    icon: Icon(
+                      provider.connectionState == HttpStatus.ok
+                          ? Icons.cloud_done
+                          : Icons.cloud_off,
+                      color: provider.connectionState == HttpStatus.ok
+                          ? Colors.green
+                          : Colors.red,
+                    ),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const ConnectivityPage()),
+                      );
+                    },
+                  );
+                },
+              ),
+            )
+          ],
+        )
     );
   }
 }

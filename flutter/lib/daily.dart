@@ -6,6 +6,9 @@ class DailyPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GamePage(title: "Daily Wordle", mode: GameMode.daily);
+    return WordleGameView(
+      title: "Daily Wordle",
+      controller: WordleGameController(mode: GameMode.daily),
+    );
   }
 }

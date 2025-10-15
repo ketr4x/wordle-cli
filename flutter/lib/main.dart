@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:wordle/random.dart';
 import 'package:adaptive_theme/adaptive_theme.dart';
+import 'package:wordle/utils.dart';
+import 'package:provider/provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,11 +34,14 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
       initial: savedThemeMode ?? AdaptiveThemeMode.light,
-      builder: (theme, darkTheme) => MaterialApp(
-        title: 'Wordle',
-        theme: theme,
-        darkTheme: darkTheme,
-        home: MyHomePage(title: 'Wordle'),
+      builder: (theme, darkTheme) => ChangeNotifierProvider(
+        create: (context) => ConnectionStateProvider(),
+        child: MaterialApp(
+          title: 'Wordle',
+          theme: theme,
+          darkTheme: darkTheme,
+          home: MyHomePage(title: 'Wordle'),
+        ),
       ),
     );
   }

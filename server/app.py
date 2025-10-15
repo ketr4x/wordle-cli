@@ -9,6 +9,7 @@ from server import online
 from werkzeug.security import generate_password_hash, check_password_hash
 import datetime
 from sqlalchemy.ext.mutable import MutableDict
+import json
 
 # Initialization
 load_dotenv()
@@ -214,6 +215,18 @@ def leaderboard():
 @app.route('/online/languages')
 def languages():
     return ','.join(utils.languages())
+
+@app.route('/online/languages/download')
+def languages_download():
+    language = request.args.get('language')
+
+    if not language or language not in utils.languages():
+        return 'Language invalid', 400
+
+    def data(language):
+        return json.load(open(f'data/{language}.json'))
+
+    return jsonify(data(language))
 
 # Game start endpoint
 @app.route('/online/start')

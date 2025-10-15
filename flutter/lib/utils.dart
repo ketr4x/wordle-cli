@@ -541,10 +541,10 @@ Widget buildGame({
 
   return Padding(
     padding: const EdgeInsets.fromLTRB(10, 25, 10, 8),
-    child: Column(
-      children: [
-        Expanded(
-          child: Column(
+    child: SingleChildScrollView(
+      child: Column(
+        children: [
+          Column(
             mainAxisAlignment: MainAxisAlignment.start,
             children: List.generate(6, (index) {
               if (index < guesses.length && answer != null) {
@@ -569,54 +569,54 @@ Widget buildGame({
               }
             }),
           ),
-        ),
-        if (!gameOver)
-          WordleKeyboard(
-            letterStatuses: letterStatuses,
-            keyboardLayout: keyboardLayout,
-            onLetterTap: onLetterTap,
-            onEnterTap: onEnterTap,
-            onBackspaceTap: onBackspaceTap,
-          ),
-        SizedBox(
-          height: 48,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (elapsed != null)
-                Text(
-                  "Time: ${formatDuration(elapsed)}",
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                ),
-              Padding(
-                padding: const EdgeInsets.only(left: 16.0),
-                child: ElevatedButton(
-                  onPressed: (mode == GameMode.daily)
-                    ? () {
-                        if (isNewDay) {
-                          if (onNewGame != null) onNewGame();
-                        } else {
-                          showDailyLimitToast();
-                        }
-                      }
-                    : onNewGame,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.primary,
-                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-                    minimumSize: const Size(0, 36),
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(6),
-                    ),
+          if (!gameOver)
+            WordleKeyboard(
+              letterStatuses: letterStatuses,
+              keyboardLayout: keyboardLayout,
+              onLetterTap: onLetterTap,
+              onEnterTap: onEnterTap,
+              onBackspaceTap: onBackspaceTap,
+            ),
+          SizedBox(
+            height: 48,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (elapsed != null)
+                  Text(
+                    "Time: ${formatDuration(elapsed)}",
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                   ),
-                  child: const Text('New Game'),
+                Padding(
+                  padding: const EdgeInsets.only(left: 16.0),
+                  child: ElevatedButton(
+                    onPressed: (mode == GameMode.daily)
+                      ? () {
+                          if (isNewDay) {
+                            if (onNewGame != null) onNewGame();
+                          } else {
+                            showDailyLimitToast();
+                          }
+                        }
+                      : onNewGame,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                      minimumSize: const Size(0, 36),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                    ),
+                    child: const Text('New Game'),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     ),
   );
 }

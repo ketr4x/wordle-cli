@@ -26,29 +26,17 @@ def write_config(param, value):
     with open('config.json', 'w') as config_file:
         json.dump(config, config_file)
 
-def get_language_name(symbol):
-    LANGUAGE_NAMES = {
-        "en": "English",
-        "fr": "French",
-        "de": "German",
-    }
-
-    return LANGUAGE_NAMES[symbol]
-
 def languages():
-    letters = set(os.listdir('../data/letters'))
-    solutions = set(os.listdir('../data/solutions'))
-    wordlist = set(os.listdir('../data/wordlist'))
-    return sorted(letters & solutions & wordlist)
+    return sorted(set(filename.removesuffix('.json') for filename in os.listdir('../data')))
 
-def wordlist(language="en"):
-    return open(f'../data/wordlist/{language}').read().lower().split()
+def wordlist(language):
+    return json.load(open(f'../data/{language}.json'))["wordlist"]
 
-def solutions(language="en"):
-    return open(f'../data/solutions/{language}').read().lower().split()
+def solutions(language):
+    return json.load(open(f'../data/{language}.json'))["solutions"]
 
-def letters(language="en"):
-    return open(f'../data/letters/{language}').read().lower().split()
+def letters(language):
+    return json.load(open(f'../data/{language}.json'))["letters"]
 
 # Sorts the remaining letters
 def format_unused_letters(letters):

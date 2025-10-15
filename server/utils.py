@@ -1,15 +1,6 @@
 import os
 import json
 
-def get_language_name(symbol):
-    LANGUAGE_NAMES = {
-        "en": "English",
-        "fr": "French",
-        "de": "German",
-    }
-
-    return LANGUAGE_NAMES[symbol]
-
 def read_config(param):
     with open('server/config.json') as config_file:
         config = json.load(config_file)
@@ -20,20 +11,16 @@ def read_config(param):
 
 # Get a list of the available languages
 def languages():
-    letters = set(os.listdir('data/letters'))
-    solutions = set(os.listdir('data/solutions'))
-    wordlist = set(os.listdir('data/wordlist'))
-    return sorted(letters & solutions & wordlist)
+    return sorted(set(filename.removesuffix('.json') for filename in os.listdir('data')))
 
 def wordlist(language):
-    return open(f'data/wordlist/{language}').read().lower().split()
+    return json.load(open(f'{language}.json'))["wordlist"]
 
 def solutions(language):
-    return open(f'data/solutions/{language}').read().lower().split()
+    return json.load(open(f'{language}.json'))["solutions"]
 
-# Get the letters for a specified language
 def letters(language):
-    return open(f'data/letters/{language}').read().lower().split()
+    return json.load(open(f'{language}.json'))["letters"]
 
 # Get words with length of 5
 def filtered(language):

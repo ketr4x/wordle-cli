@@ -5,6 +5,35 @@ from statistics import stats
 from configuration import configuration
 from leaderboard import leaderboard
 
+def connection():
+    while True:
+        server_status = requests.get(f"{utils.read_config('server_url')}/server_check")
+        account_status = requests.get(f"{utils.read_config('server_url')}/online/auth_check?user={utils.read_config('username')}&auth={utils.read_config('password')}")
+        available_languages = requests.get(f"{utils.read_config('server_url')}/online/languages")
+
+        language_status = {}
+
+        if available_languages.status_code == 200:
+            languages = available_languages.text.split()
+            for language in languages:
+                language_status[language] = utils.language_check(language)
+            for language, status in language_status.items():
+                if status == "Local language file invalid":
+                    language_status[language] = utils.language_download(language)
+
+        utils.clear_screen()
+        print("Connection status:")
+        print(f"{"Active" if server_status.status_code == 200 else "Inactive. Check your configuration and connection"}")
+        print("Account status:")
+        print(f"{"Online" if account_status.status_code == 200 else "Invalid password" if account_status.status_code == 403 else "Invalid username" if account_status.status_code == 401 else "Server offline"}")
+        print("Language status:")
+        for language, status in language_status.items():
+            print(f"{language} - {status}")
+
+        choice = input("Press `Enter` to refresh or Q to quit: ").lower()
+        if choice == "q":
+            break
+
 # Translates the data received from the server for strings with the formatted guesses
 def guess_decoder(guesses, formatted_guesses):
     output = []
@@ -37,7 +66,7 @@ def game(user, auth, language):
     guess_number = 0
     decoded_guesses = []
     formatted_guesses = []
-    letters = utils.letters(language)
+    letters = utils.letters(language, True)
     game_status = 1
 
     while game_status == 1:
@@ -52,7 +81,7 @@ def game(user, auth, language):
         print(f"Unused letters: {utils.format_unused_letters(letters)}")
 
         guess = input(f"\nWrite your {utils.ordinal(guess_number+1)} guess: ").lower()
-        if len(guess) == 5 and guess in utils.filtered(language):
+        if len(guess) == 5 and guess in utils.filtered(language, True):
             response = requests.get(f"{utils.read_config('server_url')}/online/guess?user={user}&auth={auth}&guess={guess}")
             if response.status_code == 200:
                 decoded = utils.json_decode(response.text)
@@ -156,6 +185,14 @@ def game_online():
         language = input(f"Choose the language ({','.join(languages)}): ").strip().lower()
     utils.write_config("language", language)
 
+    if languages_response.status_code == 200:
+        language_status = utils.language_check(language)
+        if language_status == "Local language file invalid":
+            language_status = utils.language_download(language)
+        if language_status != "Local language file correct":
+            connection()
+            return None
+
     while True:
         statistics = requests.get(f"{utils.read_config('server_url')}/online/stats?user={user}&auth={auth}")
         if response.status_code != 200:
@@ -167,7 +204,7 @@ def game_online():
         utils.clear_screen()
         print(f"Welcome to ranked, {user}!\n")
         print(f"Your ELO is {elo}\n")
-        print("P. Play \nL. Leaderboard \nS. Statistics \nC. Configuration \nQ. Quit to lobby")
+        print("P. Play\nL. Leaderboard\nS. Statistics\nC. Configuration\nX. Connection\nQ. Quit to lobby")
         option = input("\nChoose the option you want...: ").upper()
         if option == 'P':
             result = game(user, auth, language)
@@ -192,5 +229,7 @@ def game_online():
         elif option == 'C':
             configuration()
             break
+        elif option == 'X':
+            connection()
         elif option == 'Q':
             break

@@ -637,11 +637,20 @@ class LeaderboardData {
   });
 
   factory LeaderboardData.fromJson(Map<String, dynamic> json) {
+    List<Map<String, dynamic>> parseList(String key) {
+      final raw = json[key] as List<dynamic>? ?? [];
+      return raw.map((e) {
+        if (e is Map<String, dynamic>) return e;
+        if (e is Map) return Map<String, dynamic>.from(e);
+        return <String, dynamic>{};
+      }).toList();
+    }
+
     return LeaderboardData(
-      topAvgTime: List<Map<String, dynamic>>.from(json['top_avg_time'] ?? []),
-      topMatches: List<Map<String, dynamic>>.from(json['top_matches'] ?? []),
-      topPoints: List<Map<String, dynamic>>.from(json['top_points'] ?? []),
-      topWinrate: List<Map<String, dynamic>>.from(json['top_winrate'] ?? []),
+      topAvgTime: parseList('top_avg_time'),
+      topMatches: parseList('top_matches'),
+      topPoints: parseList('top_points'),
+      topWinrate: parseList('top_winrate'),
       userPosition: Map<String, dynamic>.from(json['user_position'] ?? {}),
     );
   }

@@ -11,7 +11,11 @@ def read_config(param):
 
 # Get a list of the available languages
 def languages():
-    return sorted(set(filename.removesuffix('.json') for filename in os.listdir('data')))
+    return sorted(set(
+        filename.removesuffix('.json')
+        for filename in os.listdir('data')
+        if os.path.isfile(os.path.join('data', filename))
+    ))
 
 def wordlist(language):
     return json.load(open(f'data/{language}.json'))["wordlist"]

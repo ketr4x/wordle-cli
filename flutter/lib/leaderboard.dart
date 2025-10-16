@@ -67,7 +67,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
               final username = item['username'] ?? '';
               final value = item[valueKey];
               final isCurrentUser = username == currentUser;
-              
+
               String displayValue;
               if (valueKey == 'avg_time') {
                 displayValue = '${value.toStringAsFixed(1)}s';
@@ -76,12 +76,12 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
               } else {
                 displayValue = value.toString();
               }
-              
+
               return Container(
                 margin: const EdgeInsets.symmetric(vertical: 2),
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: isCurrentUser ? Colors.yellow.withValues(alpha: 0.3) : null,
+                  color: isCurrentUser ? Colors.yellow.withOpacity(0.3) : null,
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Row(
@@ -90,20 +90,24 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                     Text('${index + 1}.',
                     style: TextStyle(
                       fontWeight: isCurrentUser ? FontWeight.bold : FontWeight.normal,
-                      color: isCurrentUser ? Colors.orange : Colors.black,
+                      color: isCurrentUser ? Colors.orange : Theme.of(context).colorScheme.onSurface,
                     )),
                     Expanded(
                       child: Text(
-                        username.length > 8 ? username.substring(0, 8) : username,
+                        username,
                         textAlign: TextAlign.center,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontWeight: isCurrentUser ? FontWeight.bold : FontWeight.normal,
-                          color: isCurrentUser ? Colors.orange : Colors.black,
+                          color: isCurrentUser ? Colors.orange : Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                     ),
-                    Text(displayValue),
+                    Text(displayValue,
+                      style: TextStyle(
+                        color: isCurrentUser ? Colors.orange : Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
                     if (isCurrentUser) const Icon(Icons.star, size: 16, color: Colors.orange),
                   ],
                 ),

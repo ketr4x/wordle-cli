@@ -5,7 +5,7 @@ import os
 from configuration import configuration
 from randomword import game_random
 from todaysword import game_daily
-from online import game_online
+from online import game_online, connection
 
 ascii_art = r"""
      /$$      /$$                           /$$ /$$                  /$$$$$$  /$$       /$$$$$$
@@ -29,8 +29,7 @@ while True:
     print(ascii_art)
 
     print("1. Random Word\n2. Today's Word\n3. Ranked")
-    print("\nC. Configuration")
-    print("Q. Quit")
+    print("\nC. Configuration\nX. Connection\nQ. Quit")
 
     option = input("\nChoose the option you want...: ").upper()
     if option == '1':
@@ -41,6 +40,8 @@ while True:
         game_online()
     elif option == 'C':
         configuration()
+    elif option == 'X':
+        connection()
     elif option == 'Q' or option == 'X':
         utils.clear_screen()
         print("See you next time!")

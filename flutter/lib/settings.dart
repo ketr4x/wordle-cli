@@ -16,7 +16,7 @@ class _SettingsPageState extends State<SettingsPage> {
   String _username = '';
   String _password = '';
   String _serverUrl = '';
-  late PackageInfo packageInfo;
+  late PackageInfo? packageInfo;
 
   @override
   void initState() {
@@ -154,12 +154,12 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           ListTile(
             title: const Text('About'),
-            trailing: Text(packageInfo.version),
+            trailing: Text(packageInfo!.version),
             onTap: () {
               showAboutDialog(
                 context: context,
                 applicationName: 'Wordix',
-                applicationVersion: packageInfo.version,
+                applicationVersion: packageInfo?.version,
                 /*applicationIcon: Image.asset( TODO: add app icon
                   'assets/app_icon.png',
                   width: 48,

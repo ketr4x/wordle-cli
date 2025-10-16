@@ -1,4 +1,5 @@
 # Imports
+import hashlib
 from flask import Flask, render_template, request
 from flask_sqlalchemy import SQLAlchemy
 import os
@@ -216,6 +217,19 @@ def leaderboard():
 def languages():
     return ','.join(utils.languages())
 
+@app.route('/online/languages/checksum')
+def languages_checksum():
+    language = request.args.get('language')
+
+    if not language or language not in utils.languages():
+        return 'Language invalid', 400
+
+    sha256 = hashlib.sha256()
+    with open(f'data/{language}.json', "rb") as f:
+        for chunk in iter(lambda: f.read(4096), b""):
+            sha256.update(chunk)
+    return sha256.hexdigest()
+
 @app.route('/online/languages/download')
 def languages_download():
     language = request.args.get('language')
@@ -223,10 +237,7 @@ def languages_download():
     if not language or language not in utils.languages():
         return 'Language invalid', 400
 
-    def data(language):
-        return json.load(open(f'data/{language}.json'))
-
-    return jsonify(data(language))
+    return jsonify(json.load(open(f'data/{language}.json')))
 
 # Game start endpoint
 @app.route('/online/start')

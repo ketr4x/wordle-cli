@@ -1,5 +1,7 @@
 import json
 import os
+import hashlib
+import requests
 
 def ordinal(n):
     if 10 <= n % 100 <= 20:
@@ -27,16 +29,20 @@ def write_config(param, value):
         json.dump(config, config_file)
 
 def languages():
-    return sorted(set(filename.removesuffix('.json') for filename in os.listdir('../data')))
+    return sorted(set(
+        filename.removesuffix('.json')
+        for filename in os.listdir('../data')
+        if os.path.isfile(os.path.join('../data', filename))
+    ))
 
-def wordlist(language):
-    return json.load(open(f'../data/{language}.json'))["wordlist"]
+def wordlist(language, online=False):
+    return json.load(open(f'../data/{"" if not online else "online/"}{language}.json'))["wordlist"]
 
-def solutions(language):
-    return json.load(open(f'../data/{language}.json'))["solutions"]
+def solutions(language, online=False):
+    return json.load(open(f'../data/{"" if not online else "online/"}{language}.json'))["solutions"]
 
-def letters(language):
-    return json.load(open(f'../data/{language}.json'))["letters"]
+def letters(language, online=False):
+    return json.load(open(f'../data/{"" if not online else "online/"}{language}.json'))["letters"]
 
 # Sorts the remaining letters
 def format_unused_letters(letters):
@@ -45,13 +51,44 @@ def format_unused_letters(letters):
         formatted_letters += letter
     return formatted_letters
 
-
-
-def filtered(language, length=5):
-    filtered_words = [word.strip().lower() for word in wordlist(language) if len(word.strip()) == length]
+def filtered(language, length=5, online=False):
+    filtered_words = [word.strip().lower() for word in wordlist(language, online) if len(word.strip()) == length]
     if not filtered_words:
         raise ValueError(f"No words found for {language} with length 5")
     return filtered_words
+
+def language_check(language):
+    request = requests.get(f"{read_config('server_url')}/online/languages/checksum?language={language}")
+    if request.status_code != 200:
+        if request.status_code == 400:
+            return "Language invalid"
+        else:
+            return "Error"
+
+    file_path = f'../data/online/{language}.json'
+    if not os.path.isfile(file_path):
+        download_status = language_download(language)
+        if download_status != "Local language file correct":
+            return download_status
+
+    sha256 = hashlib.sha256()
+    with open(file_path, "rb") as f:
+        for chunk in iter(lambda: f.read(4096), b""):
+            sha256.update(chunk)
+    if sha256.hexdigest() == request.text:
+        return "Local language file correct"
+    return "Local language file invalid"
+
+def language_download(language):
+    download = requests.get(f"{read_config('server_url')}/online/languages/download?language={language}")
+    if download.status_code != 200:
+        if download.status_code == 400:
+            return "Language invalid"
+        else:
+            return "Download error"
+    with open(f'../data/online/{language}.json', 'w', encoding='utf-8') as out:
+        json.dump(json.loads(download.text), out, ensure_ascii=False, indent=2)
+    return "Local language file correct"
 
 def clear_screen():
     os.system('cls' if os.name == 'nt' else 'clear')

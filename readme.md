@@ -37,6 +37,12 @@
 - `heroku local --port 5006 -f Procfile.windows` or `flask --app server/app.py run`
 ## Planned features
 - ?
+## Contributing
+### Language data
+If you want to provide the wordlist, make a lang.json file (lang being the language code).
+Template: `{"solutions": [(list the wordle answers)], "wordlist": [(list all possible words)], "letters": [(list the letters here)]}`
+### Other contributions
+You can make a pull request, and I will happily merge it.
 ## License
 Copyright ketr4x, 2025. Licensed under BSD-3-Clause License.
 

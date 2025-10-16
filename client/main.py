@@ -2,6 +2,7 @@ import time
 import utils
 import os
 
+from ai import game_ai
 from configuration import configuration
 from randomword import game_random
 from todaysword import game_daily
@@ -28,7 +29,7 @@ while True:
     utils.clear_screen()
     print(ascii_art)
 
-    print("1. Random Word\n2. Today's Word\n3. Ranked")
+    print("1. Random Word\n2. Today's Word\n3. AI game\n4. Ranked")
     print("\nC. Configuration\nX. Connection\nQ. Quit")
 
     option = input("\nChoose the option you want...: ").upper()
@@ -37,6 +38,8 @@ while True:
     elif option == '2':
         game_daily()
     elif option == '3':
+        game_ai()
+    elif option == '4':
         game_online()
     elif option == 'C':
         configuration()

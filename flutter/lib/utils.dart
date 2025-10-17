@@ -213,6 +213,35 @@ class AccountStateProvider extends ChangeNotifier {
   }
 }
 
+Future<int> createAccount(String serverUrl, String user, String auth) async {
+  final url = '$serverUrl/online/stats?user=$user&auth=$auth';
+  final response = await http.get(Uri.parse(url));
+  return response.statusCode;
+}
+
+Future<void> createAccountUI(BuildContext context, String serverUrl, String user, String auth) async {
+  var account = await createAccount(serverUrl, user, auth);
+  if (account == 200) {
+    Fluttertoast.showToast(
+      msg: "Account created successfully.",
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      backgroundColor: Colors.green,
+      textColor: Colors.white,
+      fontSize: 16.0,
+    );
+  } else {
+    Fluttertoast.showToast(
+      msg: "Failed to create account. Status code: $account",
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      backgroundColor: Colors.red,
+      textColor: Colors.white,
+      fontSize: 16.0,
+    );
+  }
+}
+
 AppBar buildAppBar(BuildContext context, String title) {
   return AppBar(
     backgroundColor: Theme.of(context).colorScheme.inversePrimary,

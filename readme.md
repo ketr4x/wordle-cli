@@ -35,8 +35,10 @@
 - Install heroku cli (optional)
 - `pip -m requirements.txt`
 - `heroku local --port 5006 -f Procfile.windows` or `flask --app server/app.py run`
-## Planned features
-- ?
+## Planned updates
+- [**Flutter**] timer fix
+- [**Flutter**] features ported from python (online)
+- Release
 ## Contributing
 ### Language data
 If you want to provide the wordlist, make a lang.json file (lang being the language code).

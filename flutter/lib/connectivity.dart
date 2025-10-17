@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:wordle/utils.dart';
+import 'settings.dart';
+import 'utils.dart';
 import 'dart:io';
 
 class ConnectivityPage extends StatefulWidget {
@@ -13,11 +14,13 @@ class ConnectivityPage extends StatefulWidget {
 class _ConnectivityPageState extends State<ConnectivityPage> {
   String _serverUrl = '';
   String _username = '';
+  String _password = '';
 
   @override
   void initState() {
     super.initState();
     _loadUsername();
+    _loadPassword();
     _loadServerUrl();
   }
 
@@ -25,6 +28,13 @@ class _ConnectivityPageState extends State<ConnectivityPage> {
     final username = await getConfig("username");
     setState(() {
       _username = username ?? '';
+    });
+  }
+
+  Future<void> _loadPassword() async {
+    final password = await getConfig("password");
+    setState(() {
+      _password = password ?? '';
     });
   }
 
@@ -71,9 +81,17 @@ class _ConnectivityPageState extends State<ConnectivityPage> {
                                     : 'Failed to connect to server. Please check your server URL and internet connection.'
                             ),
                             actions: [
+                              if (provider.connectionState != HttpStatus.ok)
+                                TextButton(
+                                  onPressed: () {
+                                    SettingsPage;
+                                    Navigator.pop(context);
+                                  },
+                                  child: const Text('Settings'),
+                                ),
                               TextButton(
                                 onPressed: () => Navigator.pop(context),
-                                child: const Text('Exit'),
+                                child: const Text('OK'),
                               ),
                             ],
                           )
@@ -118,9 +136,17 @@ class _ConnectivityPageState extends State<ConnectivityPage> {
                                     : 'Failed to connect to server. Please check your server URL and internet connection.'
                             ),
                             actions: [
+                              if (provider.connectionState == HttpStatus.notFound)
+                                TextButton(
+                                  onPressed: () {
+                                    createAccountUI(context, _serverUrl, _username, _password);
+                                    Navigator.pop(context);
+                                  },
+                                  child: const Text('Create account'),
+                                ),
                               TextButton(
                                 onPressed: () => Navigator.pop(context),
-                                child: const Text('Exit'),
+                                child: const Text('OK'),
                               ),
                             ],
                           )

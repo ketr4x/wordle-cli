@@ -159,7 +159,7 @@ class ConnectionStateProvider extends ChangeNotifier {
   }
 
   Future<void> _checkConnection() async {
-    final newState = await checkConnectionState();
+    final newState = await checkConnectionState(null);
     if (_connectionState != newState) {
       _connectionState = newState;
       notifyListeners();
@@ -214,12 +214,12 @@ class AccountStateProvider extends ChangeNotifier {
 }
 
 Future<int> createAccount(String serverUrl, String user, String auth) async {
-  final url = '$serverUrl/online/stats?user=$user&auth=$auth';
+  final url = '$serverUrl/online/create_user?user=$user&auth=$auth';
   final response = await http.get(Uri.parse(url));
   return response.statusCode;
 }
 
-Future<void> createAccountUI(BuildContext context, String serverUrl, String user, String auth) async {
+Future<void> createAccountUI(String serverUrl, String user, String auth) async {
   var account = await createAccount(serverUrl, user, auth);
   if (account == 200) {
     Fluttertoast.showToast(
@@ -685,9 +685,11 @@ class LeaderboardData {
   }
 }
 
-Future<int> checkConnectionState() async {
+Future<int> checkConnectionState(String? serverUrl) async {
   try {
-    final serverUrl = await getConfig('server_url');
+    if (serverUrl == null) {
+      serverUrl = await getConfig('server_url');
+    }
     if (serverUrl == null) {
       return HttpStatus.notFound;
     }

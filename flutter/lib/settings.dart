@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:adaptive_theme/adaptive_theme.dart';
@@ -16,15 +18,54 @@ class _SettingsPageState extends State<SettingsPage> {
   String _username = '';
   String _password = '';
   String _serverUrl = '';
-  late PackageInfo? packageInfo;
+  PackageInfo? packageInfo;
+  final FocusNode _serverUrlFocusNode = FocusNode();
+  late TextEditingController _serverUrlController;
+  late TextEditingController _usernameController;
+  late TextEditingController _passwordController;
 
   @override
   void initState() {
     super.initState();
+    _serverUrlController = TextEditingController();
+    _usernameController = TextEditingController();
+    _passwordController = TextEditingController();
     _loadUsername();
     _loadPassword();
     _loadServerUrl();
     _loadPackageInfo();
+    _serverUrlFocusNode.addListener(_onServerUrlFocusChange);
+  }
+
+  @override
+  void dispose() {
+    _serverUrlFocusNode.dispose();
+    _serverUrlController.dispose();
+    _usernameController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  void _onServerUrlFocusChange() async {
+    if (!_serverUrlFocusNode.hasFocus) {
+      final trimmed = _serverUrl.trim();
+      if (!trimmed.startsWith('http://') &&
+          !trimmed.startsWith('https://') &&
+          trimmed.isNotEmpty) {
+        if (await checkConnectionState('https://$trimmed') == HttpStatus.ok) {
+          _serverUrl = 'https://$trimmed';
+        } else {
+          _serverUrl = 'http://$trimmed';
+        }
+        _serverUrlController.text = _serverUrl;
+      }
+      if (!mounted) return;
+      final connProvider = Provider.of<ConnectionStateProvider>(context, listen: false);
+      final accProvider = Provider.of<AccountStateProvider>(context, listen: false);
+      setConfig("server_url", _serverUrl);
+      connProvider.forceCheck();
+      accProvider.forceCheck();
+    }
   }
 
   Future<void> _loadPackageInfo() async {
@@ -37,6 +78,7 @@ class _SettingsPageState extends State<SettingsPage> {
     final username = await getConfig("username");
     setState(() {
       _username = username ?? '';
+      _usernameController.text = _username;
     });
   }
 
@@ -44,6 +86,7 @@ class _SettingsPageState extends State<SettingsPage> {
     final password = await getConfig("password");
     setState(() {
       _password = password ?? '';
+      _passwordController.text = _password;
     });
   }
 
@@ -51,6 +94,7 @@ class _SettingsPageState extends State<SettingsPage> {
     final serverUrl = await getConfig("server_url");
     setState(() {
       _serverUrl = serverUrl ?? '';
+      _serverUrlController.text = _serverUrl;
     });
   }
 
@@ -79,12 +123,9 @@ class _SettingsPageState extends State<SettingsPage> {
           ListTile(
             title: const Text('Username'),
             trailing: SizedBox(
-              width: 180,
+              width: 200,
               child: TextField(
-                controller: TextEditingController(text: _username)
-                  ..selection = TextSelection.fromPosition(
-                    TextPosition(offset: _username.length),
-                  ),
+                controller: _usernameController,
                 decoration: InputDecoration(
                   hintText: _username.isNotEmpty ? _username : 'Enter your username',
                 ),
@@ -104,12 +145,9 @@ class _SettingsPageState extends State<SettingsPage> {
           ListTile(
             title: const Text('Password'),
             trailing: SizedBox(
-              width: 180,
+              width: 200,
               child: TextField(
-                controller: TextEditingController(text: _password)
-                  ..selection = TextSelection.fromPosition(
-                    TextPosition(offset: _password.length),
-                  ),
+                controller: _passwordController,
                 decoration: InputDecoration(
                   hintText: _password.isNotEmpty ? '••••••••' : 'Enter your password',
                 ),
@@ -130,36 +168,27 @@ class _SettingsPageState extends State<SettingsPage> {
           ListTile(
               title: const Text('Server URL'),
               trailing: SizedBox(
-                width: 180,
+                width: 200,
                 child: TextField(
-                  controller: TextEditingController(text: _serverUrl)
-                    ..selection = TextSelection.fromPosition(
-                      TextPosition(offset: _serverUrl.length),
-                    ),
+                  controller: _serverUrlController,
+                  focusNode: _serverUrlFocusNode,
                   decoration: InputDecoration(
-                    hintText: _serverUrl.isNotEmpty ? _serverUrl : 'Enter your server URL (like http://wordle.ketrax.ovh)',
+                    hintText: _serverUrl.isNotEmpty ? _serverUrl : 'like wordle.ketrax.ovh',
                   ),
-                  onChanged: (value) async {
-                    setState(() {
+                    onChanged: (value) {
                       _serverUrl = value;
-                    });
-                    final connProvider = Provider.of<ConnectionStateProvider>(context, listen: false);
-                    final accProvider = Provider.of<AccountStateProvider>(context, listen: false);
-                    await setConfig("server_url", value);
-                    connProvider.forceCheck();
-                    accProvider.forceCheck();
-                  },
+                    }
                 ),
               )
           ),
           ListTile(
             title: const Text('About'),
-            trailing: Text(packageInfo!.version),
+            trailing: Text(packageInfo?.version ?? ''),
             onTap: () {
               showAboutDialog(
                 context: context,
                 applicationName: 'Wordix',
-                applicationVersion: packageInfo?.version,
+                applicationVersion: packageInfo?.version ?? 'Unknown',
                 /*applicationIcon: Image.asset( TODO: add app icon
                   'assets/app_icon.png',
                   width: 48,

@@ -84,8 +84,7 @@ class _ConnectivityPageState extends State<ConnectivityPage> {
                               if (provider.connectionState != HttpStatus.ok)
                                 TextButton(
                                   onPressed: () {
-                                    SettingsPage;
-                                    Navigator.pop(context);
+                                    Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsPage()));
                                   },
                                   child: const Text('Settings'),
                                 ),
@@ -104,20 +103,20 @@ class _ConnectivityPageState extends State<ConnectivityPage> {
             ListTile(
               title: const Text('Account Status'),
               subtitle: Text(_username.isNotEmpty ? _username : 'Not configured'),
-              trailing: Consumer<AccountStateProvider>(
-                builder: (context, provider, child) {
+              trailing: Consumer2<AccountStateProvider, ConnectionStateProvider>(
+                builder: (context, provider, connection, child) {
                   return IconButton(
                     icon: Icon(
                       provider.connectionState == HttpStatus.ok
                           ? Icons.cloud_done
-                          : provider.connectionState == HttpStatus.notFound
+                          : connection.connectionState == HttpStatus.ok && provider.connectionState == HttpStatus.notFound
                           ? Icons.manage_accounts
-                          : provider.connectionState == HttpStatus.unauthorized
+                          : connection.connectionState == HttpStatus.ok && provider.connectionState == HttpStatus.unauthorized
                           ? Icons.login
                           : Icons.cloud_off,
                       color: provider.connectionState == HttpStatus.ok
                           ? Colors.green
-                          : provider.connectionState == HttpStatus.notFound || provider.connectionState == HttpStatus.unauthorized
+                          : connection.connectionState == HttpStatus.ok && (provider.connectionState == HttpStatus.notFound || provider.connectionState == HttpStatus.unauthorized)
                           ? Colors.orange
                           : Colors.red,
                     ),
@@ -129,18 +128,29 @@ class _ConnectivityPageState extends State<ConnectivityPage> {
                             content: Text(
                                 provider.connectionState == HttpStatus.ok
                                     ? 'Logged in successfully.'
-                                    : provider.connectionState == HttpStatus.notFound
+                                    : connection.connectionState == HttpStatus.ok && provider.connectionState == HttpStatus.notFound
                                     ? 'Account not found. Please check your username or create a new account.'
-                                    : provider.connectionState == HttpStatus.unauthorized
+                                    : connection.connectionState == HttpStatus.ok && provider.connectionState == HttpStatus.unauthorized
                                     ? 'Unauthorized. Please check your password.'
                                     : 'Failed to connect to server. Please check your server URL and internet connection.'
                             ),
                             actions: [
-                              if (provider.connectionState == HttpStatus.notFound)
+                              if (provider.connectionState == HttpStatus.notFound && connection.connectionState == HttpStatus.ok)
                                 TextButton(
-                                  onPressed: () {
-                                    createAccountUI(context, _serverUrl, _username, _password);
+                                  onPressed: () async {
                                     Navigator.pop(context);
+                                    final connProvider = Provider.of<ConnectionStateProvider>(context, listen: false);
+                                    final accProvider = Provider.of<AccountStateProvider>(context, listen: false);
+                                    final server = await getConfig("server_url");
+                                    final user = await getConfig("username");
+                                    final pass = await getConfig("password");
+                                    await createAccountUI(
+                                      server != null && server.isNotEmpty ? server : _serverUrl,
+                                      user != null && user.isNotEmpty ? user : _username,
+                                      pass != null && pass.isNotEmpty ? pass : _password
+                                    );
+                                    connProvider.forceCheck();
+                                    accProvider.forceCheck();
                                   },
                                   child: const Text('Create account'),
                                 ),

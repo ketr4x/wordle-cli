@@ -142,7 +142,6 @@ class _StatsPageState extends State<StatsPage> {
       bottomNavigationBar: buildBottomNavigationBar(
         context,
         currentIndex: _selectedIndex,
-        widget: widget,
       ),
     );
   }

@@ -26,9 +26,9 @@
 - Install it
 - Set up your account and server (below)
 #### Website
-- Go to https://wordle.ketrax.ovh/ or https://afternoon-waters-00138-898a825f9a47.herokuapp.com/
+- Go to https://wordle.ketrax.ovh/
 ### Server
-#### `https://wordle.ketrax.ovh/` or `https://afternoon-waters-00138-898a825f9a47.herokuapp.com/`
+#### `https://wordle.ketrax.ovh/`
 #### Custom installation
 - Clone the repository
 - Install python and pip

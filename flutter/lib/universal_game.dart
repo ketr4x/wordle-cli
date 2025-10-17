@@ -353,7 +353,6 @@ class _WordleGameViewState extends State<WordleGameView> {
       bottomNavigationBar: buildBottomNavigationBar(
         context,
         currentIndex: c.selectedIndex,
-        widget: widget,
       ),
     );
   }

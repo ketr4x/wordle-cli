@@ -294,7 +294,6 @@ AppBar buildAppBar(BuildContext context, String title) {
 BottomNavigationBar buildBottomNavigationBar(
     BuildContext context, {
       required int currentIndex,
-      required widget,
     }
     ) {
   return BottomNavigationBar(
@@ -687,9 +686,7 @@ class LeaderboardData {
 
 Future<int> checkConnectionState(String? serverUrl) async {
   try {
-    if (serverUrl == null) {
-      serverUrl = await getConfig('server_url');
-    }
+    serverUrl ??= await getConfig('server_url');
     if (serverUrl == null) {
       return HttpStatus.notFound;
     }

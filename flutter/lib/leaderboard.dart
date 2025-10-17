@@ -81,7 +81,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                 margin: const EdgeInsets.symmetric(vertical: 2),
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: isCurrentUser ? Colors.yellow.withOpacity(0.3) : null,
+                  color: isCurrentUser ? Colors.yellow.withValues(alpha: 0.3) : null,
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Row(
@@ -195,7 +195,6 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
       bottomNavigationBar: buildBottomNavigationBar(
         context,
         currentIndex: _selectedIndex,
-        widget: widget,
       ),
     );
   }

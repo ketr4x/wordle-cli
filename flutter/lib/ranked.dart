@@ -6,6 +6,12 @@ class RankedPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return buildBottomNavigationBar(context, currentIndex: 3);
+    return Scaffold(
+      appBar: buildAppBar(context, 'Ranked'),
+      body: const Center(
+        child: Text('Ranked Mode Coming Soon!'),
+      ),
+      bottomNavigationBar: buildBottomNavigationBar(context, currentIndex: 3),
+    );
   }
 }

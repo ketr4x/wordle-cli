@@ -237,7 +237,7 @@ def languages_download():
     if not language or language not in utils.languages():
         return 'Language invalid', 400
 
-    return jsonify(json.load(open(f'data/{language}.json')))
+    return jsonify(open(f'data/{language}.json'))
 
 # Game start endpoint
 @app.route('/online/start')

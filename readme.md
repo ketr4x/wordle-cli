@@ -19,6 +19,11 @@
 - Go to client/
 - `pip -m requirements.txt`
 - `python3 main.py`
+#### Downloading a binary
+- Go to releases
+- Select the `python` tag
+- Download the latest release for your platform
+- Run it
 ### Flutter version
 #### App
 - Click releases

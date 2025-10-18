@@ -16,6 +16,7 @@ import 'dart:async';
 import 'package:provider/provider.dart';
 import 'statistics.dart';
 import 'connectivity.dart';
+import 'package:crypto/crypto.dart';
 
 enum GameMode { random, daily, ranked }
 
@@ -51,23 +52,152 @@ Future<String?> getConfig(String key) async {
   return prefs.getString(key);
 }
 
-Future<List<String>> getLanguagePacks() async {
-  return ['en'];
+Future<List<String>> getLanguagePacks([bool online = false]) async {
+  if (online) {
+    final serverUrl = await getConfig('server_url');
+    if (serverUrl == null) {
+      return [];
+    }
+    final url = '$serverUrl/online/languages';
+    try {
+      final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 5));
+      if (response.statusCode == 200) {
+        final body = response.body.trim();
+        if (body.startsWith('[')) {
+          final data = json.decode(body);
+          if (data is List) {
+            return data.map((e) => e.toString()).toList();
+          }
+          return [];
+        } else {
+          final parts = body.split(" ").where((s) => s.isNotEmpty).toList();
+          return parts;
+        }
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  } else {
+    try {
+      final manifestContent = await rootBundle.loadString('AssetManifest.json');
+      final Map<String, dynamic> manifestMap = json.decode(manifestContent);
+      final files = manifestMap.keys
+          .where((k) => k.startsWith('assets/') && k.endsWith('.json'))
+          .toList();
+      return files.map((f) => f.split('/').last.replaceAll('.json', '')).toList();
+    } catch (e) {
+      final dir = await _getOnlineLanguagesDirectory();
+      final entities = await dir.list().toList();
+      final files = entities.whereType<File>().where((f) => f.path.endsWith('.json')).toList();
+      return files.map((f) {
+        final filename = f.path.split(Platform.pathSeparator).last;
+        return filename.replaceAll('.json', '');
+      }).toList();
+    }
+  }
 }
 
-Future<Map<String, dynamic>> readLanguagePack(String languageCode) async {
+Future<Directory> _getOnlineLanguagesDirectory() async {
+  final base = await getApplicationSupportDirectory();
+  final dir = Directory('${base.path}${Platform.pathSeparator}online');
+  if (!await dir.exists()) {
+    await dir.create(recursive: true);
+  }
+  return dir;
+}
+
+String _extractSha256(String raw) {
+  final t = raw.trim().replaceAll(RegExp(r'\s+'), '');
+  final match = RegExp(r'([A-Fa-f0-9]{64})').firstMatch(t);
+  if (match != null) return match.group(1)!.toLowerCase();
+  return t.toLowerCase();
+}
+
+Future<String> checkOnlineLanguagePack(String languageCode) async {
+  try {
+    final serverUrl = await getConfig('server_url');
+    if (serverUrl == null) {
+      return "Server URL not configured";
+    }
+
+    final url = '$serverUrl/online/languages/checksum?language=$languageCode';
+    final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 5));
+
+    if (response.statusCode != 200) {
+      if (response.statusCode == 400) {
+        return "Language invalid";
+      }
+      return "Error";
+    }
+
+    final serverChecksum = _extractSha256(response.body);
+
+    if (!RegExp(r'^[a-f0-9]{64}$').hasMatch(serverChecksum)) {
+      return "Server returned invalid checksum format";
+    }
+
+    final dir = await _getOnlineLanguagesDirectory();
+    final file = File('${dir.path}${Platform.pathSeparator}$languageCode.json');
+
+    if (!await file.exists()) {
+      return "Local file missing";
+    }
+
+    final bytes = await file.readAsBytes();
+    final localChecksum = sha256.convert(bytes).toString();
+
+    if (localChecksum == serverChecksum) {
+      return "Local language file correct";
+    }
+
+    return "Local language file invalid (expected $serverChecksum, got $localChecksum)";
+  } catch (e) {
+    return "Error: $e";
+  }
+}
+
+Future<Map<String, dynamic>> readLanguagePack(String languageCode, [bool online = false]) async {
   try {
     final String response = await rootBundle.loadString('assets/$languageCode.json');
     return jsonDecode(response);
   } catch (e) {
-    final dir = await getApplicationDocumentsDirectory();
-    final file = File('${dir.path}/$languageCode.json');
+    final dir = online ? await _getOnlineLanguagesDirectory() : await getApplicationSupportDirectory();
+    final file = File('${dir.path}${Platform.pathSeparator}$languageCode.json');
     if (await file.exists()) {
       final contents = await file.readAsString();
       return jsonDecode(contents);
     } else {
       throw Exception('Language pack not found: $languageCode');
     }
+  }
+}
+
+Future<String> downloadLanguagePack(String languageCode) async {
+  try {
+    final serverUrl = await getConfig('server_url');
+    if (serverUrl == null) {
+      return "Server URL not configured";
+    }
+
+    final url = '$serverUrl/online/languages/download?language=$languageCode';
+    final response = await http
+        .get(Uri.parse(url))
+        .timeout(const Duration(seconds: 10));
+
+    if (response.statusCode != 200) {
+      if (response.statusCode == 400) {
+        return "Language invalid";
+      }
+      return "Download error";
+    }
+
+    final dir = await _getOnlineLanguagesDirectory();
+    final file = File('${dir.path}${Platform.pathSeparator}$languageCode.json');
+    await file.writeAsString(response.body, flush: true);
+    return "$languageCode downloaded";
+  } catch (e) {
+    return "Download error: $e";
   }
 }
 

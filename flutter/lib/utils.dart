@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:wordle/universal_game.dart';
 import 'daily.dart';
 import 'leaderboard.dart';
 import 'random.dart';
@@ -17,6 +16,8 @@ import 'dart:async';
 import 'package:provider/provider.dart';
 import 'statistics.dart';
 import 'connectivity.dart';
+
+enum GameMode { random, daily, ranked }
 
 void showErrorToast(String message) {
   Fluttertoast.showToast(

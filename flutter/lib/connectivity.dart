@@ -165,6 +165,10 @@ class _ConnectivityPageState extends State<ConnectivityPage> {
                   );
                 },
               ),
+            ),
+            ListTile(
+              title: const Text('Languages'),
+              subtitle: const Text('Available languages depend on server configuration.'),
             )
           ],
         )

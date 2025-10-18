@@ -55,3 +55,4 @@ Copyright ketr4x, 2025. Licensed under BSD-3-Clause License.
 
 This project was made for the [Moonshot](https://moonshot.hack.club/1016) hackathon organized by HackClub.
 ![Hackatime Badge](https://hackatime-badge.hackclub.com/U08RQEP53HA/wordle-cli)
+[![Flutter](https://github.com/ketr4x/wordle-cli/actions/workflows/flutter.yml/badge.svg)](https://github.com/ketr4x/wordle-cli/actions/workflows/flutter.yml)

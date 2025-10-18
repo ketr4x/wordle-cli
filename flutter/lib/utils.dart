@@ -195,7 +195,22 @@ Future<String> downloadLanguagePack(String languageCode) async {
     final dir = await _getOnlineLanguagesDirectory();
     final file = File('${dir.path}${Platform.pathSeparator}$languageCode.json');
     await file.writeAsString(response.body, flush: true);
-    return "$languageCode downloaded";
+
+    final bytes = await file.readAsBytes();
+    final localChecksum = sha256.convert(bytes).toString();
+    final url2 = '$serverUrl/online/languages/checksum?language=$languageCode';
+    final response2 = await http.get(Uri.parse(url2)).timeout(const Duration(seconds: 5));
+
+    if (response2.statusCode != 200) {
+      return "Downloaded - checksum check failed: server responded ${response2.statusCode}";
+    }
+
+    final serverChecksum = _extractSha256(response2.body);
+    if (localChecksum == serverChecksum) {
+      return "Downloaded - file OK";
+    }
+
+    return "Downloaded - checksum mismatch (expected $serverChecksum, got $localChecksum)";
   } catch (e) {
     return "Download error: $e";
   }

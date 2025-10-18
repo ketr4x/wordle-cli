@@ -43,6 +43,7 @@
 ## Planned updates
 - [**Flutter**] timer fix
 - [**Flutter**] features ported from python (online)
+- [**Python**] updater
 - Release
 ## Contributing
 ### Language data

@@ -81,7 +81,7 @@ def game(user, auth, language):
         print(f"Unused letters: {utils.format_unused_letters(letters)}")
 
         guess = input(f"\nWrite your {utils.ordinal(guess_number+1)} guess: ").lower()
-        if len(guess) == 5 and guess in utils.filtered(language, True):
+        if len(guess) == 5 and guess in utils.wordlist(language, True):
             response = requests.get(f"{utils.read_config('server_url')}/online/guess?user={user}&auth={auth}&guess={guess}")
             if response.status_code == 200:
                 decoded = utils.json_decode(response.text)
@@ -109,7 +109,7 @@ def game_online():
     print("Welcome to ranked!\n")
 
     while not server:
-        server = input("Please enter your full server address (i.e., http://ketrax.ovh/dev/wordle): ").strip()
+        server = input("Please enter your full server address (i.e., https://wordle.ketrax.ovh): ").strip()
 
         if server and not server.startswith(('http://', 'https://')):
             server = 'http://' + server

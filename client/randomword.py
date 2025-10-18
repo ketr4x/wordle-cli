@@ -41,7 +41,7 @@ def format_guess(guess, word):
             output.append(f"\033[91m{char}\033[0m")
     return "".join(output)
 
-def game(word, filtered, tries, language):
+def game(word, tries, language):
     utils.clear_screen()
     print("Starting the game!")
     time.sleep(1)
@@ -66,7 +66,7 @@ def game(word, filtered, tries, language):
         print(f"Unused letters: {utils.format_unused_letters(letters)}")
 
         guess = input(f"\nWrite your {utils.ordinal(len(guesses)+1)} guess: ").lower()
-        if len(guess) == len(word) and guess in filtered:
+        if len(guess) == len(word) and guess in utils.wordlist(language):
             guesses.append(guess)
             if guess == word:
                 print("You won!")
@@ -82,7 +82,7 @@ def game_random():
     length, language, tries = settings()
     filtered = utils.filtered(language, length)
     word = random.choice(filtered)
-    game_status, guesses, formatted_guesses, letters = game(word, filtered, tries, language)
+    game_status, guesses, formatted_guesses, letters = game(word, tries, language)
 
     utils.clear_screen()
     if game_status == 2:

@@ -19,8 +19,8 @@ def settings():
 def game_daily():
     length, language = settings()
     word = get_word(language)
-    filtered = sorted(utils.wordlist(language))
-    game_status, guesses, formatted_guesses, letters = game(word, filtered, 6, language)
+    filtered = utils.filtered(language)
+    game_status, guesses, formatted_guesses, letters = game(word, 6, language)
 
     utils.clear_screen()
     if game_status == 2:

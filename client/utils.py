@@ -52,7 +52,7 @@ def format_unused_letters(letters):
     return formatted_letters
 
 def filtered(language, length=5, online=False):
-    filtered_words = [word.strip().lower() for word in wordlist(language, online) if len(word.strip()) == length]
+    filtered_words = [word.strip().lower() for word in solutions(language, online) if len(word.strip()) == length]
     if not filtered_words:
         raise ValueError(f"No words found for {language} with length 5")
     return filtered_words

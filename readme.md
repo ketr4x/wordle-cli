@@ -42,8 +42,7 @@
 - `heroku local --port 5006 -f Procfile.windows` or `flask --app server/app.py run`
 ## Planned updates
 - [**Flutter**] timer fix
-- [**Flutter**] features ported from python (online)
-- [**Python**] updater
+- [**Flutter**] ranked mode improvements
 - Release
 ## Contributing
 ### Language data

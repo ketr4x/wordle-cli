@@ -740,6 +740,7 @@ Widget buildGame({
   required BuildContext context,
   GameMode? mode,
   bool gameOver = false,
+  List<List<LetterStatus>>? formattedGuesses,
 }) {
   String formatDuration(Duration d) {
     final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
@@ -764,8 +765,10 @@ Widget buildGame({
           Column(
             mainAxisAlignment: MainAxisAlignment.start,
             children: List.generate(6, (index) {
-              if (index < guesses.length && answer != null) {
-                List<LetterStatus> statuses = checkGuess(guesses[index], answer);
+              if (index < guesses.length) {
+                final statuses = (formattedGuesses != null && index < formattedGuesses.length)
+                    ? formattedGuesses[index]
+                    : (answer != null) ? checkGuess(guesses[index], answer) : null;
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 6),
                   child: WordleLetterBoxes(

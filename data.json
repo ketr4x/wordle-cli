@@ -3,6 +3,6 @@
   "update_url": "https://raw.githubusercontent.com/ketr4x/wordle-cli/master/data.json",
   "repo": "https://github.com/ketr4x/wordle-cli.git",
   "version": "1.0.0",
-  "release_notes": "",
-  "published_at": ""
+  "release_notes": "Add version endpoint and updater functionality; enhance server connection handling",
+  "published_at": "2025-10-19T19:03:00Z"
 }

@@ -388,6 +388,33 @@ Future<void> createAccountUI(String serverUrl, String user, String auth) async {
   }
 }
 
+Future<Map<String, dynamic>> checkLanguagesForServer() async {
+  final serverLanguages = await getLanguagePacks(true);
+  if (serverLanguages.isEmpty) {
+    return {
+      'status': 'no_server_languages',
+      'serverLanguages': serverLanguages,
+    };
+  }
+
+  List<String> problematic = [];
+  Map<String, String> problemsDetails = {};
+  for (var lang in serverLanguages) {
+    final status = await checkOnlineLanguagePack(lang);
+    if (status != "Local language file correct") {
+      problematic.add(lang);
+      problemsDetails[lang] = status;
+    }
+  }
+
+  return {
+    'status': problematic.isEmpty ? 'all_ok' : 'some_problem',
+    'problematic': problematic,
+    'details': problemsDetails,
+    'serverLanguages': serverLanguages,
+  };
+}
+
 AppBar buildAppBar(BuildContext context, String title) {
   return AppBar(
     backgroundColor: Theme.of(context).colorScheme.inversePrimary,
@@ -395,30 +422,46 @@ AppBar buildAppBar(BuildContext context, String title) {
     actions: [
       Consumer2<ConnectionStateProvider, AccountStateProvider>(
         builder: (context, connProvider, accProvider, child) {
-          return IconButton(
-            icon: Icon(
-              connProvider.connectionState == HttpStatus.ok &&
-                      accProvider.connectionState == HttpStatus.ok
-                  ? Icons.cloud_done
-                  : connProvider.connectionState == HttpStatus.ok &&
-                  accProvider.connectionState == HttpStatus.notFound
-                  ? Icons.manage_accounts
-                  : connProvider.connectionState == HttpStatus.ok &&
-                  accProvider.connectionState == HttpStatus.unauthorized
-                  ? Icons.login
-                  : Icons.cloud_off,
-              color: connProvider.connectionState == HttpStatus.ok &&
-                      accProvider.connectionState == HttpStatus.ok
-                  ? Colors.green
-                  : connProvider.connectionState == HttpStatus.ok &&
-                  accProvider.connectionState != HttpStatus.ok
-                  ? Colors.orange
-                  : Colors.red,
-            ),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const ConnectivityPage()),
+          return FutureBuilder<Map<String, dynamic>>(
+            future: checkLanguagesForServer(),
+            builder: (context, snapshot) {
+              final data = snapshot.data ?? {};
+              final langStatus = data['status'] as String? ?? 'error';
+
+              IconData iconData;
+              Color iconColor;
+
+              if (connProvider.connectionState == HttpStatus.ok &&
+                  accProvider.connectionState == HttpStatus.ok &&
+                  langStatus == 'all_ok') {
+                iconData = Icons.cloud_done;
+                iconColor = Colors.green;
+              } else if (connProvider.connectionState == HttpStatus.ok &&
+                  accProvider.connectionState == HttpStatus.ok &&
+                  langStatus == 'some_problem') {
+                iconData = Icons.file_download_off;
+                iconColor = Colors.orange;
+              } else if (connProvider.connectionState == HttpStatus.ok &&
+                  accProvider.connectionState == HttpStatus.notFound) {
+                iconData = Icons.manage_accounts;
+                iconColor = Colors.orange;
+              } else if (connProvider.connectionState == HttpStatus.ok &&
+                  accProvider.connectionState == HttpStatus.unauthorized) {
+                iconData = Icons.login;
+                iconColor = Colors.orange;
+              } else {
+                iconData = Icons.cloud_off;
+                iconColor = Colors.red;
+              }
+
+              return IconButton(
+                icon: Icon(iconData, color: iconColor),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ConnectivityPage()),
+                  );
+                },
               );
             },
           );

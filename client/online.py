@@ -148,9 +148,8 @@ def game_online():
         return None
 
     server_version = requests.get(f"{server}/online/version").text
-    with open("data.json", "r", encoding="utf-8") as f:
-        loaded = json.load(f)
-    if server_version != loaded["server_version"]:
+    loaded = utils.json_decode(open("../data.json", "r", encoding="utf-8").read())
+    if server_version != loaded["version"]:
         print("Version mismatch. Update your client or notify the server owner.")
         input("Press `Enter` to continue...")
         return None

@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'settings.dart';
@@ -21,6 +20,9 @@ class _ConnectivityPageState extends State<ConnectivityPage> {
   Future<Map<String, dynamic>>? _lastCheckFuture;
   Map<String, dynamic>? _lastCheckResult;
   DateTime? _lastCheckTime;
+  bool _loadingLanguagesPressed = false;
+  int? _lastConnectionState;
+  ConnectionStateProvider? _connProviderRef;
 
   void _invalidateLanguageCheckCache() {
     _lastCheckFuture = null;
@@ -34,6 +36,48 @@ class _ConnectivityPageState extends State<ConnectivityPage> {
     _loadUsername();
     _loadPassword();
     _loadServerUrl();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final conn = Provider.of<ConnectionStateProvider>(context, listen: false);
+      _connProviderRef = conn;
+      _lastConnectionState = conn.connectionState;
+      conn.addListener(_onConnectionChanged);
+    });
+  }
+
+  void _onConnectionChanged() {
+    final conn = _connProviderRef;
+    if (conn == null) return;
+    final current = conn.connectionState;
+    if (_lastConnectionState == current) return;
+
+    try {
+      final accProvider = Provider.of<AccountStateProvider>(context, listen: false);
+      accProvider.forceCheck();
+    } catch (_) {
+    }
+
+    try {
+      conn.forceCheck();
+    } catch (_) {}
+
+    _loadServerUrl();
+    _loadUsername();
+    _loadPassword();
+
+    setState(() {
+      _invalidateLanguageCheckCache();
+    });
+    _checkLanguagesForServer(force: true);
+    _lastConnectionState = current;
+  }
+
+  @override
+  void dispose() {
+    try {
+      _connProviderRef?.removeListener(_onConnectionChanged);
+    } catch (_) {}
+    super.dispose();
   }
 
   Future<void> _loadUsername() async {
@@ -120,9 +164,9 @@ class _ConnectivityPageState extends State<ConnectivityPage> {
     }
   }
 
-  Future<List<String>> _downloadLanguages(List<String> langs) async {
+  Future<List<String>> _downloadLanguages(List<String> languages) async {
     List<String> results = [];
-    for (var lang in langs) {
+    for (var lang in languages) {
       final res = await downloadLanguagePack(lang);
       results.add('$lang: $res');
     }
@@ -265,29 +309,46 @@ class _ConnectivityPageState extends State<ConnectivityPage> {
               builder: (context, connProvider, child) {
                 return FutureBuilder<Map<String, dynamic>>(
                   future: _checkLanguagesForServer(),
+                  initialData: const {'status': 'loading'},
                   builder: (context, snapshot) {
                     final data = snapshot.data ?? {};
                     final status = data['status'] as String? ?? 'error';
-                    return IconButton(
-                      icon: Icon(
-                        status == 'all_ok'
+
+                    final Widget iconWidget = _loadingLanguagesPressed
+                        ? const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                        : Icon(
+                      status == 'all_ok'
                           ? Icons.cloud_done
                           : status == 'some_problem'
-                          ? Icons.file_download_off
+                          ? Icons.file_download
+                          : status == 'loading'
+                          ? Icons.hourglass_bottom
                           : Icons.cloud_off,
-                        color: status == 'all_ok'
-                            ? Colors.green
-                            : status == 'some_problem'
-                            ? Colors.orange
-                            : Colors.red,
-                      ),
-                      onPressed: () async {
+                      color: status == 'all_ok'
+                          ? Colors.green
+                          : status == 'some_problem'
+                          ? Colors.orange
+                          : status == 'loading'
+                          ? Colors.grey
+                          : Colors.red,
+                    );
+
+                    return IconButton(
+                      icon: iconWidget,
+                      onPressed: _loadingLanguagesPressed
+                          ? null
+                          : () async {
                         if (connProvider.connectionState != HttpStatus.ok) {
                           showDialog(
                             context: context,
                             builder: (context) => AlertDialog(
                               title: const Text('Languages'),
-                              content: const Text('Failed to connect to server. Please check your server URL and internet connection.'),
+                              content: const Text(
+                                  'Failed to connect to server. Please check your server URL and internet connection.'),
                               actions: [
                                 TextButton(
                                   onPressed: () => Navigator.pop(context),
@@ -299,104 +360,133 @@ class _ConnectivityPageState extends State<ConnectivityPage> {
                           return;
                         }
 
-                        final result = await _checkLanguagesForServer(force: true);
-                        final status2 = result['status'] as String? ?? 'error';
-                        if (!context.mounted) return;
-                        showDialog(
-                          context: context,
-                          builder: (dialogContext) {
-                            if (status2 == 'no_server_languages') {
-                              return AlertDialog(
-                                title: const Text('Languages'),
-                                content: const Text('No languages available on server.'),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(dialogContext),
-                                    child: const Text('OK'),
-                                  ),
-                                ],
-                              );
-                            }
+                        setState(() {
+                          _loadingLanguagesPressed = true;
+                        });
 
-                            if (status2 == 'all_ok') {
-                              return AlertDialog(
-                                title: const Text('Languages'),
-                                content: const Text('All languages are correct.'),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(dialogContext),
-                                    child: const Text('OK'),
-                                  ),
-                                ],
-                              );
-                            }
+                        try {
+                          final result = await _checkLanguagesForServer(force: true);
+                          final status2 = result['status'] as String? ?? 'error';
+                          if (!context.mounted) return;
 
-                            final List<String> problematic = List<String>.from(result['problematic'] ?? []);
-                            final Map<String, String> details = Map<String, String>.from(result['details'] ?? {});
+                          setState(() {
+                            _loadingLanguagesPressed = false;
+                          });
 
-                            return AlertDialog(
-                              title: const Text('Languages'),
-                              content: SingleChildScrollView(
-                                child: ListBody(
-                                  children: [
-                                    const Text('The following languages are missing or invalid:'),
-                                    const SizedBox(height: 8),
-                                    Text(problematic.join(', ')),
-                                    const SizedBox(height: 8),
-                                    Text(problematic.map((l) => '$l: ${details[l]}').join('\n')),
+                          showDialog(
+                            context: context,
+                            builder: (dialogContext) {
+                              if (status2 == 'no_server_languages') {
+                                return AlertDialog(
+                                  title: const Text('Languages'),
+                                  content: const Text('No languages available on server.'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(dialogContext),
+                                      child: const Text('OK'),
+                                    ),
                                   ],
+                                );
+                              }
+
+                              if (status2 == 'all_ok') {
+                                return AlertDialog(
+                                  title: const Text('Languages'),
+                                  content: const Text('All languages are correct.'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(dialogContext),
+                                      child: const Text('OK'),
+                                    ),
+                                  ],
+                                );
+                              }
+
+                              final List<String> problematic = List<String>.from(result['problematic'] ?? []);
+                              final Map<String, String> details = Map<String, String>.from(result['details'] ?? {});
+
+                              return AlertDialog(
+                                title: const Text('Languages'),
+                                content: SingleChildScrollView(
+                                  child: ListBody(
+                                    children: [
+                                      const Text('The following languages are missing or invalid:'),
+                                      const SizedBox(height: 8),
+                                      Text(problematic.join(', ')),
+                                      const SizedBox(height: 8),
+                                      Text(problematic.map((l) => '$l: ${details[l]}').join('\n')),
+                                    ],
+                                  ),
                                 ),
-                              ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () async {
+                                      Navigator.pop(dialogContext);
+                                      if (problematic.isEmpty) return;
+                                      await showDialog(
+                                        context: context,
+                                        builder: (downloadCtx) {
+                                          return AlertDialog(
+                                            title: const Text('Downloading languages'),
+                                            content: FutureBuilder<List<String>>(
+                                              future: _downloadLanguages(problematic),
+                                              builder: (dCtx, dSnap) {
+                                                if (dSnap.connectionState != ConnectionState.done) {
+                                                  return const SizedBox(
+                                                    height: 80,
+                                                    child: Center(child: CircularProgressIndicator()),
+                                                  );
+                                                }
+                                                final List<String> results = dSnap.data ?? [];
+                                                return SingleChildScrollView(
+                                                  child: Text(results.join('\n')),
+                                                );
+                                              },
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () => Navigator.pop(downloadCtx),
+                                                child: const Text('OK'),
+                                              ),
+                                            ],
+                                          );
+                                        },
+                                      );
+                                      if (!mounted) return;
+                                      setState(() {
+                                        _invalidateLanguageCheckCache();
+                                      });
+                                      await _checkLanguagesForServer(force: true);
+                                    },
+                                    child: const Text('Download'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(dialogContext),
+                                    child: const Text('OK'),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        } catch (e) {
+                          if (!context.mounted) return;
+                          setState(() {
+                            _loadingLanguagesPressed = false;
+                          });
+                          showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text('Languages'),
+                              content: Text('Error checking languages: ${e.toString()}'),
                               actions: [
                                 TextButton(
-                                  onPressed: () async {
-                                    Navigator.pop(dialogContext);
-                                    if (problematic.isEmpty) return;
-                                    await showDialog(
-                                      context: context,
-                                      builder: (downloadCtx) {
-                                        return AlertDialog(
-                                          title: const Text('Downloading languages'),
-                                          content: FutureBuilder<List<String>>(
-                                            future: _downloadLanguages(problematic),
-                                            builder: (dCtx, dSnap) {
-                                              if (dSnap.connectionState != ConnectionState.done) {
-                                                return const SizedBox(
-                                                  height: 80,
-                                                  child: Center(child: CircularProgressIndicator()),
-                                                );
-                                              }
-                                              final List<String> results = dSnap.data ?? [];
-                                              return SingleChildScrollView(
-                                                child: Text(results.join('\n')),
-                                              );
-                                            },
-                                          ),
-                                          actions: [
-                                            TextButton(
-                                              onPressed: () => Navigator.pop(downloadCtx),
-                                              child: const Text('OK'),
-                                            ),
-                                          ],
-                                        );
-                                      },
-                                    );
-                                    if (!mounted) return;
-                                    setState(() {
-                                      _invalidateLanguageCheckCache();
-                                    });
-                                    await _checkLanguagesForServer(force: true);
-                                  },
-                                  child: const Text('Download'),
-                                ),
-                                TextButton(
-                                  onPressed: () => Navigator.pop(dialogContext),
+                                  onPressed: () => Navigator.pop(context),
                                   child: const Text('OK'),
                                 ),
                               ],
-                            );
-                          },
-                        );
+                            ),
+                          );
+                        }
                       },
                     );
                   },

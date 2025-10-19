@@ -57,7 +57,7 @@ def update():
 
     lv = version_tuple(local.get("version", "0"))
     rv = version_tuple(remote.get("version", "0"))
-    print("local version:", local.get("version"), "remote version:", remote.get("version"))
+    print("Local version:", local.get("version"), "- Remote version:", remote.get("version"))
 
     if rv <= lv:
         print("Already up to date.")

@@ -12,7 +12,7 @@ void main() async {
   } catch (e) {
     savedThemeMode = AdaptiveThemeMode.light;
   }
-  runApp(MyApp(savedThemeMode: savedThemeMode,));
+  runApp(MyApp(savedThemeMode: savedThemeMode));
 }
 
 class MyApp extends StatelessWidget {

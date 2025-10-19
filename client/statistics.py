@@ -36,7 +36,7 @@ def stats():
     print(f"Total matches: {matches}")
     print(f"Total wins: {wins}")
     print(f"Total losses: {matches - wins}")
-    print(f"Winrate: {wins / (matches - wins) * 100:.2f}%")
+    print(f"Winrate: {((wins / matches * 100) if matches != 0 else 0):.2f}%")
     print(f"ELO: {points}")
     if word_freq:
         print("Most used words:")

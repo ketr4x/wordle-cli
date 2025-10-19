@@ -1,0 +1,66 @@
+name: Update Data
+
+on:
+  push:
+    branches: [ "master" ]
+    paths:
+      - 'data.json'
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Extract version from data.json
+        id: data_version
+        run: |
+          VERSION=$(jq -r '.version' data.json)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+      
+      - name: Get latest commit message
+        id: commit_message
+        run: |
+          MESSAGE=$(git log -1 --pretty=%B)
+          echo "message<<EOF" >> $GITHUB_OUTPUT
+          echo "$MESSAGE" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+      
+      - name: Get current timestamp
+        id: timestamp
+        run: |
+          TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          echo "timestamp=$TIMESTAMP" >> $GITHUB_OUTPUT
+      
+      - name: Update Flutter pubspec.yaml version
+        run: |
+          VERSION="${{ steps.data_version.outputs.version }}"
+          sed -i "s/^version: .*/version: $VERSION+1/" flutter/pubspec.yaml
+      
+      - name: Update data.json with release notes and timestamp
+        run: |
+          python3 << 'EOF'
+          import json
+          
+          with open('data.json', 'r') as f:
+              data = json.load(f)
+          
+          data['release_notes'] = '''${{ steps.commit_message.outputs.message }}'''
+          data['published_at'] = '${{ steps.timestamp.outputs.timestamp }}'
+          
+          with open('data.json', 'w') as f:
+              json.dump(data, f, indent=2)
+          EOF
+      
+      - name: Set up git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+      
+      - name: Commit and push changes
+        run: |
+          git add flutter/pubspec.yaml data.json
+          git diff --staged --quiet || git commit -m "Update Flutter version to ${{ steps.data_version.outputs.version }} and add release info"
+          git push

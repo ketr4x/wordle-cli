@@ -165,7 +165,13 @@ def get_stats():
         'avg_time': stats.avg_time,
         'word_freq': stats.word_freq,
         'registered_on': stats.registered_on
-    }) # {"avg_time": float,"matches": number,"points": ELO,"registered_on":time and date,"username":username,"wins":number,"word_freq":{"word": numberofoccurences}}
+    })
+
+@app.route('/online/version')
+def get_version():
+    with open("data.json", "r", encoding="utf-8") as f:
+        loaded = json.load(f)
+    return loaded["version"]
 
 # ELO calculation system
 # You can customize it in config.json

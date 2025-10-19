@@ -6,10 +6,14 @@ from configuration import configuration
 from leaderboard import leaderboard
 
 def connection():
+    server_url = utils.read_config('server_url')
+    if not server_url:
+        print("Server URL not set. Set it up in the configuration.")
+        input("Press `Enter` to continue...")
     while True:
-        server_status = requests.get(f"{utils.read_config('server_url')}/server_check")
-        account_status = requests.get(f"{utils.read_config('server_url')}/online/auth_check?user={utils.read_config('username')}&auth={utils.read_config('password')}")
-        available_languages = requests.get(f"{utils.read_config('server_url')}/online/languages")
+        server_status = requests.get(f"{server_url}/server_check")
+        account_status = requests.get(f"{server_url}/online/auth_check?user={utils.read_config('username')}&auth={utils.read_config('password')}")
+        available_languages = requests.get(f"{server_url}/online/languages")
 
         language_status = {}
 
@@ -112,7 +116,10 @@ def game_online():
         server = input("Please enter your full server address (i.e., https://wordle.ketrax.ovh): ").strip()
 
         if server and not server.startswith(('http://', 'https://')):
-            server = 'http://' + server
+            if requests.get(f"https://{server}/server_check").status_code == 200:
+                server = 'https://' + server
+            else:
+                server = 'http://' + server
 
         try:
             response = requests.get(f"{server}/server_check", timeout=5)
@@ -137,6 +144,14 @@ def game_online():
             return None
     except requests.exceptions.RequestException as e:
         print(f"Cannot connect to server ({server}): {e}")
+        input("Press `Enter` to continue...")
+        return None
+
+    server_version = requests.get(f"{server}/online/version").text
+    with open("data.json", "r", encoding="utf-8") as f:
+        loaded = json.load(f)
+    if server_version != loaded["server_version"]:
+        print("Version mismatch. Update your client or notify the server owner.")
         input("Press `Enter` to continue...")
         return None
 

@@ -16,7 +16,7 @@
 - Download zip
 - Unpack the file
 - Install python and pip
-- Go to client/
+- `cd client`
 - `pip -m requirements.txt`
 - `python3 main.py`
 #### Downloading a binary

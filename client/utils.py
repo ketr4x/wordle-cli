@@ -92,3 +92,7 @@ def language_download(language):
 
 def clear_screen():
     os.system('cls' if os.name == 'nt' else 'clear')
+
+def read_data(param):
+    data = open('../data.json').read()
+    return json.loads(data)[param]

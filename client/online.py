@@ -10,6 +10,7 @@ def connection():
     if not server_url:
         print("Server URL not set. Set it up in the configuration.")
         input("Press `Enter` to continue...")
+        return
     while True:
         server_status = requests.get(f"{server_url}/server_check")
         account_status = requests.get(f"{server_url}/online/auth_check?user={utils.read_config('username')}&auth={utils.read_config('password')}")
@@ -36,7 +37,7 @@ def connection():
 
         choice = input("Press `Enter` to refresh or Q to quit: ").lower()
         if choice == "q":
-            break
+            return
 
 # Translates the data received from the server for strings with the formatted guesses
 def guess_decoder(guesses, formatted_guesses):
@@ -114,12 +115,14 @@ def game_online():
 
     while not server:
         server = input("Please enter your full server address (i.e., https://wordle.ketrax.ovh): ").strip()
-
-        if server and not server.startswith(('http://', 'https://')):
-            if requests.get(f"https://{server}/server_check").status_code == 200:
-                server = 'https://' + server
-            else:
-                server = 'http://' + server
+        try:
+            if server and not server.startswith(('http://', 'https://')):
+                if requests.get(f"https://{server}/server_check").status_code == 200:
+                    server = 'https://' + server
+                else:
+                    server = 'http://' + server
+        except requests.exceptions.RequestException:
+            server = None
 
         try:
             response = requests.get(f"{server}/server_check", timeout=5)

@@ -24,7 +24,7 @@ def game_ai():
     length, language = settings()
     word = get_ai_word(language)
     filtered = sorted(utils.wordlist(language))
-    game_status, guesses, formatted_guesses, letters = game(word, filtered, 6, language)
+    game_status, guesses, formatted_guesses, letters = game(word, 6, language)
 
     utils.clear_screen()
     if game_status == 2:

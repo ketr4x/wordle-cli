@@ -24,10 +24,11 @@
 - Select the `python` tag
 - Download the latest release for your platform
 - Run it
-### Flutter version
+### Flutter version [![Flutter](https://github.com/ketr4x/wordle-cli/actions/workflows/flutter.yml/badge.svg)](https://github.com/ketr4x/wordle-cli/actions/workflows/flutter.yml)
 #### App
-- Click releases
-- Download the latest file for your OS
+- Go to releases
+- Select the `Flutter` tag
+- Download the latest release for your platform
 - Install it
 - Set up your account and server (below)
 #### Website
@@ -42,7 +43,8 @@
 - `heroku local --port 5006 -f Procfile.windows` or `flask --app server/app.py run`
 ## Planned updates
 - [**Flutter**] timer fix
-- [**Flutter**] ranked mode improvements
+- [**Flutter**] ranked mode improvements and fixes
+- [**Website**] actual web game and website implementation
 - Release
 ## Contributing
 ### Language data
@@ -55,4 +57,3 @@ Copyright ketr4x, 2025. Licensed under BSD-3-Clause License.
 
 This project was made for the [Moonshot](https://moonshot.hack.club/1016) hackathon organized by HackClub.
 ![Hackatime Badge](https://hackatime-badge.hackclub.com/U08RQEP53HA/wordle-cli)
-[![Flutter](https://github.com/ketr4x/wordle-cli/actions/workflows/flutter.yml/badge.svg)](https://github.com/ketr4x/wordle-cli/actions/workflows/flutter.yml)

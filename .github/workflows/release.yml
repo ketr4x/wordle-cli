@@ -5,6 +5,28 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
+      - name: Install GitHub CLI
+        run: sudo apt-get install gh
+      - name: Check if build version is incremented
+        run: |
+          latest_release=$(gh release view --json tagName -q .tagName || echo "none")
+          current_version="${{ steps.version.outputs.version }}"
+          if [ "$latest_release" = "$current_version" ]; then
+            echo "Version has not been incremented."
+            exit 1
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Decode keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > ./flutter/android/app/my-release-key.jks
+      - name: Set signing env vars
+        run: |
+          echo "MYAPP_UPLOAD_STORE_FILE=./flutter/android/app/my-release-key.jks" >> $GITHUB_ENV
+          echo "MYAPP_UPLOAD_STORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> $GITHUB_ENV
+          echo "MYAPP_UPLOAD_KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> $GITHUB_ENV
+          echo "MYAPP_UPLOAD_KEY_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> $GITHUB_ENV 
+
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
         with:

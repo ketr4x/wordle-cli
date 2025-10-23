@@ -43,7 +43,8 @@
 - `heroku local --port 5006 -f Procfile.windows` or `flask --app server/app.py run`
 ## Planned updates
 - [**Flutter**] timer fix
-- [**Flutter**] ranked mode improvements and fixes
+- [**Flutter**] language pack download
+- [**Flutter**] (_online_) language pack verification (quick answer check)
 - [**Website**] actual web game and website implementation
 - Release
 ## Contributing

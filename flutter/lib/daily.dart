@@ -81,7 +81,7 @@ class DailyWordleController extends ChangeNotifier with WidgetsBindingObserver {
         LetterStatus currentStatus = letterStatuses[letter] ?? LetterStatus.absent;
         LetterStatus newStatus = statuses[i];
         if (newStatus == LetterStatus.correct ||
-            (newStatus == LetterStatus.present && currentStatus != LetterStatus.correct)) {
+          (newStatus == LetterStatus.present && currentStatus != LetterStatus.correct)) {
           letterStatuses[letter] = newStatus;
         } else if (currentStatus == LetterStatus.absent) {
           letterStatuses[letter] = newStatus;
@@ -143,8 +143,8 @@ class DailyWordleController extends ChangeNotifier with WidgetsBindingObserver {
       ticker.stop();
       shouldTick = false;
       resultMessage = guesses.last.toLowerCase() == answer!.toLowerCase()
-          ? 'You win!'
-          : 'You lose! Answer: ${answer!}';
+        ? 'You win!'
+        : 'You lose! Answer: ${answer!}';
     }
     notifyListeners();
     saveGameState();

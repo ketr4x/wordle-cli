@@ -124,7 +124,7 @@ class RankedWordleController extends ChangeNotifier with WidgetsBindingObserver 
         LetterStatus currentStatus = letterStatuses[letter] ?? LetterStatus.absent;
         LetterStatus newStatus = statuses[i];
         if (newStatus == LetterStatus.correct ||
-            (newStatus == LetterStatus.present && currentStatus != LetterStatus.correct)) {
+          (newStatus == LetterStatus.present && currentStatus != LetterStatus.correct)) {
           letterStatuses[letter] = newStatus;
         } else if (currentStatus == LetterStatus.absent) {
           letterStatuses[letter] = newStatus;
@@ -185,14 +185,14 @@ class RankedWordleController extends ChangeNotifier with WidgetsBindingObserver 
 
         final rawGuesses = (decoded['guesses'] as List<dynamic>?) ?? <dynamic>[];
         final normalizedGuesses = rawGuesses
-            .map((g) => (g?.toString() ?? '').trim().toLowerCase())
-            .where((s) => s.isNotEmpty)
-            .toList();
+          .map((g) => (g?.toString() ?? '').trim().toLowerCase())
+          .where((s) => s.isNotEmpty)
+          .toList();
 
         final rawFormatted = (decoded['formatted_guesses'] as List<dynamic>?) ?? <dynamic>[];
         final serverFormatted = rawFormatted
-            .map((r) => List<dynamic>.from(r as List<dynamic>))
-            .toList();
+          .map((r) => List<dynamic>.from(r as List<dynamic>))
+          .toList();
 
         if (kDebugMode) {
           print('Server guesses: $normalizedGuesses');
@@ -201,14 +201,14 @@ class RankedWordleController extends ChangeNotifier with WidgetsBindingObserver 
 
         guesses = normalizedGuesses;
         formattedGuesses = serverFormatted.map((row) =>
-            row.map((v) {
-              final intVal = (v as num).toInt();
-              return intVal == 2
-                  ? LetterStatus.correct
-                  : intVal == 1
-                  ? LetterStatus.present
-                  : LetterStatus.absent;
-            }).toList()
+          row.map((v) {
+            final intVal = (v as num).toInt();
+            return intVal == 2
+              ? LetterStatus.correct
+              : intVal == 1
+              ? LetterStatus.present
+              : LetterStatus.absent;
+          }).toList()
         ).toList();
 
         guessNumber = (decoded['guess_number'] as num).toInt();
@@ -225,8 +225,8 @@ class RankedWordleController extends ChangeNotifier with WidgetsBindingObserver 
           final wordResp = await http.get(Uri.parse('$serverUrl/online/word?user=$user&auth=$auth'));
           answer = wordResp.statusCode == 200 ? wordResp.body.trim() : null;
           resultMessage = (gameStatus == 2)
-              ? 'Congratulations! You won in $guessNumber guesses!\nTime: $gameTime s'
-              : 'You lost! The word was: ${answer ?? "?"}';
+            ? 'Congratulations! You won in $guessNumber guesses!\nTime: $gameTime s'
+            : 'You lost! The word was: ${answer?.toUpperCase() ?? "?"}';
         }
       } else {
         errorMessage = 'Error: ${resp.body}';

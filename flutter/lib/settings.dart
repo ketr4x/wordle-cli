@@ -166,20 +166,20 @@ class _SettingsPageState extends State<SettingsPage> {
             )
           ),
           ListTile(
-              title: const Text('Server URL'),
-              trailing: SizedBox(
-                width: 200,
-                child: TextField(
-                  controller: _serverUrlController,
-                  focusNode: _serverUrlFocusNode,
-                  decoration: InputDecoration(
-                    hintText: _serverUrl.isNotEmpty ? _serverUrl : 'like wordle.ketrax.ovh',
-                  ),
-                    onChanged: (value) {
-                      _serverUrl = value;
-                    }
+            title: const Text('Server URL'),
+            trailing: SizedBox(
+              width: 200,
+              child: TextField(
+                controller: _serverUrlController,
+                focusNode: _serverUrlFocusNode,
+                decoration: InputDecoration(
+                  hintText: _serverUrl.isNotEmpty ? _serverUrl : 'like wordle.ketrax.ovh',
                 ),
-              )
+                  onChanged: (value) {
+                    _serverUrl = value;
+                  }
+              ),
+            )
           ),
           ListTile(
             title: const Text('About'),
@@ -195,7 +195,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   height: 48,
                 ),*/
                 applicationLegalese: 'Copyright ketr4x, 2025. '
-                    '\nLicensed under BSD-3-Clause License.',
+                  '\nLicensed under BSD-3-Clause License.',
               );
             },
           ),

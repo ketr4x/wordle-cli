@@ -143,8 +143,8 @@ class RandomWordleController extends ChangeNotifier with WidgetsBindingObserver 
       ticker.stop();
       shouldTick = false;
       resultMessage = guesses.last.toLowerCase() == answer!.toLowerCase()
-          ? 'You win!'
-          : 'You lose! Answer: ${answer!}';
+        ? 'You win!'
+        : 'You lose! Answer: ${answer!}';
     }
     notifyListeners();
     saveGameState();

@@ -190,38 +190,38 @@ class _ConnectivityPageState extends State<ConnectivityPage> {
                 return IconButton(
                   icon: Icon(
                     provider.connectionState == HttpStatus.ok
-                        ? Icons.cloud_done
-                        : Icons.cloud_off,
+                      ? Icons.cloud_done
+                      : Icons.cloud_off,
                     color: provider.connectionState == HttpStatus.ok
-                        ? Colors.green
-                        : Colors.red,
+                      ? Colors.green
+                      : Colors.red,
                   ),
                   onPressed: () {
                     showDialog(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: const Text('Server Status'),
-                          content: Text(
-                              provider.connectionState == HttpStatus.ok
-                                  ? 'Connected to server successfully.'
-                                  : provider.connectionState == HttpStatus.notFound
-                                  ? 'Server URL not configured.'
-                                  : 'Failed to connect to server. Please check your server URL and internet connection.'
-                          ),
-                          actions: [
-                            if (provider.connectionState != HttpStatus.ok)
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsPage()));
-                                },
-                                child: const Text('Settings'),
-                              ),
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Server Status'),
+                        content: Text(
+                          provider.connectionState == HttpStatus.ok
+                            ? 'Connected to server successfully.'
+                            : provider.connectionState == HttpStatus.notFound
+                            ? 'Server URL not configured.'
+                            : 'Failed to connect to server. Please check your server URL and internet connection.'
+                        ),
+                        actions: [
+                          if (provider.connectionState != HttpStatus.ok)
                             TextButton(
-                              onPressed: () => Navigator.pop(context),
-                              child: const Text('OK'),
+                              onPressed: () {
+                                Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsPage()));
+                              },
+                              child: const Text('Settings'),
                             ),
-                          ],
-                        )
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('OK'),
+                          ),
+                        ],
+                      )
                     );
                   },
                 );
@@ -236,58 +236,58 @@ class _ConnectivityPageState extends State<ConnectivityPage> {
                 return IconButton(
                   icon: Icon(
                     provider.connectionState == HttpStatus.ok
-                        ? Icons.cloud_done
-                        : connection.connectionState == HttpStatus.ok && provider.connectionState == HttpStatus.notFound
-                        ? Icons.manage_accounts
-                        : connection.connectionState == HttpStatus.ok && provider.connectionState == HttpStatus.unauthorized
-                        ? Icons.login
-                        : Icons.cloud_off,
+                      ? Icons.cloud_done
+                      : connection.connectionState == HttpStatus.ok && provider.connectionState == HttpStatus.notFound
+                      ? Icons.manage_accounts
+                      : connection.connectionState == HttpStatus.ok && provider.connectionState == HttpStatus.unauthorized
+                      ? Icons.login
+                      : Icons.cloud_off,
                     color: provider.connectionState == HttpStatus.ok
-                        ? Colors.green
-                        : connection.connectionState == HttpStatus.ok && (provider.connectionState == HttpStatus.notFound || provider.connectionState == HttpStatus.unauthorized)
-                        ? Colors.orange
-                        : Colors.red,
+                      ? Colors.green
+                      : connection.connectionState == HttpStatus.ok && (provider.connectionState == HttpStatus.notFound || provider.connectionState == HttpStatus.unauthorized)
+                      ? Colors.orange
+                      : Colors.red,
                   ),
                   onPressed: () {
                     showDialog(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: const Text('Account Status'),
-                          content: Text(
-                              provider.connectionState == HttpStatus.ok
-                                  ? 'Logged in successfully.'
-                                  : connection.connectionState == HttpStatus.ok && provider.connectionState == HttpStatus.notFound
-                                  ? 'Account not found. Please check your username or create a new account.'
-                                  : connection.connectionState == HttpStatus.ok && provider.connectionState == HttpStatus.unauthorized
-                                  ? 'Unauthorized. Please check your password.'
-                                  : 'Failed to connect to server. Please check your server URL and internet connection.'
-                          ),
-                          actions: [
-                            if (provider.connectionState == HttpStatus.notFound && connection.connectionState == HttpStatus.ok)
-                              TextButton(
-                                onPressed: () async {
-                                  Navigator.pop(context);
-                                  final connProvider = Provider.of<ConnectionStateProvider>(context, listen: false);
-                                  final accProvider = Provider.of<AccountStateProvider>(context, listen: false);
-                                  final server = await getConfig("server_url");
-                                  final user = await getConfig("username");
-                                  final pass = await getConfig("password");
-                                  await createAccountUI(
-                                    server != null && server.isNotEmpty ? server : _serverUrl,
-                                    user != null && user.isNotEmpty ? user : _username,
-                                    pass != null && pass.isNotEmpty ? pass : _password
-                                  );
-                                  connProvider.forceCheck();
-                                  accProvider.forceCheck();
-                                },
-                                child: const Text('Create account'),
-                              ),
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Account Status'),
+                        content: Text(
+                          provider.connectionState == HttpStatus.ok
+                            ? 'Logged in successfully.'
+                            : connection.connectionState == HttpStatus.ok && provider.connectionState == HttpStatus.notFound
+                            ? 'Account not found. Please check your username or create a new account.'
+                            : connection.connectionState == HttpStatus.ok && provider.connectionState == HttpStatus.unauthorized
+                            ? 'Unauthorized. Please check your password.'
+                            : 'Failed to connect to server. Please check your server URL and internet connection.'
+                        ),
+                        actions: [
+                          if (provider.connectionState == HttpStatus.notFound && connection.connectionState == HttpStatus.ok)
                             TextButton(
-                              onPressed: () => Navigator.pop(context),
-                              child: const Text('OK'),
+                              onPressed: () async {
+                                Navigator.pop(context);
+                                final connProvider = Provider.of<ConnectionStateProvider>(context, listen: false);
+                                final accProvider = Provider.of<AccountStateProvider>(context, listen: false);
+                                final server = await getConfig("server_url");
+                                final user = await getConfig("username");
+                                final pass = await getConfig("password");
+                                await createAccountUI(
+                                  server != null && server.isNotEmpty ? server : _serverUrl,
+                                  user != null && user.isNotEmpty ? user : _username,
+                                  pass != null && pass.isNotEmpty ? pass : _password
+                                );
+                                connProvider.forceCheck();
+                                accProvider.forceCheck();
+                              },
+                              child: const Text('Create account'),
                             ),
-                          ],
-                        )
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('OK'),
+                          ),
+                        ],
+                      )
                     );
                   },
                 );
@@ -315,40 +315,40 @@ class _ConnectivityPageState extends State<ConnectivityPage> {
                     final status = data['status'] as String? ?? 'error';
 
                     final Widget iconWidget = _loadingLanguagesPressed
-                        ? const SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                        : Icon(
-                      status == 'all_ok'
-                          ? Icons.cloud_done
-                          : status == 'some_problem'
-                          ? Icons.file_download
-                          : status == 'loading'
-                          ? Icons.hourglass_bottom
-                          : Icons.cloud_off,
-                      color: status == 'all_ok'
-                          ? Colors.green
-                          : status == 'some_problem'
-                          ? Colors.orange
-                          : status == 'loading'
-                          ? Colors.grey
-                          : Colors.red,
-                    );
+                      ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                      : Icon(
+                        status == 'all_ok'
+                            ? Icons.cloud_done
+                            : status == 'some_problem'
+                            ? Icons.file_download
+                            : status == 'loading'
+                            ? Icons.hourglass_bottom
+                            : Icons.cloud_off,
+                        color: status == 'all_ok'
+                            ? Colors.green
+                            : status == 'some_problem'
+                            ? Colors.orange
+                            : status == 'loading'
+                            ? Colors.grey
+                            : Colors.red,
+                      );
 
                     return IconButton(
                       icon: iconWidget,
                       onPressed: _loadingLanguagesPressed
-                          ? null
-                          : () async {
+                        ? null
+                        : () async {
                         if (connProvider.connectionState != HttpStatus.ok) {
                           showDialog(
                             context: context,
                             builder: (context) => AlertDialog(
                               title: const Text('Languages'),
                               content: const Text(
-                                  'Failed to connect to server. Please check your server URL and internet connection.'),
+                                'Failed to connect to server. Please check your server URL and internet connection.'),
                               actions: [
                                 TextButton(
                                   onPressed: () => Navigator.pop(context),

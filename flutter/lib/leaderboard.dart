@@ -130,68 +130,68 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
     return Scaffold(
       appBar: buildAppBar(context, "Leaderboard"),
       body: loading
-          ? const Center(child: CircularProgressIndicator())
-          : error != null
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(error!),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: fetchLeaderboard,
-                        child: const Text('Retry'),
-                      ),
-                    ],
-                  ),
-                )
-              : leaderboardData == null
-                  ? const Center(child: Text('No data available'))
-                  : RefreshIndicator(
-                      onRefresh: fetchLeaderboard,
-                      child: SingleChildScrollView(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          children: [
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                buildLeaderboardColumn('ELO', '📊', leaderboardData!.topPoints, 'points', null),
-                                const SizedBox(width: 8),
-                                buildLeaderboardColumn('MATCHES', '🎮', leaderboardData!.topMatches, 'matches', null),
-                              ],
-                            ),
-                            const SizedBox(height: 24),
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                buildLeaderboardColumn('AVG TIME', '⚡', leaderboardData!.topAvgTime, 'avg_time', 's'),
-                                const SizedBox(width: 8),
-                                buildLeaderboardColumn('WINRATE', '🎯', leaderboardData!.topWinrate, 'winrate', '%'),
-                              ],
-                            ),
-                            const SizedBox(height: 24),
-                            Card(
-                              child: Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text('Your Rankings', style: Theme.of(context).textTheme.titleMedium),
-                                    const SizedBox(height: 8),
-                                    Text('ELO: ${leaderboardData!.userPosition['points'] != null ? '#${leaderboardData!.userPosition['points']}' : 'N/A'}'),
-                                    Text('Matches: ${leaderboardData!.userPosition['matches'] != null ? '#${leaderboardData!.userPosition['matches']}' : 'N/A'}'),
-                                    Text('Avg Time: ${leaderboardData!.userPosition['avg_time'] != null ? '#${leaderboardData!.userPosition['avg_time']}' : 'N/A'}'),
-                                    Text('Winrate: ${leaderboardData!.userPosition['winrate'] != null ? '#${leaderboardData!.userPosition['winrate']}' : 'N/A'}'),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+        ? const Center(child: CircularProgressIndicator())
+        : error != null
+        ? Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(error!),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: fetchLeaderboard,
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        )
+        : leaderboardData == null
+        ? const Center(child: Text('No data available'))
+        : RefreshIndicator(
+          onRefresh: fetchLeaderboard,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    buildLeaderboardColumn('ELO', '📊', leaderboardData!.topPoints, 'points', null),
+                    const SizedBox(width: 8),
+                    buildLeaderboardColumn('MATCHES', '🎮', leaderboardData!.topMatches, 'matches', null),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    buildLeaderboardColumn('AVG TIME', '⚡', leaderboardData!.topAvgTime, 'avg_time', 's'),
+                    const SizedBox(width: 8),
+                    buildLeaderboardColumn('WINRATE', '🎯', leaderboardData!.topWinrate, 'winrate', '%'),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Your Rankings', style: Theme.of(context).textTheme.titleMedium),
+                        const SizedBox(height: 8),
+                        Text('ELO: ${leaderboardData!.userPosition['points'] != null ? '#${leaderboardData!.userPosition['points']}' : 'N/A'}'),
+                        Text('Matches: ${leaderboardData!.userPosition['matches'] != null ? '#${leaderboardData!.userPosition['matches']}' : 'N/A'}'),
+                        Text('Avg Time: ${leaderboardData!.userPosition['avg_time'] != null ? '#${leaderboardData!.userPosition['avg_time']}' : 'N/A'}'),
+                        Text('Winrate: ${leaderboardData!.userPosition['winrate'] != null ? '#${leaderboardData!.userPosition['winrate']}' : 'N/A'}'),
+                      ],
                     ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       bottomNavigationBar: buildBottomNavigationBar(
         context,
         currentIndex: _selectedIndex,

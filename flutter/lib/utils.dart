@@ -20,6 +20,18 @@ import 'package:crypto/crypto.dart';
 
 enum GameMode { random, daily, ranked }
 
+extension StringCasingExtension on String {
+  String capitalize() {
+    if (isEmpty) return this;
+    return substring(0, 1).toUpperCase() + substring(1);
+  }
+
+  String toTitleCase() {
+    if (isEmpty) return this;
+    return split(' ').map((word) => word.capitalize()).join(' ');
+  }
+}
+
 void showErrorToast(String message) {
   Fluttertoast.showToast(
     msg: message,
@@ -60,7 +72,7 @@ Future<List<String>> getLanguagePacks([bool online = false]) async {
     }
     final url = '$serverUrl/online/languages';
     try {
-      final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 5));
+      final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 7));
       if (response.statusCode == 200) {
         final body = response.body.trim();
         if (body.startsWith('[')) {
@@ -122,7 +134,7 @@ Future<String> checkOnlineLanguagePack(String languageCode) async {
     }
 
     final url = '$serverUrl/online/languages/checksum?language=$languageCode';
-    final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 5));
+    final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 7));
 
     if (response.statusCode != 200) {
       if (response.statusCode == 400) {
@@ -199,7 +211,7 @@ Future<String> downloadLanguagePack(String languageCode) async {
     final bytes = await file.readAsBytes();
     final localChecksum = sha256.convert(bytes).toString();
     final url2 = '$serverUrl/online/languages/checksum?language=$languageCode';
-    final response2 = await http.get(Uri.parse(url2)).timeout(const Duration(seconds: 5));
+    final response2 = await http.get(Uri.parse(url2)).timeout(const Duration(seconds: 7));
 
     if (response2.statusCode != 200) {
       return "Downloaded - checksum check failed: server responded ${response2.statusCode}";
@@ -359,6 +371,41 @@ class AccountStateProvider extends ChangeNotifier {
   }
 }
 
+class LanguageStateProvider extends ChangeNotifier {
+  String _status = 'error';
+  Timer? _timer;
+  String get status => _status;
+
+  LanguageStateProvider() {
+    _startPeriodicCheck();
+  }
+
+  void _startPeriodicCheck() {
+    _timer = Timer.periodic(const Duration(seconds: 30), (timer) {
+      _checkStatus();
+    });
+  }
+
+  Future<void> _checkStatus() async {
+    final data = await checkLanguagesForServer();
+    final newStatus = data['status'] as String? ?? 'error';
+    if (_status != newStatus) {
+      _status = newStatus;
+      notifyListeners();
+    }
+  }
+
+  Future<void> forceCheck() async {
+    await _checkStatus();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+}
+
 Future<int> createAccount(String serverUrl, String user, String auth) async {
   final url = '$serverUrl/online/create_user?user=$user&auth=$auth';
   final response = await http.get(Uri.parse(url));
@@ -420,48 +467,41 @@ AppBar buildAppBar(BuildContext context, String title) {
     backgroundColor: Theme.of(context).colorScheme.inversePrimary,
     title: Text(title),
     actions: [
-      Consumer2<ConnectionStateProvider, AccountStateProvider>(
-        builder: (context, connProvider, accProvider, child) {
-          return FutureBuilder<Map<String, dynamic>>(
-            future: checkLanguagesForServer(),
-            builder: (context, snapshot) {
-              final data = snapshot.data ?? {};
-              final langStatus = data['status'] as String? ?? 'error';
+      Consumer3<ConnectionStateProvider, AccountStateProvider, LanguageStateProvider>(
+        builder: (context, connProvider, accProvider, langProvider, child) {
+          final langStatus = langProvider.status;
+          IconData iconData;
+          Color iconColor;
 
-              IconData iconData;
-              Color iconColor;
+          if (connProvider.connectionState == HttpStatus.ok &&
+              accProvider.connectionState == HttpStatus.ok &&
+              langStatus == 'all_ok') {
+            iconData = Icons.cloud_done;
+            iconColor = Colors.green;
+          } else if (connProvider.connectionState == HttpStatus.ok &&
+              accProvider.connectionState == HttpStatus.ok &&
+              langStatus == 'some_problem') {
+            iconData = Icons.file_download_off;
+            iconColor = Colors.orange;
+          } else if (connProvider.connectionState == HttpStatus.ok &&
+              accProvider.connectionState == HttpStatus.notFound) {
+            iconData = Icons.manage_accounts;
+            iconColor = Colors.orange;
+          } else if (connProvider.connectionState == HttpStatus.ok &&
+              accProvider.connectionState == HttpStatus.unauthorized) {
+            iconData = Icons.login;
+            iconColor = Colors.orange;
+          } else {
+            iconData = Icons.cloud_off;
+            iconColor = Colors.red;
+          }
 
-              if (connProvider.connectionState == HttpStatus.ok &&
-                  accProvider.connectionState == HttpStatus.ok &&
-                  langStatus == 'all_ok') {
-                iconData = Icons.cloud_done;
-                iconColor = Colors.green;
-              } else if (connProvider.connectionState == HttpStatus.ok &&
-                  accProvider.connectionState == HttpStatus.ok &&
-                  langStatus == 'some_problem') {
-                iconData = Icons.file_download_off;
-                iconColor = Colors.orange;
-              } else if (connProvider.connectionState == HttpStatus.ok &&
-                  accProvider.connectionState == HttpStatus.notFound) {
-                iconData = Icons.manage_accounts;
-                iconColor = Colors.orange;
-              } else if (connProvider.connectionState == HttpStatus.ok &&
-                  accProvider.connectionState == HttpStatus.unauthorized) {
-                iconData = Icons.login;
-                iconColor = Colors.orange;
-              } else {
-                iconData = Icons.cloud_off;
-                iconColor = Colors.red;
-              }
-
-              return IconButton(
-                icon: Icon(iconData, color: iconColor),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const ConnectivityPage()),
-                  );
-                },
+          return IconButton(
+            icon: Icon(iconData, color: iconColor),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ConnectivityPage()),
               );
             },
           );
@@ -486,57 +526,57 @@ BottomNavigationBar buildBottomNavigationBar(
     }
     ) {
   return BottomNavigationBar(
-      type: BottomNavigationBarType.fixed,
-      currentIndex: currentIndex,
-      onTap: (index) {
-        Widget page;
-        switch (index) {
-          case 0:
-            page = RandomPage();
-            break;
-          case 1:
-            page = DailyPage();
-            break;
-          case 2:
-            page = RankedPage();
-            break;
-          case 3:
-            page = LeaderboardPage();
-            break;
-          case 4:
-            page = StatsPage();
-            break;
-          default:
-            return;
-        }
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => page),
-        );
-      },
-      backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-      items: const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.shuffle),
-          label: 'Random',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.calendar_today),
-          label: 'Daily',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.star),
-          label: 'Ranked',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.leaderboard),
-          label: 'Leaderboard',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.query_stats),
-          label: 'Stats',
-        ),
-      ]
+    type: BottomNavigationBarType.fixed,
+    currentIndex: currentIndex,
+    onTap: (index) {
+      Widget page;
+      switch (index) {
+        case 0:
+          page = RandomPage();
+          break;
+        case 1:
+          page = DailyPage();
+          break;
+        case 2:
+          page = RankedPage();
+          break;
+        case 3:
+          page = LeaderboardPage();
+          break;
+        case 4:
+          page = StatsPage();
+          break;
+        default:
+          return;
+      }
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => page),
+      );
+    },
+    backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+    items: const [
+      BottomNavigationBarItem(
+        icon: Icon(Icons.shuffle),
+        label: 'Random',
+      ),
+      BottomNavigationBarItem(
+        icon: Icon(Icons.calendar_today),
+        label: 'Daily',
+      ),
+      BottomNavigationBarItem(
+        icon: Icon(Icons.star),
+        label: 'Ranked',
+      ),
+      BottomNavigationBarItem(
+        icon: Icon(Icons.leaderboard),
+        label: 'Leaderboard',
+      ),
+      BottomNavigationBarItem(
+        icon: Icon(Icons.query_stats),
+        label: 'Stats',
+      ),
+    ]
   );
 }
 
@@ -749,26 +789,42 @@ Widget buildGame({
   }
 
   bool isNewDay = true;
+  DateTime? startTime;
   if (mode == GameMode.daily && elapsed != null && elapsed > Duration.zero) {
     final now = DateTime.now();
-    final startTime = now.subtract(elapsed);
+    startTime = now.subtract(elapsed);
     isNewDay = now.day != startTime.day ||
                now.month != startTime.month ||
                now.year != startTime.year;
+  } else if (mode == GameMode.daily) {
+    startTime = DateTime.now();
+    isNewDay = true;
   }
 
   return Padding(
-    padding: const EdgeInsets.fromLTRB(10, 25, 10, 8),
+    padding: const EdgeInsets.all(8),
     child: SingleChildScrollView(
       child: Column(
         children: [
+          if (mode == GameMode.daily)
+            Padding(
+              padding: const EdgeInsets.all(8),
+              child: Text(
+                'Wordle for ${startTime?.toLocal().toIso8601String().split('T').first}',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: Theme.of(context).colorScheme.primary
+                )
+              ),
+            ),
           Column(
             mainAxisAlignment: MainAxisAlignment.start,
             children: List.generate(6, (index) {
               if (index < guesses.length) {
                 final statuses = (formattedGuesses != null && index < formattedGuesses.length)
-                    ? formattedGuesses[index]
-                    : (answer != null) ? checkGuess(guesses[index], answer) : null;
+                  ? formattedGuesses[index]
+                  : (answer != null) ? checkGuess(guesses[index], answer) : null;
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 6),
                   child: WordleLetterBoxes(
@@ -812,12 +868,12 @@ Widget buildGame({
                   child: ElevatedButton(
                     onPressed: (mode == GameMode.daily)
                       ? () {
-                          if (isNewDay) {
-                            if (onNewGame != null) onNewGame();
-                          } else {
-                            showDailyLimitToast();
-                          }
+                        if (isNewDay) {
+                          if (onNewGame != null) onNewGame();
+                        } else {
+                          showDailyLimitToast();
                         }
+                      }
                       : onNewGame,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Theme.of(context).colorScheme.primary,
@@ -884,7 +940,7 @@ Future<int> checkConnectionState(String? serverUrl) async {
     }
 
     final url = '$serverUrl/server_check';
-    final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 5));
+    final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 7));
 
     if (response.statusCode == 200) {
       return HttpStatus.ok;
@@ -904,7 +960,7 @@ Future<int> checkAccountState() async {
     }
 
     final url = '$serverUrl/online/auth_check?user=${await getConfig("username")}&auth=${await getConfig("password")}';
-    final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 5));
+    final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 7));
 
     if (response.statusCode == 200) {
       return HttpStatus.ok;

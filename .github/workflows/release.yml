@@ -25,7 +25,7 @@ jobs:
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > ./flutter/android/app/upload-keystore.jks
       - name: Set signing env vars
         run: |
-          echo "MYAPP_UPLOAD_STORE_FILE=upload-keystore.jks" >> $GITHUB_ENV
+          echo "MYAPP_UPLOAD_STORE_FILE=./flutter/android/app/upload-keystore.jks" >> $GITHUB_ENV
           echo "MYAPP_UPLOAD_STORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> $GITHUB_ENV
           echo "MYAPP_UPLOAD_KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> $GITHUB_ENV
           echo "MYAPP_UPLOAD_KEY_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> $GITHUB_ENV

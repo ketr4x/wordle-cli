@@ -5,6 +5,7 @@ on:
     branches: [ "master" ]
     paths:
       - 'data.json'
+  workflow_dispatch:
 
 jobs:
   update-data:

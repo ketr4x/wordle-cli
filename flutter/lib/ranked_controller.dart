@@ -79,37 +79,43 @@ class RankedWordleController extends ChangeNotifier with WidgetsBindingObserver 
     final letters = pack['letters'] as List<dynamic>;
     keyboardLayout = letters.cast<String>();
 
-    try {
-      final url = '$serverUrl/online/start?user=$user&auth=$auth&language=$lang';
-      final resp = await http.get(Uri.parse(url));
-      if (resp.statusCode != 200) {
-        errorMessage = "Invalid details. Please try again in a minute.";
+    if (serverUrl == null) {
+      errorMessage = "Server URL is not set. Change the settings.";
+      loading = false;
+      notifyListeners();
+    } else {
+      try {
+        final url = '$serverUrl/online/start?user=$user&auth=$auth&language=$lang';
+        final resp = await http.get(Uri.parse(url));
+        if (resp.statusCode != 200) {
+          errorMessage = "Invalid details. Please try again in a minute.";
+          loading = false;
+          notifyListeners();
+          return;
+        }
+        guesses.clear();
+        formattedGuesses.clear();
+        currentGuess = '';
+        letterStatuses.clear();
+        gameOver = false;
+        resultMessage = null;
+        errorMessage = null;
+        startTime = DateTime.now();
+        elapsed = Duration.zero;
+        shouldTick = true;
+        guessNumber = 0;
+        gameStatus = 1;
+        gameTime = 0;
+        answer = null;
+        ticker.stop();
+        ticker.start();
         loading = false;
         notifyListeners();
-        return;
+      } catch (e) {
+        errorMessage = "Failed to start game: $e";
+        loading = false;
+        notifyListeners();
       }
-      guesses.clear();
-      formattedGuesses.clear();
-      currentGuess = '';
-      letterStatuses.clear();
-      gameOver = false;
-      resultMessage = null;
-      errorMessage = null;
-      startTime = DateTime.now();
-      elapsed = Duration.zero;
-      shouldTick = true;
-      guessNumber = 0;
-      gameStatus = 1;
-      gameTime = 0;
-      answer = null;
-      ticker.stop();
-      ticker.start();
-      loading = false;
-      notifyListeners();
-    } catch (e) {
-      errorMessage = "Failed to start game: $e";
-      loading = false;
-      notifyListeners();
     }
   }
 

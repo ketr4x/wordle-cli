@@ -7,7 +7,7 @@
 - File synchronization
 - Statistics
 - Leaderboards
-- A flutter version for all platforms
+- A Flutter version for all platforms
 
 ## Installation
 ### Python CLI
@@ -45,11 +45,12 @@
 - [**Flutter**] timer fix
 - [**Flutter**] language pack download
 - [**Flutter**] (_online_) language pack verification (quick answer check)
+- [**Flutter**] ai mode
 - [**Website**] actual web game and website implementation
-- Release
+- Python and web releases
 ## Contributing
 ### Language data
-If you want to provide the wordlist, make a lang.json file (lang being the language code).
+If you want to provide the wordlist, make a lang.json file in data/ (lang being the language code).
 Template: `{"solutions": [(list the wordle answers)], "wordlist": [(list all possible words)], "letters": [(list the letters here)]}`
 ### Other contributions
 You can make a pull request, and I will happily merge it.

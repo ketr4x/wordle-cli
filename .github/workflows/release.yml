@@ -1,0 +1,32 @@
+name: Flutter Release
+on: workflow_dispatch
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release' && github.event.action == 'published' && startsWith(github.ref, 'refs/tags/Flutter')
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+      - name: Install dependencies
+        run: flutter pub get
+        working-directory: ./flutter/
+      - name: Build APK
+        run: flutter build apk --release
+        working-directory: ./flutter/
+      - name: Get version from data.json
+        id: version
+        run: echo "version=$(jq -r .version ./flutter/data.json)" >> $GITHUB_OUTPUT
+      - name: Get latest commit message not from GitHub Actions
+        id: commit
+        run: |
+          git log --no-merges --pretty=format:"%s" -n 20 | grep -v 'github-actions' | head -n 1 > commit_message.txt
+          echo "message=$(cat commit_message.txt)" >> $GITHUB_OUTPUT
+      - name: Upload APK to release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: ./flutter/build/app/outputs/flutter-apk/app-release.apk
+          name: "[Flutter] ${{ steps.version.outputs.version }}"
+          body: "${{ steps.commit.outputs.message }}"

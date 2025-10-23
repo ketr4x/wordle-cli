@@ -412,8 +412,6 @@ class _ConnectivityPageState extends State<ConnectivityPage> {
                                     children: [
                                       const Text('The following languages are missing or invalid:'),
                                       const SizedBox(height: 8),
-                                      Text(problematic.join(', ')),
-                                      const SizedBox(height: 8),
                                       Text(problematic.map((l) => '$l: ${details[l]}').join('\n')),
                                     ],
                                   ),

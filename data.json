@@ -3,6 +3,6 @@
   "update_url": "https://raw.githubusercontent.com/ketr4x/wordle-cli/master/data.json",
   "repo": "https://github.com/ketr4x/wordle-cli.git",
   "version": "1.1.3",
-  "release_notes": "Add GitHub CLI installation and version check to release workflow; configure signing environment variables",
-  "published_at": "2025-10-23T21:30:16Z"
+  "release_notes": "Refactor dialog handling and improve language pack retrieval",
+  "published_at": "2025-10-24T19:33:03Z"
 }

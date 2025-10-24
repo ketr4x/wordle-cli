@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'connectivity.dart';
 import 'utils.dart';
 import 'ranked_controller.dart';
 
@@ -44,6 +45,7 @@ class _WordleGameViewState extends State<WordleGameView> {
   @override
   Widget build(BuildContext context) {
     final c = widget.controller;
+    final List<String> resultList = c.resultMessage?.split('\n') ?? <String>[];
     return Scaffold(
       appBar: buildAppBar(context, widget.title),
       body: KeyboardListener(
@@ -72,14 +74,21 @@ class _WordleGameViewState extends State<WordleGameView> {
                 ),
               ),
               if (c.resultMessage != null)
-                Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: Text(
-                    c.resultMessage!,
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Column(
+                      children: [
+                        for (final resultMessage in resultList)
+                          Text(
+                            resultMessage,
+                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.normal),
+                          ),
+                      ],
+                    ),
                   ),
                 ),
-              if (c.errorMessage != null)
+              if (c.errorMessage != null) ...[
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Text(
@@ -87,6 +96,42 @@ class _WordleGameViewState extends State<WordleGameView> {
                     style: const TextStyle(fontSize: 16, color: Colors.red),
                   ),
                 ),
+                if (c.errorMessage == 'Language pack invalid.' || c.errorMessage == 'File does not exist.') ...[
+                  Builder(
+                    builder: (context) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        showAdaptiveDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Invalid language pack'),
+                            content: Text('The local language pack differs from the server one. Download it or change the server.'),
+                            actions: [
+                              TextButton(
+                                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ConnectivityPage())),
+                                  child: const Text('Download')
+                              ),
+                              TextButton(
+                                  onPressed: () => Navigator.of(context).pop(),
+                                  child: const Text('OK')
+                              )
+                            ],
+                          )
+                        );
+                      });
+                      return const SizedBox.shrink();
+                    }
+                  )
+                ] else ...[
+                  Builder(
+                    builder: (context) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        showErrorToast(c.errorMessage!);
+                      });
+                      return const SizedBox.shrink();
+                    },
+                  ),
+                ],
+              ],
               if (c.loading)
                 const Padding(
                   padding: EdgeInsets.all(8.0),

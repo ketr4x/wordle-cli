@@ -197,7 +197,7 @@ class _ConnectivityPageState extends State<ConnectivityPage> {
                       : Colors.red,
                   ),
                   onPressed: () {
-                    showDialog(
+                    showAdaptiveDialog(
                       context: context,
                       builder: (context) => AlertDialog(
                         title: const Text('Server Status'),
@@ -248,8 +248,10 @@ class _ConnectivityPageState extends State<ConnectivityPage> {
                       ? Colors.orange
                       : Colors.red,
                   ),
-                  onPressed: () {
-                    showDialog(
+                  onPressed: () async {
+                    final usernameConfig = await getConfig("username");
+                    final isUsernameEmpty = (usernameConfig ?? '') == '';
+                    showAdaptiveDialog(
                       context: context,
                       builder: (context) => AlertDialog(
                         title: const Text('Account Status'),
@@ -264,24 +266,32 @@ class _ConnectivityPageState extends State<ConnectivityPage> {
                         ),
                         actions: [
                           if (provider.connectionState == HttpStatus.notFound && connection.connectionState == HttpStatus.ok)
-                            TextButton(
-                              onPressed: () async {
-                                Navigator.pop(context);
-                                final connProvider = Provider.of<ConnectionStateProvider>(context, listen: false);
-                                final accProvider = Provider.of<AccountStateProvider>(context, listen: false);
-                                final server = await getConfig("server_url");
-                                final user = await getConfig("username");
-                                final pass = await getConfig("password");
-                                await createAccountUI(
-                                  server != null && server.isNotEmpty ? server : _serverUrl,
-                                  user != null && user.isNotEmpty ? user : _username,
-                                  pass != null && pass.isNotEmpty ? pass : _password
-                                );
-                                connProvider.forceCheck();
-                                accProvider.forceCheck();
-                              },
-                              child: const Text('Create account'),
-                            ),
+                            if (!isUsernameEmpty)
+                              TextButton(
+                                onPressed: () async {
+                                  Navigator.pop(context);
+                                  final connProvider = Provider.of<ConnectionStateProvider>(context, listen: false);
+                                  final accProvider = Provider.of<AccountStateProvider>(context, listen: false);
+                                  final server = await getConfig("server_url");
+                                  final user = await getConfig("username");
+                                  final pass = await getConfig("password");
+                                  await createAccountUI(
+                                    server != null && server.isNotEmpty ? server : _serverUrl,
+                                    user != null && user.isNotEmpty ? user : _username,
+                                    pass != null && pass.isNotEmpty ? pass : _password
+                                  );
+                                  connProvider.forceCheck();
+                                  accProvider.forceCheck();
+                                },
+                                child: const Text('Create account'),
+                              ),
+                            if (isUsernameEmpty)
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsPage()));
+                                },
+                                child: const Text('Settings'),
+                              ),
                           TextButton(
                             onPressed: () => Navigator.pop(context),
                             child: const Text('OK'),
@@ -322,19 +332,19 @@ class _ConnectivityPageState extends State<ConnectivityPage> {
                       )
                       : Icon(
                         status == 'all_ok'
-                            ? Icons.cloud_done
-                            : status == 'some_problem'
-                            ? Icons.file_download
-                            : status == 'loading'
-                            ? Icons.hourglass_bottom
-                            : Icons.cloud_off,
+                          ? Icons.cloud_done
+                          : status == 'some_problem'
+                          ? Icons.file_download
+                          : status == 'loading'
+                          ? Icons.hourglass_bottom
+                          : Icons.cloud_off,
                         color: status == 'all_ok'
-                            ? Colors.green
-                            : status == 'some_problem'
-                            ? Colors.orange
-                            : status == 'loading'
-                            ? Colors.grey
-                            : Colors.red,
+                          ? Colors.green
+                          : status == 'some_problem'
+                          ? Colors.orange
+                          : status == 'loading'
+                          ? Colors.grey
+                          : Colors.red,
                       );
 
                     return IconButton(
@@ -343,7 +353,7 @@ class _ConnectivityPageState extends State<ConnectivityPage> {
                         ? null
                         : () async {
                         if (connProvider.connectionState != HttpStatus.ok) {
-                          showDialog(
+                          showAdaptiveDialog(
                             context: context,
                             builder: (context) => AlertDialog(
                               title: const Text('Languages'),
@@ -373,7 +383,7 @@ class _ConnectivityPageState extends State<ConnectivityPage> {
                             _loadingLanguagesPressed = false;
                           });
 
-                          showDialog(
+                          showAdaptiveDialog(
                             context: context,
                             builder: (dialogContext) {
                               if (status2 == 'no_server_languages') {
@@ -421,7 +431,7 @@ class _ConnectivityPageState extends State<ConnectivityPage> {
                                     onPressed: () async {
                                       Navigator.pop(dialogContext);
                                       if (problematic.isEmpty) return;
-                                      await showDialog(
+                                      await showAdaptiveDialog(
                                         context: context,
                                         builder: (downloadCtx) {
                                           return AlertDialog(
@@ -471,7 +481,7 @@ class _ConnectivityPageState extends State<ConnectivityPage> {
                           setState(() {
                             _loadingLanguagesPressed = false;
                           });
-                          showDialog(
+                          showAdaptiveDialog(
                             context: context,
                             builder: (context) => AlertDialog(
                               title: const Text('Languages'),

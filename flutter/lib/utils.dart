@@ -32,10 +32,10 @@ extension StringCasingExtension on String {
   }
 }
 
-void showErrorToast(String message) {
+void showErrorToast(String message, {bool long = false}) {
   Fluttertoast.showToast(
     msg: message,
-    toastLength: Toast.LENGTH_SHORT,
+    toastLength: long ? Toast.LENGTH_LONG : Toast.LENGTH_SHORT,
     gravity: ToastGravity.BOTTOM,
     backgroundColor: Colors.red,
     textColor: Colors.white,
@@ -171,7 +171,7 @@ Future<String> checkOnlineLanguagePack(String languageCode) async {
 
 Future<Map<String, dynamic>> readLanguagePack(String languageCode, [bool online = false]) async {
   try {
-    final String response = await rootBundle.loadString('assets/$languageCode.json');
+    final String response = await rootBundle.loadString('assets${Platform.pathSeparator}${online ? 'online${Platform.pathSeparator}' : ''}$languageCode.json');
     return jsonDecode(response);
   } catch (e) {
     final dir = online ? await _getOnlineLanguagesDirectory() : await getApplicationSupportDirectory();
@@ -183,6 +183,40 @@ Future<Map<String, dynamic>> readLanguagePack(String languageCode, [bool online 
       throw Exception('Language pack not found: $languageCode');
     }
   }
+}
+
+Future<Map<String, dynamic>> readOnlineLanguagePack(String languageCode) async {
+  //try {
+    final serverUrl = await getConfig('server_url');
+    if (serverUrl == null) {
+      return {'error': 'Server URL is not set up.'};
+    }
+
+    final dir = await _getOnlineLanguagesDirectory();
+    final file = File('${dir.path}${Platform.pathSeparator}$languageCode.json');
+
+    if (!await file.exists()) {
+      return {'error': 'File does not exist.'};
+    }
+
+    final bytes = await file.readAsBytes();
+    final localChecksum = sha256.convert(bytes).toString();
+
+    final url2 = '$serverUrl/online/languages/checksum?language=$languageCode';
+    final response2 = await http.get(Uri.parse(url2)).timeout(const Duration(seconds: 7));
+
+    if (response2.statusCode != 200) {
+      return {'error': 'Server did not respond correctly.'};
+    }
+
+    final serverChecksum = _extractSha256(response2.body);
+    if (localChecksum == serverChecksum) {
+      return jsonDecode(await file.readAsString());
+    }
+    return {'error': 'Error'};
+  //} catch (e) {
+    //return {'error': 'Error'};
+  //}
 }
 
 Future<String> downloadLanguagePack(String languageCode) async {

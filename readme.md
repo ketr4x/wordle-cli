@@ -44,9 +44,10 @@
 ## Planned updates
 - [**Flutter**] timer fix
 - [**Flutter**] language pack download
-- [**Flutter**] (_online_) language pack verification (quick answer check)
+- [**Flutter**] (_online_) quick answer check
 - [**Flutter**] ai mode
 - [**Website**] actual web game and website implementation
+- fix releases action
 - Python and web releases
 ## Contributing
 ### Language data

@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:adaptive_theme/adaptive_theme.dart';
@@ -93,7 +92,7 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<void> _loadServerUrl() async {
     final serverUrl = await getConfig("server_url");
     setState(() {
-      _serverUrl = serverUrl ?? '';
+      _serverUrl = serverUrl ?? 'https://wordle.ketrax.ovh';
       _serverUrlController.text = _serverUrl;
     });
   }

@@ -75,44 +75,60 @@ class RankedWordleController extends ChangeNotifier with WidgetsBindingObserver 
     final user = await getConfig('username');
     final auth = await getConfig('password');
     final lang = await getConfig('game_lang') ?? "en";
-    final pack = await readLanguagePack(lang, true);
-    final letters = pack['letters'] as List<dynamic>;
-    keyboardLayout = letters.cast<String>();
+    final pack = await readOnlineLanguagePack(lang);
+
+    if (kDebugMode) {
+      print('pack: $pack');
+    }
 
     if (serverUrl == null) {
       errorMessage = "Server URL is not set. Change the settings.";
       loading = false;
       notifyListeners();
     } else {
-      try {
-        final url = '$serverUrl/online/start?user=$user&auth=$auth&language=$lang';
-        final resp = await http.get(Uri.parse(url));
-        if (resp.statusCode != 200) {
-          errorMessage = "Invalid details. Please try again in a minute.";
+      if (pack.containsKey('letters')) {
+        final letters = pack['letters'] as List<dynamic>;
+        keyboardLayout = letters.cast<String>();
+        if (await checkOnlineLanguagePack(lang) == "Local language file correct") {
+          try {
+            final url = '$serverUrl/online/start?user=$user&auth=$auth&language=$lang';
+            final resp = await http.get(Uri.parse(url));
+            if (resp.statusCode != 200) {
+              errorMessage = "Invalid details. Please try again in a minute.";
+              loading = false;
+              notifyListeners();
+              return;
+            }
+            guesses.clear();
+            formattedGuesses.clear();
+            currentGuess = '';
+            letterStatuses.clear();
+            gameOver = false;
+            resultMessage = null;
+            errorMessage = null;
+            startTime = DateTime.now();
+            elapsed = Duration.zero;
+            shouldTick = true;
+            guessNumber = 0;
+            gameStatus = 1;
+            gameTime = 0;
+            answer = null;
+            ticker.stop();
+            ticker.start();
+            loading = false;
+            notifyListeners();
+          } catch (e) {
+            errorMessage = "Failed to start game: $e";
+            loading = false;
+            notifyListeners();
+          }
+        } else {
+          errorMessage = pack['error'];
           loading = false;
           notifyListeners();
-          return;
         }
-        guesses.clear();
-        formattedGuesses.clear();
-        currentGuess = '';
-        letterStatuses.clear();
-        gameOver = false;
-        resultMessage = null;
-        errorMessage = null;
-        startTime = DateTime.now();
-        elapsed = Duration.zero;
-        shouldTick = true;
-        guessNumber = 0;
-        gameStatus = 1;
-        gameTime = 0;
-        answer = null;
-        ticker.stop();
-        ticker.start();
-        loading = false;
-        notifyListeners();
-      } catch (e) {
-        errorMessage = "Failed to start game: $e";
+      } else {
+        errorMessage = pack['error'] ?? "Cannot retrieve the language pack.";
         loading = false;
         notifyListeners();
       }
@@ -170,7 +186,7 @@ class RankedWordleController extends ChangeNotifier with WidgetsBindingObserver 
     final auth = await getConfig('password');
     final lang = await getConfig('game_lang') ?? "en";
 
-    final pack = await readLanguagePack(lang, true);
+    final pack = await readOnlineLanguagePack(lang);
     final answers = pack['solutions'] as List<dynamic>;
     final guessesList = pack['wordlist'] as List<dynamic>;
     final allWords = [...answers, ...guessesList];
@@ -231,8 +247,8 @@ class RankedWordleController extends ChangeNotifier with WidgetsBindingObserver 
           final wordResp = await http.get(Uri.parse('$serverUrl/online/word?user=$user&auth=$auth'));
           answer = wordResp.statusCode == 200 ? wordResp.body.trim() : null;
           resultMessage = (gameStatus == 2)
-            ? 'Congratulations! You won in $guessNumber guesses!\nTime: $gameTime s'
-            : 'You lost! The word was: ${answer?.toUpperCase() ?? "?"}';
+            ? 'Congratulations!\nYou won in $guessNumber guesses!'
+            : 'You lost!\nThe word was: ${answer?.toUpperCase() ?? "?"}';
         }
       } else {
         errorMessage = 'Error: ${resp.body}';

@@ -73,7 +73,7 @@ jobs:
           set -euo pipefail          
           VERSION="${{ steps.version.outputs.version }}"
           if [ -z "$VERSION" ]; then
-            VERSION="$(jq -r .version ./flutter/data.json || true)"
+            VERSION="$(jq -r .version data.json || true)"
           fi
           if [ -z "$VERSION" ] || [ "$VERSION" = "null" ]; then
             echo "ERROR: no version available to tag" >&2

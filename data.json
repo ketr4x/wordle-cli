@@ -3,6 +3,6 @@
   "update_url": "https://raw.githubusercontent.com/ketr4x/wordle-cli/master/data.json",
   "repo": "https://github.com/ketr4x/wordle-cli.git",
   "version": "1.1.6",
-  "release_notes": "fix: refactor release CI/CD #2",
-  "published_at": "2025-10-25T13:36:33Z"
+  "release_notes": "feat: implement online storage functionality",
+  "published_at": "2025-10-25T20:26:01Z"
 }

@@ -24,10 +24,11 @@
 - Select the `python` tag
 - Download the latest release for your platform
 - Run it
-### Flutter version [![Flutter](https://github.com/ketr4x/wordle-cli/actions/workflows/flutter.yml/badge.svg)](https://github.com/ketr4x/wordle-cli/actions/workflows/flutter.yml)
+### Flutter version 
+[![Flutter](https://github.com/ketr4x/wordle-cli/actions/workflows/flutter.yml/badge.svg)](https://github.com/ketr4x/wordle-cli/actions/workflows/flutter.yml)
+[![Version](https://img.shields.io/github/v/release/ketr4x/wordle-cli?label=version)](https://github.com/ketr4x/wordle-cli/releases)
 #### App
-- Go to releases
-- Select the `Flutter` tag
+- https://github.com/ketr4x/wordle-cli/releases/tag/Flutter
 - Download the latest release for your platform
 - Install it
 - Set up your account and server (below)
@@ -44,9 +45,8 @@
 ## Planned updates
 - [**Flutter**] timer fix
 - [**Flutter**] language pack download
-- [**Flutter**] (_online_) quick answer check
 - [**Flutter**] ai mode
-- [**Website**] website implementation
+- [**Website**] website redesign
 - Python releases
 ## Contributing
 ### Language data

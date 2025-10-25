@@ -67,6 +67,25 @@ jobs:
             git commit -m "chore(build): add web build for version ${{ steps.version.outputs.version }}"
             git push https://x-access-to  ken:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:${{ github.ref_name }}
           fi
+      - name: Create tag for release
+        id: create_tage
+        run: |
+          set -euo pipefail          
+          VERSION="${{ steps.version.outputs.version }}"
+          if [ -z "$VERSION" ]; then
+            VERSION="$(jq -r .version data.json || true)"
+          fi
+          if [ -z "$VERSION" ] || [ "$VERSION" = "null" ]; then
+            echo "ERROR: no version available to tag" >&2
+            exit 1
+          fi
+          echo "Using tag: $VERSION"
+          if git rev-parse "refs/tags/$VERSION" >/dev/null 2>&1; then
+            echo "Tag $VERSION already exists"
+          else
+            git tag -a "$VERSION" -m "Release $VERSION"
+            git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} refs/tags/$VERSION
+          fi
       - name: Package web build
         run: |
           cd ./flutter
@@ -79,9 +98,9 @@ jobs:
       - name: Upload APK and web build to release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: Flutter
+          tag_name: ${{ steps.version.outputs.version }}
           files: |
             ./flutter/build/app/outputs/flutter-apk/app-release.apk
             ./build_web_${{ steps.version.outputs.version }}.zip
-          name: "[Flutter] ${{ steps.version.outputs.version }}"
+          name: "[Flutter] v${{ steps.version.outputs.version }}"
           body: "${{ steps.commit.outputs.message }}"

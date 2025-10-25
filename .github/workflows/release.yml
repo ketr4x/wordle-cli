@@ -67,6 +67,26 @@ jobs:
             git commit -m "chore(build): add web build for version ${{ steps.version.outputs.version }}"
             git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:${{ github.ref_name }}
           fi
+      - name: Create tag for release
+        id: create_tage
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+          if git rev-parse "refs/tags/$VERSION" >/dev/null 2>&1; then
+            echo "Tag $VERSION already exists"
+          else
+            git tag -a "$VERSION" -m "Release $VERSION"
+            git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} refs/tags/$VERSION
+          fi
+      - name: Create Flutter tag
+        id: create_flutter_tag
+        run: |
+          TAG="Flutter"
+          if git rev-parse "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists"
+          else
+            git tag -a "$TAG" -m "Flutter"
+            git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} refs/tags/$TAG
+          fi
       - name: Upload APK to release
         uses: softprops/action-gh-release@v1
         with:

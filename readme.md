@@ -46,9 +46,8 @@
 - [**Flutter**] language pack download
 - [**Flutter**] (_online_) quick answer check
 - [**Flutter**] ai mode
-- [**Website**] actual web game and website implementation
-- fix releases action
-- Python and web releases
+- [**Website**] website implementation
+- Python releases
 ## Contributing
 ### Language data
 If you want to provide the wordlist, make a lang.json file in data/ (lang being the language code).

@@ -10,6 +10,9 @@ jobs:
         run: mkdir -p ./flutter/android/app
       - name: Install GitHub CLI
         run: sudo apt-get install gh
+      - name: Get version from data.json
+        id: version
+        run: echo "version=$(jq -r .version ./flutter/data.json)" >> $GITHUB_OUTPUT
       - name: Check if build version is incremented
         run: |
           latest_release=$(gh release view --json tagName -q .tagName || echo "none")
@@ -38,9 +41,6 @@ jobs:
       - name: Build APK
         run: flutter build apk --release
         working-directory: ./flutter/
-      - name: Get version from data.json
-        id: version
-        run: echo "version=$(jq -r .version ./flutter/data.json)" >> $GITHUB_OUTPUT
       - name: Get latest commit message not from GitHub Actions
         id: commit
         run: |
@@ -61,6 +61,12 @@ jobs:
             git commit -m "chore(build): add web build for version ${{ steps.version.outputs.version }}"
             git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:${{ github.ref_name }}
           fi
+      - name: Upload APK to release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: ./flutter/build/app/outputs/flutter-apk/app-release.apk
+          name: "[Flutter] ${{ steps.version.outputs.version }}"
+          body: "${{ steps.commit.outputs.message }}"
       - name: Package web build and upload to release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -78,9 +84,3 @@ jobs:
           else
             echo "No web build to upload"
           fi
-      - name: Upload APK to release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: ./flutter/build/app/outputs/flutter-apk/app-release.apk
-          name: "[Flutter] ${{ steps.version.outputs.version }}"
-          body: "${{ steps.commit.outputs.message }}"

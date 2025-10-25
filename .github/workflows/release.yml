@@ -46,6 +46,38 @@ jobs:
         run: |
           git log --no-merges --pretty=format:"%s" -n 20 | grep -v 'github-actions' | head -n 1 > commit_message.txt
           echo "message=$(cat commit_message.txt)" >> $GITHUB_OUTPUT
+      - name: Make a web build
+        run: flutter build web --release --base-href /play/
+        working-directory: ./flutter/
+      - name: Commit web build
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          cd ./flutter
+          git add -A build/web
+          if git diff --cached --quiet; then
+            echo "No web build changes to commit"
+          else
+            git commit -m "chore(build): add web build for version ${{ steps.version.outputs.version }}"
+            git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:${{ github.ref_name }}
+          fi
+      - name: Package web build and upload to release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          echo "$GITHUB_TOKEN" | gh auth login --with-token
+          cd ./flutter
+          if [ -d build/web ]; then
+            zip -r ../build_web_${VERSION}.zip build/web
+            if gh release view "${VERSION}" >/dev/null 2>&1; then
+              gh release upload "${VERSION}"" ../build_web_${VERSION}.zip --clobber
+            else
+              gh release create "${VERSION}" -t "[Flutter] ${VERSION} -n "${{ steps.commit.outputs.message }}" ../build_web_${VERSION}.zip
+            fi
+          else
+            echo "No web build to upload"
+          fi
       - name: Upload APK to release
         uses: softprops/action-gh-release@v1
         with:

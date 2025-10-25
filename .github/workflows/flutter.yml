@@ -39,9 +39,6 @@ jobs:
       - name: Analyze project source
         run: dart analyze .
         working-directory: ./flutter/
-      - name: Make a web build
-        run: flutter build web --release --base-href /play/
-        working-directory: ./flutter/
       # - name: Run tests TODO: Add tests
       #   run: flutter test .
       #   working-directory: ./flutter/test

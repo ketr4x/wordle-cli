@@ -12,7 +12,7 @@ jobs:
         run: sudo apt-get install gh
       - name: Get version from data.json
         id: version
-        run: echo "version=$(jq -r .version ./flutter/data.json)" >> $GITHUB_OUTPUT
+        run: echo "version=$(jq -r .version data.json)" >> $GITHUB_OUTPUT
       - name: Check if build version is incremented
         run: |
           latest_release=$(gh release view --json tagName -q .tagName || echo "none")
@@ -65,7 +65,7 @@ jobs:
             echo "No web build changes to commit"
           else
             git commit -m "chore(build): add web build for version ${{ steps.version.outputs.version }}"
-            git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:${{ github.ref_name }}
+            git push https://x-access-to  ken:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:${{ github.ref_name }}
           fi
       - name: Package web build
         run: |

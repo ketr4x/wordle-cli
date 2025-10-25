@@ -502,6 +502,23 @@ class _ConnectivityPageState extends State<ConnectivityPage> {
                 );
               },
             ),
+          ),
+          ListTile(
+            title: const Text('Local languages'),
+            subtitle: FutureBuilder<List<String>>(
+              future: getLanguagePacks(),
+              builder: (context, snapshot) {
+                if (snapshot.hasData) {
+                  return Text('Languages downloaded: ${snapshot.data!.length}');
+                }
+                return const Text('');
+              },
+            ),
+            /*trailing: IconButton(
+              icon: Icon(
+                TODO
+              ),
+            ),*/
           )
         ],
       )

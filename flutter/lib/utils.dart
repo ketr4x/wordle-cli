@@ -90,7 +90,7 @@ Future<List<String>> getLanguagePacks([bool online = false]) async {
       }
       return [];
     } catch (e) {
-      return [];
+      return await listFiles(true);
     }
   } else {
     try {
@@ -101,8 +101,7 @@ Future<List<String>> getLanguagePacks([bool online = false]) async {
           .toList();
       return files.map((f) => f.split('/').last.replaceAll('.json', '')).toList();
     } catch (e) {
-      final files = await listOnlineFiles();
-      return files;
+      return listFiles();
     }
   }
 }

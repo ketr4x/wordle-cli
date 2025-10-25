@@ -42,7 +42,7 @@ jobs:
       - name: Get latest commit message not from GitHub Actions
         id: commit
         run: |
-          git log --no-merges --pretty=format:"%s" -n 20 | grep -v 'github-actions' | head -n 1 > commit_message.txt
+          git log --no-merges --pretty=format:"%s" -n 20 | grep -v 'github-actions[bot]' | head -n 1 > commit_message.txt
           echo "message=$(cat commit_message.txt)" >> $GITHUB_OUTPUT
       - name: Build APK
         run: >

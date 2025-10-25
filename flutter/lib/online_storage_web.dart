@@ -1,9 +1,9 @@
 import 'package:universal_html/html.dart' as html;
 import 'dart:async';
 
-Future<List<String>> listOnlineFiles() async {
+Future<List<String>> listFiles([bool online = false]) async {
   final keys = html.window.localStorage.keys;
-  final prefix = 'online_';
+  final prefix = online ? 'online_' : '';
   final out = <String>[];
   for (final k in keys) {
     if (k.startsWith(prefix) && k.endsWith('.json')) {

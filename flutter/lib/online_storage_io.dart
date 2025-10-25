@@ -3,17 +3,17 @@ import 'package:path_provider/path_provider.dart';
 import 'dart:async';
 import 'package:path/path.dart' as p;
 
-Future<Directory> _getBaseDir() async {
+Future<Directory> _getBaseDir([bool online = false]) async {
   final base = await getApplicationSupportDirectory();
-  final dir = Directory(p.join(base.path, 'online'));
+  final dir = online ? Directory(p.join(base.path, 'online')) : Directory(base.path);
   if (!await dir.exists()) {
     await dir.create(recursive: true);
   }
   return dir;
 }
 
-Future<List<String>> listOnlineFiles() async {
-  final dir = await _getBaseDir();
+Future<List<String>> listFiles([bool online = false]) async {
+  final dir = await _getBaseDir(online);
   final entities = await dir.list().toList();
   return entities
       .whereType<File>()

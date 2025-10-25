@@ -10,6 +10,7 @@
 - A Flutter version for all platforms
 
 ## Installation
+[![Version](https://img.shields.io/github/v/release/ketr4x/wordle-cli?sort=semver&label=Version)](https://github.com/ketr4x/wordle-cli/releases)
 ### Python CLI
 #### Cloning the repository
 - Click the Code button
@@ -20,16 +21,14 @@
 - `pip -m requirements.txt`
 - `python3 main.py`
 #### Downloading a binary
-- Go to releases
-- Select the `Python` tag
-- Download the latest release for your platform
+- https://github.com/ketr4x/wordle-cli/releases/tag/Python
+- Download the latest release for your platform:
+  - `.exe` for Windows GUI build
 - Run it
-### Flutter version 
-[![Flutter](https://github.com/ketr4x/wordle-cli/actions/workflows/flutter.yml/badge.svg)](https://github.com/ketr4x/wordle-cli/actions/workflows/flutter.yml)
-[![Version](https://img.shields.io/github/v/release/ketr4x/wordle-cli?label=version)](https://github.com/ketr4x/wordle-cli/releases)
+### Flutter version [![Flutter](https://github.com/ketr4x/wordle-cli/actions/workflows/flutter.yml/badge.svg)](https://github.com/ketr4x/wordle-cli/actions/workflows/flutter.yml)
 #### App
 - https://github.com/ketr4x/wordle-cli/releases/tag/Flutter
-- Download the latest [Flutter] release for your platform: 
+- Download the latest release for your platform: 
   - `.apk` for Android
   - `build_web_*.zip` for local browser play
   - `.exe` for Windows GUI build
@@ -48,7 +47,7 @@
 ## Planned updates
 - [**Flutter**] timer fix
 - [**Flutter**] language pack download
-- [**Flutter**] ai mode
+- [**Flutter**] (?) ai mode
 - [**Website**] website redesign
 - Python releases
 - Icon

@@ -63,5 +63,5 @@ jobs:
       - name: Commit and push changes
         run: |
           git add flutter/pubspec.yaml data.json
-          git diff --staged --quiet || git commit -m "Update Flutter version to ${{ steps.data_version.outputs.version }} and add release info"
+          git diff --staged --quiet || git commit -m "chore(data): update Flutter version to ${{ steps.data_version.outputs.version }} and add release info"
           git push

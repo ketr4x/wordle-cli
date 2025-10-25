@@ -65,7 +65,7 @@ jobs:
             echo "No web build changes to commit"
           else
             git commit -m "chore(build): add web build for version ${{ steps.version.outputs.version }}"
-            git push https://x-access-to  ken:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:${{ github.ref_name }}
+            git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:${{ github.ref_name }}
           fi
       - name: Create tag for release
         id: create_tage
@@ -104,3 +104,21 @@ jobs:
             ./build_web_${{ steps.version.outputs.version }}.zip
           name: "[Flutter] v${{ steps.version.outputs.version }}"
           body: "${{ steps.commit.outputs.message }}"
+      - name: Delete old Flutter release and tag
+        run: |
+          gh release delete "Flutter" --yes || echo "No Flutter release to delete"
+          git push --delete origin Flutter || echo "No Flutter tag to delete"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create new Flutter release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: Flutter
+          files: |
+            ./flutter/build/app/outputs/flutter-apk/app-release.apk
+            ./build_web_${{ steps.version.outputs.version }}.zip
+          name: "[Flutter] Latest"
+          body: |
+            Latest Flutter release for all platforms
+            Version: ${{ steps.version.outputs.version }}
+            ${{ steps.commit.outputs.message }}

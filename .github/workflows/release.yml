@@ -24,6 +24,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Decode keystore
+        id: keystore
         run: |
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > ./flutter/android/app/upload-keystore.jks
       - name: Set signing env vars
@@ -41,7 +42,7 @@ jobs:
       - name: Build APK
         run: > 
           flutter build apk --release
-          -P MYAPP_UPLOAD_STORE_FILE=./android/app/upload-keystore.jks
+          -P MYAPP_UPLOAD_STORE_FILE=upload-keystore.jks
           -P MYAPP_UPLOAD_STORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}
           -P MYAPP_UPLOAD_KEY_ALIAS=${{ secrets.KEY_ALIAS }}
           -P MYAPP_UPLOAD_KEY_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}

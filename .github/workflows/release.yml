@@ -39,19 +39,19 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
         working-directory: ./flutter/
+      - name: Get latest commit message not from GitHub Actions
+        id: commit
+        run: |
+          git log --no-merges --pretty=format:"%s" -n 20 | grep -v 'github-actions' | head -n 1 > commit_message.txt
+          echo "message=$(cat commit_message.txt)" >> $GITHUB_OUTPUT
       - name: Build APK
-        run: > 
+        run: >
           flutter build apk --release
           -P MYAPP_UPLOAD_STORE_FILE=upload-keystore.jks
           -P MYAPP_UPLOAD_STORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}
           -P MYAPP_UPLOAD_KEY_ALIAS=${{ secrets.KEY_ALIAS }}
           -P MYAPP_UPLOAD_KEY_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}
         working-directory: ./flutter/
-      - name: Get latest commit message not from GitHub Actions
-        id: commit
-        run: |
-          git log --no-merges --pretty=format:"%s" -n 20 | grep -v 'github-actions' | head -n 1 > commit_message.txt
-          echo "message=$(cat commit_message.txt)" >> $GITHUB_OUTPUT
       - name: Make a web build
         run: flutter build web --release --base-href /play/
         working-directory: ./flutter/
@@ -96,26 +96,21 @@ jobs:
             git tag -a "$TAG" -m "Flutter"
             git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} refs/tags/$TAG
           fi
-      - name: Upload APK to release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: ./flutter/build/app/outputs/flutter-apk/app-release.apk
-          name: "[Flutter] ${{ steps.version.outputs.version }}"
-          body: "${{ steps.commit.outputs.message }}"
-      - name: Package web build and upload to release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VERSION: ${{ steps.version.outputs.version }}
+      - name: Package web build
         run: |
-          echo "$GITHUB_TOKEN" | gh auth login --with-token
           cd ./flutter
           if [ -d build/web ]; then
-            zip -r ../build_web_${VERSION}.zip build/web
-            if gh release view "${VERSION}" >/dev/null 2>&1; then
-              gh release upload "${VERSION}"" ../build_web_${VERSION}.zip --clobber
-            else
-              gh release create "${VERSION}" -t "[Flutter] ${VERSION} -n "${{ steps.commit.outputs.message }}" ../build_web_${VERSION}.zip
-            fi
+            zip -r ../build_web_${{ steps.version.outputs.version }}.zip build/web
           else
             echo "No web build to upload"
+            exit 1
           fi
+      - name: Upload APK and web build to release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: Flutter
+          files: |
+            ./flutter/build/app/outputs/flutter-apk/app-release.apk
+            ./build_web_${{ steps.version.outputs.version }}.zip
+          name: "[Flutter] ${{ steps.version.outputs.version }}"
+          body: "${{ steps.commit.outputs.message }}"

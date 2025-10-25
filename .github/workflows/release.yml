@@ -70,7 +70,16 @@ jobs:
       - name: Create tag for release
         id: create_tage
         run: |
-          VERSION=${{ steps.version.outputs.version }}
+          set -euo pipefail          
+          VERSION="${{ steps.version.outputs.version }}"
+          if [ -z "$VERSION" ]; then
+            VERSION="$(jq -r .version ./flutter/data.json || true)"
+          fi
+          if [ -z "$VERSION" ] || [ "$VERSION" = "null" ]; then
+            echo "ERROR: no version available to tag" >&2
+            exit 1
+          fi
+          echo "Using tag: $VERSION"
           if git rev-parse "refs/tags/$VERSION" >/dev/null 2>&1; then
             echo "Tag $VERSION already exists"
           else

@@ -51,6 +51,7 @@
 - [**Flutter**] ai mode
 - [**Website**] website redesign
 - Python releases
+- Icon
 ## Contributing
 ### Language data
 If you want to provide the wordlist, make a lang.json file in data/ (lang being the language code).

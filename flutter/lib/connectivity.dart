@@ -251,6 +251,7 @@ class _ConnectivityPageState extends State<ConnectivityPage> {
                   onPressed: () async {
                     final usernameConfig = await getConfig("username");
                     final isUsernameEmpty = (usernameConfig ?? '') == '';
+                    if (!context.mounted) return;
                     showAdaptiveDialog(
                       context: context,
                       builder: (context) => AlertDialog(

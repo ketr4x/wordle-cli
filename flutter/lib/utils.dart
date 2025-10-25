@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'daily.dart';
@@ -17,6 +18,7 @@ import 'package:provider/provider.dart';
 import 'statistics.dart';
 import 'connectivity.dart';
 import 'package:crypto/crypto.dart';
+import 'online_storage.dart';
 
 enum GameMode { random, daily, ranked }
 
@@ -99,24 +101,10 @@ Future<List<String>> getLanguagePacks([bool online = false]) async {
           .toList();
       return files.map((f) => f.split('/').last.replaceAll('.json', '')).toList();
     } catch (e) {
-      final dir = await _getOnlineLanguagesDirectory();
-      final entities = await dir.list().toList();
-      final files = entities.whereType<File>().where((f) => f.path.endsWith('.json')).toList();
-      return files.map((f) {
-        final filename = f.path.split(Platform.pathSeparator).last;
-        return filename.replaceAll('.json', '');
-      }).toList();
+      final files = await listOnlineFiles();
+      return files;
     }
   }
-}
-
-Future<Directory> _getOnlineLanguagesDirectory() async {
-  final base = await getApplicationSupportDirectory();
-  final dir = Directory('${base.path}${Platform.pathSeparator}online');
-  if (!await dir.exists()) {
-    await dir.create(recursive: true);
-  }
-  return dir;
 }
 
 String _extractSha256(String raw) {
@@ -149,16 +137,13 @@ Future<String> checkOnlineLanguagePack(String languageCode) async {
       return "Server returned invalid checksum format";
     }
 
-    final dir = await _getOnlineLanguagesDirectory();
-    final file = File('${dir.path}${Platform.pathSeparator}$languageCode.json');
-
-    if (!await file.exists()) {
+    final exists = await onlineFileExists(languageCode);
+    if (!exists) {
       return "Local file missing";
     }
-
-    final bytes = await file.readAsBytes();
-    final localChecksum = sha256.convert(bytes).toString();
-
+    final content = await readOnlineFile(languageCode);
+    if (content == null) return "Local file missing";
+    final localChecksum = sha256.convert(utf8.encode(content)).toString();
     if (localChecksum == serverChecksum) {
       return "Local language file correct";
     }
@@ -174,13 +159,24 @@ Future<Map<String, dynamic>> readLanguagePack(String languageCode, [bool online 
     final String response = await rootBundle.loadString('assets${Platform.pathSeparator}${online ? 'online${Platform.pathSeparator}' : ''}$languageCode.json');
     return jsonDecode(response);
   } catch (e) {
-    final dir = online ? await _getOnlineLanguagesDirectory() : await getApplicationSupportDirectory();
-    final file = File('${dir.path}${Platform.pathSeparator}$languageCode.json');
-    if (await file.exists()) {
-      final contents = await file.readAsString();
-      return jsonDecode(contents);
-    } else {
+    if (online) {
+      final content = await readOnlineFile(languageCode);
+      if (content != null) {
+        return jsonDecode(content);
+      }
       throw Exception('Language pack not found: $languageCode');
+    } else {
+      if (kIsWeb) {
+        throw Exception('Language pack not found: $languageCode');
+      }
+      final dir = await getApplicationSupportDirectory();
+      final file = File('${dir.path}${Platform.pathSeparator}$languageCode.json');
+      if (await file.exists()) {
+        final contents = await file.readAsString();
+        return jsonDecode(contents);
+      } else {
+        throw Exception('Language pack not found: $languageCode');
+      }
     }
   }
 }
@@ -192,15 +188,13 @@ Future<Map<String, dynamic>> readOnlineLanguagePack(String languageCode) async {
       return {'error': 'Server URL is not set up.'};
     }
 
-    final dir = await _getOnlineLanguagesDirectory();
-    final file = File('${dir.path}${Platform.pathSeparator}$languageCode.json');
-
-    if (!await file.exists()) {
+    final exists = await onlineFileExists(languageCode);
+    if (!exists) {
       return {'error': 'File does not exist.'};
     }
-
-    final bytes = await file.readAsBytes();
-    final localChecksum = sha256.convert(bytes).toString();
+    final content = await readOnlineFile(languageCode);
+    if (content == null) return {'error': 'File does not exist.'};
+    final localChecksum = sha256.convert(utf8.encode(content)).toString();
 
     final url2 = '$serverUrl/online/languages/checksum?language=$languageCode';
     final response2 = await http.get(Uri.parse(url2)).timeout(const Duration(seconds: 7));
@@ -211,7 +205,7 @@ Future<Map<String, dynamic>> readOnlineLanguagePack(String languageCode) async {
 
     final serverChecksum = _extractSha256(response2.body);
     if (localChecksum == serverChecksum) {
-      return jsonDecode(await file.readAsString());
+      return jsonDecode(content);
     }
     return {'error': 'Error'};
   } catch (e) {
@@ -238,12 +232,9 @@ Future<String> downloadLanguagePack(String languageCode) async {
       return "Download error";
     }
 
-    final dir = await _getOnlineLanguagesDirectory();
-    final file = File('${dir.path}${Platform.pathSeparator}$languageCode.json');
-    await file.writeAsString(response.body, flush: true);
+    await writeOnlineFile(languageCode, response.body);
+    final localChecksum = sha256.convert(utf8.encode(response.body)).toString();
 
-    final bytes = await file.readAsBytes();
-    final localChecksum = sha256.convert(bytes).toString();
     final url2 = '$serverUrl/online/languages/checksum?language=$languageCode';
     final response2 = await http.get(Uri.parse(url2)).timeout(const Duration(seconds: 7));
 

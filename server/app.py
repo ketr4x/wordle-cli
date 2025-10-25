@@ -1,12 +1,14 @@
 # Imports
 import hashlib
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 import os
 from dotenv import load_dotenv
 from flask import jsonify
-from server import utils
-from server import online
+try:
+    from . import utils, online
+except Exception:
+    import utils, online
 from werkzeug.security import generate_password_hash, check_password_hash
 import datetime
 from sqlalchemy.ext.mutable import MutableDict
@@ -208,10 +210,22 @@ def fn_create_user(user, auth):
     db.session.add(stats)
     db.session.commit()
 
-# TODO: Add a working play page
-@app.route('/play')
-def play():
-    return render_template('play.html')
+@app.route('/play', defaults={'path': ''})
+@app.route('/play/<path:path>')
+def play(path):
+    flutter_build_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'flutter', 'build', 'web'))
+    if not os.path.isdir(flutter_build_dir):
+        flutter_build_dir = os.path.abspath(os.path.join(str(app.static_folder), 'play'))
+
+    requested = path or 'index.html'
+    target_path = os.path.abspath(os.path.join(flutter_build_dir, requested))
+    base_path = os.path.abspath(flutter_build_dir)
+
+    if not (target_path == base_path or target_path.startswith(base_path + os.sep)):
+        return 'Invalid path', 400
+    if os.path.exists(target_path) and os.path.isfile(target_path):
+        return send_from_directory(flutter_build_dir, requested)
+    return send_from_directory(flutter_build_dir, 'index.html')
 
 # TODO: Add a working leaderboard page
 @app.route('/leaderboard')
@@ -316,7 +330,9 @@ def guess_online():
         stats.matches += 1
         if game.status == 2:
             stats.wins += 1
-        stats.avg_time = (stats.avg_time + game.time) / stats.matches
+            prev_avg = stats.avg_time or 0.0
+            prev_wins = max(stats.wins -1, 0)
+            stats.avg_time = (prev_avg * prev_wins + game.time) / stats.wins
 
         if not isinstance(stats.word_freq, dict):
             stats.word_freq = {}

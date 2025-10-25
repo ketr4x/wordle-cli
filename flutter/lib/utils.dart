@@ -186,7 +186,7 @@ Future<Map<String, dynamic>> readLanguagePack(String languageCode, [bool online 
 }
 
 Future<Map<String, dynamic>> readOnlineLanguagePack(String languageCode) async {
-  //try {
+  try {
     final serverUrl = await getConfig('server_url');
     if (serverUrl == null) {
       return {'error': 'Server URL is not set up.'};
@@ -214,9 +214,9 @@ Future<Map<String, dynamic>> readOnlineLanguagePack(String languageCode) async {
       return jsonDecode(await file.readAsString());
     }
     return {'error': 'Error'};
-  //} catch (e) {
-    //return {'error': 'Error'};
-  //}
+  } catch (e) {
+    return {'error': 'Error'};
+  }
 }
 
 Future<String> downloadLanguagePack(String languageCode) async {
@@ -418,6 +418,7 @@ class LanguageStateProvider extends ChangeNotifier {
     _timer = Timer.periodic(const Duration(seconds: 30), (timer) {
       _checkStatus();
     });
+    _checkStatus();
   }
 
   Future<void> _checkStatus() async {
@@ -532,11 +533,20 @@ AppBar buildAppBar(BuildContext context, String title) {
 
           return IconButton(
             icon: Icon(iconData, color: iconColor),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const ConnectivityPage()),
-              );
+            onPressed: () async {
+              try {
+                await Future.wait([
+                  connProvider.forceCheck(),
+                  accProvider.forceCheck(),
+                  langProvider.forceCheck()
+                ]);
+              } catch (_) {}
+              if (context.mounted) {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ConnectivityPage())
+                );
+              }
             },
           );
         },

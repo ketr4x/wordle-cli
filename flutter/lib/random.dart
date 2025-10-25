@@ -292,44 +292,50 @@ class _WordleGameViewState extends State<WordleGameView> {
   @override
   Widget build(BuildContext context) {
     final c = widget.controller;
+    final child = GestureDetector(
+      onTap: () {
+        if (kIsWeb) _focusNode.requestFocus();
+      },
+      child: Column(
+        children: [
+          Expanded(
+            child: buildGame(
+              guesses: c.guesses,
+              currentGuess: c.currentGuess,
+              answer: c.answer,
+              letterStatuses: c.letterStatuses,
+              keyboardLayout: c.keyboardLayout,
+              onLetterTap: c.gameOver ? (_) {} : c.onLetterTap,
+              onEnterTap: c.gameOver ? () {} : c.onEnterTap,
+              onBackspaceTap: c.gameOver ? () {} : c.onBackspaceTap,
+              elapsed: c.elapsed,
+              onNewGame: c.restartGame,
+              context: context,
+              mode: GameMode.random,
+              gameOver: c.gameOver,
+            ),
+          ),
+          if (c.resultMessage != null)
+            Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Text(
+                c.resultMessage!,
+                style: const TextStyle(
+                    fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+            ),
+        ],
+      ),
+    );
     return Scaffold(
       appBar: buildAppBar(context, widget.title),
-      body: KeyboardListener(
+      body: kIsWeb
+          ? KeyboardListener(
         focusNode: _focusNode,
         onKeyEvent: c.handleKeyEvent,
-        child: GestureDetector(
-          onTap: () => _focusNode.requestFocus(),
-          child: Column(
-            children: [
-              Expanded(
-                child: buildGame(
-                  guesses: c.guesses,
-                  currentGuess: c.currentGuess,
-                  answer: c.answer,
-                  letterStatuses: c.letterStatuses,
-                  keyboardLayout: c.keyboardLayout,
-                  onLetterTap: c.gameOver ? (_) {} : c.onLetterTap,
-                  onEnterTap: c.gameOver ? () {} : c.onEnterTap,
-                  onBackspaceTap: c.gameOver ? () {} : c.onBackspaceTap,
-                  elapsed: c.elapsed,
-                  onNewGame: c.restartGame,
-                  context: context,
-                  mode: GameMode.random,
-                  gameOver: c.gameOver,
-                ),
-              ),
-              if (c.resultMessage != null)
-                Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: Text(
-                    c.resultMessage!,
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
+        child: child,
+      )
+          : child,
       bottomNavigationBar: buildBottomNavigationBar(
         context,
         currentIndex: 0,

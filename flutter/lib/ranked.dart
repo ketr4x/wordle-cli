@@ -52,7 +52,9 @@ class _WordleGameViewState extends State<WordleGameView> {
         focusNode: _focusNode,
         onKeyEvent: c.handleKeyEvent,
         child: GestureDetector(
-          onTap: () => _focusNode.requestFocus(),
+          onTap: () {
+            if (kIsWeb) _focusNode.requestFocus();
+          },
           child: Column(
             children: [
               Expanded(
@@ -82,7 +84,7 @@ class _WordleGameViewState extends State<WordleGameView> {
                         for (final resultMessage in resultList)
                           Text(
                             resultMessage,
-                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.normal),
+                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.normal, color: Theme.of(context).colorScheme.primary),
                           ),
                       ],
                     ),

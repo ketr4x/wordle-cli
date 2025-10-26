@@ -53,13 +53,9 @@ jobs:
           -P MYAPP_UPLOAD_KEY_ALIAS=${{ secrets.KEY_ALIAS }}
           -P MYAPP_UPLOAD_KEY_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}
         working-directory: ./flutter/
-        with:
-          cache: true
       - name: Make a web build
         run: flutter build web --release --base-href /play/
         working-directory: ./flutter/
-        with:
-          cache: true
       - name: Commit web build
         run: |
           git config user.name "github-actions[bot]"

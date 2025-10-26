@@ -40,8 +40,6 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
         working-directory: ./flutter/
-        with:
-          cache: true
       - name: Get latest commit message not from GitHub Actions
         id: commit
         run: |

@@ -1,4 +1,8 @@
 # Wordle CLI
+[![Version](https://img.shields.io/github/v/release/ketr4x/wordle-cli?sort=semver&label=Version)](https://github.com/ketr4x/wordle-cli/releases)
+[![Commits](https://img.shields.io/github/commits-since/ketr4x/wordle-cli/latest?label=Commits%20since%20release)](https://img.shields.io/github/commits-since/ketr4x/wordle-cli/latest)
+![File Count](https://img.shields.io/github/directory-file-count/ketr4x/wordle-cli/data?label=Languages)
+![Hackatime Badge](https://hackatime-badge.hackclub.com/U08RQEP53HA/wordle-cli?label=Project%20time)
 ## Features
 - Custom solo game
 - Daily game
@@ -8,9 +12,7 @@
 - Statistics
 - Leaderboards
 - A Flutter version for all platforms
-
 ## Installation
-[![Version](https://img.shields.io/github/v/release/ketr4x/wordle-cli?sort=semver&label=Version)](https://github.com/ketr4x/wordle-cli/releases)
 ### Python CLI
 #### Cloning the repository
 - Click the Code button
@@ -25,7 +27,8 @@
 - Download the latest release for your platform:
   - `.exe` for Windows GUI build
 - Run it
-### Flutter version [![Flutter](https://github.com/ketr4x/wordle-cli/actions/workflows/flutter.yml/badge.svg)](https://github.com/ketr4x/wordle-cli/actions/workflows/flutter.yml)
+### Flutter version 
+[![Flutter](https://github.com/ketr4x/wordle-cli/actions/workflows/flutter.yml/badge.svg)](https://github.com/ketr4x/wordle-cli/actions/workflows/flutter.yml)
 #### App
 - https://github.com/ketr4x/wordle-cli/releases/tag/Flutter
 - Download the latest release for your platform: 
@@ -62,4 +65,4 @@ Copyright ketr4x, 2025. Licensed under BSD-3-Clause License.
 
 
 [![This project is part of Moonshot, a 4-day hackathon in Florida visiting Kennedy Space Center and Universal Studios\!](https://hc-cdn.hel1.your-objectstorage.com/s/v3/35ad2be8c916670f3e1ac63c1df04d76a4b337d1_moonshot.png)](https://moonshot.hack.club/1016)
-#### This project was made for the [Moonshot](https://moonshot.hack.club/1016) hackathon organized by HackClub. ![Hackatime Badge](https://hackatime-badge.hackclub.com/U08RQEP53HA/wordle-cli)
+#### This project was made for the [Moonshot](https://moonshot.hack.club/1016) hackathon organized by [HackClub](https://hackclub.com).

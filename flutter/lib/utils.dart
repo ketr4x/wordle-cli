@@ -155,7 +155,7 @@ Future<String> checkOnlineLanguagePack(String languageCode) async {
 
 Future<Map<String, dynamic>> readLanguagePack(String languageCode, [bool online = false]) async {
   try {
-    final String response = await rootBundle.loadString('assets${Platform.pathSeparator}${online ? 'online${Platform.pathSeparator}' : ''}$languageCode.json');
+    final String response = await rootBundle.loadString('assets/${online ? 'online/' : ''}$languageCode.json');
     return jsonDecode(response);
   } catch (e) {
     if (online) {

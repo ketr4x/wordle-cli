@@ -36,6 +36,8 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
         working-directory: ./flutter/
+        with:
+          cache: true
       - name: Analyze project source
         run: dart analyze .
         working-directory: ./flutter/

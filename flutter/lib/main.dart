@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await ensureDefaultServerUrl();
   AdaptiveThemeMode? savedThemeMode;
   try {
     savedThemeMode = await AdaptiveTheme.getThemeMode();

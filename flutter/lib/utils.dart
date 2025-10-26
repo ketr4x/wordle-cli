@@ -66,9 +66,24 @@ Future<String?> getConfig(String key) async {
   return prefs.getString(key);
 }
 
+Future<String?> _getServerUrl() async {
+  final s = await getConfig('server_url');
+  if (s == null) return null;
+  final trimmed = s.trim();
+  if (trimmed.isEmpty) return null;
+  return trimmed;
+}
+
+Future<void> ensureDefaultServerUrl() async {
+  final current = await getConfig('server_url');
+  if (current == null) {
+    await setConfig('server_url', 'https://wordle.ketrax.ovh');
+  }
+}
+
 Future<List<String>> getLanguagePacks([bool online = false]) async {
   if (online) {
-    final serverUrl = await getConfig('server_url');
+    final serverUrl = await _getServerUrl();
     if (serverUrl == null) {
       return [];
     }
@@ -115,7 +130,7 @@ String _extractSha256(String raw) {
 
 Future<String> checkOnlineLanguagePack(String languageCode) async {
   try {
-    final serverUrl = await getConfig('server_url');
+    final serverUrl = await _getServerUrl();
     if (serverUrl == null) {
       return "Server URL not configured";
     }
@@ -182,7 +197,7 @@ Future<Map<String, dynamic>> readLanguagePack(String languageCode, [bool online 
 
 Future<Map<String, dynamic>> readOnlineLanguagePack(String languageCode) async {
   try {
-    final serverUrl = await getConfig('server_url');
+    final serverUrl = await _getServerUrl();
     if (serverUrl == null) {
       return {'error': 'Server URL is not set up.'};
     }
@@ -214,7 +229,7 @@ Future<Map<String, dynamic>> readOnlineLanguagePack(String languageCode) async {
 
 Future<String> downloadOnlineLanguagePack(String languageCode) async {
   try {
-    final serverUrl = await getConfig('server_url');
+    final serverUrl = await _getServerUrl();
     if (serverUrl == null) {
       return "Server URL not configured";
     }
@@ -968,7 +983,7 @@ class LeaderboardData {
 
 Future<int> checkConnectionState(String? serverUrl) async {
   try {
-    serverUrl ??= await getConfig('server_url');
+    serverUrl ??= await _getServerUrl();
     if (serverUrl == null) {
       return HttpStatus.notFound;
     }
@@ -988,7 +1003,7 @@ Future<int> checkConnectionState(String? serverUrl) async {
 
 Future<int> checkAccountState() async {
   try {
-    final serverUrl = await getConfig('server_url');
+    final serverUrl = await _getServerUrl();
     if (serverUrl == null) {
       return HttpStatus.notFound;
     }
@@ -1012,7 +1027,7 @@ Future<int> checkAccountState() async {
 
 Future<LeaderboardData?> getLeaderboard(String state, String user, String auth) async {
   try {
-    final serverUrl = await getConfig('server_url');
+    final serverUrl = await _getServerUrl();
     if (serverUrl == null) {
       throw Exception('Server URL not configured');
     }

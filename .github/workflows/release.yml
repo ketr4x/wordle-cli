@@ -6,6 +6,33 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Cache Flutter pub packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pub-cache
+            ~/.pub-cache/hosted
+          key: pub-${{ runner.os }}-flutter-${{ hashFiles('flutter/pubspec.lock') }}
+          restore-keys: |
+            pub-${{ runner.os }}-flutter-
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('flutter/android/gradle/wrapper/gradle-wrapper.properties', 'flutter/android/app/build.gradle', 'flutter/android/build.gradle') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+      - name: Cache Android SDK
+        uses: actions/cache@v4
+        with:
+          path: |
+            /usr/local/lib/android/sdk
+            ~/.android
+          key: android-sdk-${{ runner.os }}-ndk-cmake
+          restore-keys: |
+            android-sdk-${{ runner.os }}-
       - name: Create keystore directory
         run: mkdir -p ./flutter/android/app
       - name: Install GitHub CLI
@@ -56,20 +83,8 @@ jobs:
       - name: Make a web build
         run: flutter build web --release --base-href /play/
         working-directory: ./flutter/
-      - name: Commit web build
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          cd ./flutter
-          git add -A build/web -f
-          if git diff --cached --quiet; then
-            echo "No web build changes to commit"
-          else
-            git commit -m "chore(build): add web build for version ${{ steps.version.outputs.version }}"
-            git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:${{ github.ref_name }}
-          fi
       - name: Create tag for release
-        id: create_tage
+        id: create_tag
         run: |
           set -euo pipefail          
           VERSION="${{ steps.version.outputs.version }}"
@@ -86,6 +101,18 @@ jobs:
           else
             git tag -a "$VERSION" -m "Release $VERSION"
             git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} refs/tags/$VERSION
+          fi
+      - name: Commit web build
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          cd ./flutter
+          git add -A build/web -f
+          if git diff --cached --quiet; then
+            echo "No web build changes to commit"
+          else
+            git commit -m "chore(build): add web build for version ${{ steps.version.outputs.version }}"
+            git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:${{ github.ref_name }}
           fi
       - name: Package web build
         run: |

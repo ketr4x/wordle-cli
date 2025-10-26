@@ -97,7 +97,7 @@ class _ConnectivityPageState extends State<ConnectivityPage> {
   Future<void> _loadServerUrl() async {
     final serverUrl = await getConfig("server_url");
     setState(() {
-      _serverUrl = serverUrl ?? 'https://wordle.ketrax.ovh'; //TODO
+      _serverUrl = serverUrl ?? '';
     });
   }
 

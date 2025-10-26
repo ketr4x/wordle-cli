@@ -18,7 +18,7 @@ import 'package:provider/provider.dart';
 import 'statistics.dart';
 import 'connectivity.dart';
 import 'package:crypto/crypto.dart';
-import 'online_storage.dart';
+import 'storage.dart';
 
 enum GameMode { random, daily, ranked }
 

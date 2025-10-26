@@ -28,24 +28,6 @@ jobs:
             ~/.pub-cache
             ~/.dart_tool
           key: ${{ runner.os }}-flutter-${{ hashFiles('**/pubspec.lock') }}
-      - name: Cache Gradle
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-${{ hashFiles('flutter/android/gradle/wrapper/gradle-wrapper.properties', 'flutter/android/app/build.gradle', 'flutter/android/build.gradle') }}
-          restore-keys: |
-            gradle-${{ runner.os }}-
-      - name: Cache Android SDK
-        uses: actions/cache@v4
-        with:
-          path: |
-            /usr/local/lib/android/sdk
-            ~/.android
-          key: android-sdk-${{ runner.os }}-ndk-cmake
-          restore-keys: |
-            android-sdk-${{ runner.os }}-
       - uses: dart-lang/setup-dart@9a04e6d73cca37bd455e0608d7e5092f881fd603
       - uses: subosito/flutter-action@v2
         with:

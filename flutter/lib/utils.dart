@@ -136,11 +136,11 @@ Future<String> checkOnlineLanguagePack(String languageCode) async {
       return "Server returned invalid checksum format";
     }
 
-    final exists = await onlineFileExists(languageCode);
+    final exists = await fileExists(languageCode, true);
     if (!exists) {
       return "Local file missing";
     }
-    final content = await readOnlineFile(languageCode);
+    final content = await readFile(languageCode, true);
     if (content == null) return "Local file missing";
     final localChecksum = sha256.convert(utf8.encode(content)).toString();
     if (localChecksum == serverChecksum) {
@@ -159,7 +159,7 @@ Future<Map<String, dynamic>> readLanguagePack(String languageCode, [bool online 
     return jsonDecode(response);
   } catch (e) {
     if (online) {
-      final content = await readOnlineFile(languageCode);
+      final content = await readFile(languageCode, true);
       if (content != null) {
         return jsonDecode(content);
       }
@@ -187,11 +187,11 @@ Future<Map<String, dynamic>> readOnlineLanguagePack(String languageCode) async {
       return {'error': 'Server URL is not set up.'};
     }
 
-    final exists = await onlineFileExists(languageCode);
+    final exists = await fileExists(languageCode, true);
     if (!exists) {
       return {'error': 'File does not exist.'};
     }
-    final content = await readOnlineFile(languageCode);
+    final content = await readFile(languageCode, true);
     if (content == null) return {'error': 'File does not exist.'};
     final localChecksum = sha256.convert(utf8.encode(content)).toString();
 
@@ -212,7 +212,7 @@ Future<Map<String, dynamic>> readOnlineLanguagePack(String languageCode) async {
   }
 }
 
-Future<String> downloadLanguagePack(String languageCode) async {
+Future<String> downloadOnlineLanguagePack(String languageCode) async {
   try {
     final serverUrl = await getConfig('server_url');
     if (serverUrl == null) {
@@ -231,7 +231,7 @@ Future<String> downloadLanguagePack(String languageCode) async {
       return "Download error";
     }
 
-    await writeOnlineFile(languageCode, response.body);
+    await writeFile(languageCode, response.body, true);
     final localChecksum = sha256.convert(utf8.encode(response.body)).toString();
 
     final url2 = '$serverUrl/online/languages/checksum?language=$languageCode';

@@ -11,7 +11,7 @@
 - File synchronization
 - Statistics
 - Leaderboards
-- A Flutter version for all platforms
+- A Flutter GUI and a Python CLI
 ## Installation
 ### Python CLI
 #### Cloning the repository
@@ -45,6 +45,9 @@
 - Clone the repository
 - Install python and pip
 - Install heroku cli (optional)
+- Add a `.env` file in server/ with the following contents:
+  - `DATABASE_URL="sqlite:///wordle.db"`
+  - `FLASK_DEBUG=True`
 - `pip -m requirements.txt`
 - `heroku local --port 5006 -f Procfile.windows` or `flask --app server/app.py run`
 ## Planned updates

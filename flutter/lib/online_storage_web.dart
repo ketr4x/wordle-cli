@@ -14,17 +14,17 @@ Future<List<String>> listFiles([bool online = false]) async {
   return out;
 }
 
-Future<void> writeOnlineFile(String name, String content) async {
-  final key = 'online_$name.json';
+Future<void> writeFile(String name, String content, [bool online = false]) async {
+  final key = '${online ? 'online_' : ''}$name.json';
   html.window.localStorage[key] = content;
 }
 
-Future<bool> onlineFileExists(String name) async {
-  final key = 'online_$name.json';
+Future<bool> fileExists(String name, [bool online = false]) async {
+  final key = '${online ? 'online_' : ''}$name.json';
   return html.window.localStorage.containsKey(key);
 }
 
-Future<String?> readOnlineFile(String name) async {
-  final key = 'online_$name.json';
+Future<String?> readFile(String name, [bool online = false]) async {
+  final key = '${online ? 'online_' : ''}$name.json';
   return html.window.localStorage[key];
 }

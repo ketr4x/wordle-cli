@@ -22,20 +22,20 @@ Future<List<String>> listFiles([bool online = false]) async {
       .toList();
 }
 
-Future<void> writeOnlineFile(String name, String content) async {
-  final dir = await _getBaseDir();
+Future<void> writeFile(String name, String content, [bool online = false]) async {
+  final dir = await _getBaseDir(online);
   final file = File(p.join(dir.path, '$name.json'));
   await file.writeAsString(content, flush: true);
 }
 
-Future<bool> onlineFileExists(String name) async {
-  final dir = await _getBaseDir();
+Future<bool> fileExists(String name, [bool online = false]) async {
+  final dir = await _getBaseDir(online);
   final file = File(p.join(dir.path, '$name.json'));
   return file.exists();
 }
 
-Future<String?> readOnlineFile(String name) async {
-  final dir = await _getBaseDir();
+Future<String?> readFile(String name, [bool online = false]) async {
+  final dir = await _getBaseDir(online);
   final file = File(p.join(dir.path, '$name.json'));
   if (!await file.exists()) return null;
   return await file.readAsString();

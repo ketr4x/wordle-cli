@@ -97,7 +97,7 @@ class _ConnectivityPageState extends State<ConnectivityPage> {
   Future<void> _loadServerUrl() async {
     final serverUrl = await getConfig("server_url");
     setState(() {
-      _serverUrl = serverUrl ?? '';
+      _serverUrl = serverUrl ?? 'https://wordle.ketrax.ovh'; //TODO
     });
   }
 
@@ -164,10 +164,10 @@ class _ConnectivityPageState extends State<ConnectivityPage> {
     }
   }
 
-  Future<List<String>> _downloadLanguages(List<String> languages) async {
+  Future<List<String>> _downloadOnlineLanguages(List<String> languages) async {
     List<String> results = [];
     for (var lang in languages) {
-      final res = await downloadLanguagePack(lang);
+      final res = await downloadOnlineLanguagePack(lang);
       results.add('$lang: $res');
     }
     return results;
@@ -211,8 +211,22 @@ class _ConnectivityPageState extends State<ConnectivityPage> {
                         actions: [
                           if (provider.connectionState != HttpStatus.ok)
                             TextButton(
-                              onPressed: () {
-                                Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsPage()));
+                              onPressed: () async {
+                                await Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsPage()));
+                                await _loadServerUrl();
+                                await _loadUsername();
+                                await _loadPassword();
+                                setState(() {
+                                  _invalidateLanguageCheckCache();
+                                });
+                                _checkLanguagesForServer(force: true);
+                                if (!context.mounted) return;
+                                final conn = Provider.of<ConnectionStateProvider>(context, listen: false);
+                                try {conn.forceCheck();} catch (_) {}
+                                try {
+                                  final acc = Provider.of<AccountStateProvider>(context, listen: false);
+                                  acc.forceCheck();
+                                } catch (_) {}
                               },
                               child: const Text('Settings'),
                             ),
@@ -288,8 +302,22 @@ class _ConnectivityPageState extends State<ConnectivityPage> {
                               ),
                             if (isUsernameEmpty)
                               TextButton(
-                                onPressed: () {
-                                  Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsPage()));
+                                onPressed: () async {
+                                  await Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsPage()));
+                                  await _loadServerUrl();
+                                  await _loadUsername();
+                                  await _loadPassword();
+                                  setState(() {
+                                    _invalidateLanguageCheckCache();
+                                  });
+                                  _checkLanguagesForServer(force: true);
+                                  if (!context.mounted) return;
+                                  final conn = Provider.of<ConnectionStateProvider>(context, listen: false);
+                                  try {conn.forceCheck();} catch (_) {}
+                                  try {
+                                    final acc = Provider.of<AccountStateProvider>(context, listen: false);
+                                    acc.forceCheck();
+                                  } catch (_) {}
                                 },
                                 child: const Text('Settings'),
                               ),
@@ -438,7 +466,7 @@ class _ConnectivityPageState extends State<ConnectivityPage> {
                                           return AlertDialog(
                                             title: const Text('Downloading languages'),
                                             content: FutureBuilder<List<String>>(
-                                              future: _downloadLanguages(problematic),
+                                              future: _downloadOnlineLanguages(problematic),
                                               builder: (dCtx, dSnap) {
                                                 if (dSnap.connectionState != ConnectionState.done) {
                                                   return const SizedBox(

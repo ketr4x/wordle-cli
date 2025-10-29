@@ -21,6 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Cache Flutter dependencies
         uses: actions/cache@v4
         with:
@@ -28,17 +29,18 @@ jobs:
             ~/.pub-cache
             ~/.dart_tool
           key: ${{ runner.os }}-flutter-${{ hashFiles('**/pubspec.lock') }}
+
       - uses: dart-lang/setup-dart@9a04e6d73cca37bd455e0608d7e5092f881fd603
+
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
           cache: true
+
       - name: Install dependencies
         run: flutter pub get
         working-directory: ./flutter/
+
       - name: Analyze project source
         run: dart analyze .
         working-directory: ./flutter/
-      # - name: Run tests TODO: Add tests
-      #   run: flutter test .
-      #   working-directory: ./flutter/test

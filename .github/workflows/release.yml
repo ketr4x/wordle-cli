@@ -6,6 +6,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Cache Flutter pub packages
         uses: actions/cache@v4
         with:
@@ -15,6 +16,7 @@ jobs:
           key: pub-${{ runner.os }}-flutter-${{ hashFiles('flutter/pubspec.lock') }}
           restore-keys: |
             pub-${{ runner.os }}-flutter-
+
       - name: Cache Gradle
         uses: actions/cache@v4
         with:
@@ -24,6 +26,7 @@ jobs:
           key: gradle-${{ runner.os }}-${{ hashFiles('flutter/android/gradle/wrapper/gradle-wrapper.properties', 'flutter/android/app/build.gradle', 'flutter/android/build.gradle') }}
           restore-keys: |
             gradle-${{ runner.os }}-
+
       - name: Cache Android SDK
         uses: actions/cache@v4
         with:
@@ -33,13 +36,17 @@ jobs:
           key: android-sdk-${{ runner.os }}-ndk-cmake
           restore-keys: |
             android-sdk-${{ runner.os }}-
+
       - name: Create keystore directory
         run: mkdir -p ./flutter/android/app
+
       - name: Install GitHub CLI
         run: sudo apt-get install gh
+
       - name: Get version from data.json
         id: version
         run: echo "version=$(jq -r .version data.json)" >> $GITHUB_OUTPUT
+
       - name: Check if build version is incremented
         run: |
           latest_release=$(gh release view --json tagName -q .tagName || echo "none")
@@ -50,28 +57,34 @@ jobs:
           fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Decode keystore
         id: keystore
         run: |
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > ./flutter/android/app/upload-keystore.jks
+
       - name: Set signing env vars
         run: |
           echo "MYAPP_UPLOAD_STORE_FILE=./flutter/android/app/upload-keystore.jks" >> $GITHUB_ENV
           echo "MYAPP_UPLOAD_STORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> $GITHUB_ENV
           echo "MYAPP_UPLOAD_KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> $GITHUB_ENV
           echo "MYAPP_UPLOAD_KEY_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> $GITHUB_ENV
+
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
           cache: true
+
       - name: Install dependencies
         run: flutter pub get
         working-directory: ./flutter/
+
       - name: Get latest commit message not from GitHub Actions
         id: commit
         run: |
           git log --no-merges --pretty=format:"%s" -n 20 | grep -v 'github-actions[bot]' | head -n 1 > commit_message.txt
           echo "message=$(cat commit_message.txt)" >> $GITHUB_OUTPUT
+
       - name: Build APK
         run: >
           flutter build apk --release
@@ -80,9 +93,11 @@ jobs:
           -P MYAPP_UPLOAD_KEY_ALIAS=${{ secrets.KEY_ALIAS }}
           -P MYAPP_UPLOAD_KEY_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}
         working-directory: ./flutter/
+
       - name: Make a web build
         run: flutter build web --release --base-href /play/
         working-directory: ./flutter/
+
       - name: Create tag for release
         id: create_tag
         run: |
@@ -104,6 +119,7 @@ jobs:
             git tag -a "$VERSION" -m "Release $VERSION"
             git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} refs/tags/$VERSION
           fi
+
       - name: Commit web build
         run: |
           cd ./flutter
@@ -114,6 +130,7 @@ jobs:
             git commit -m "chore(build): add web build for version ${{ steps.version.outputs.version }}"
             git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:${{ github.ref_name }}
           fi
+
       - name: Package web build
         run: |
           cd ./flutter
@@ -123,6 +140,7 @@ jobs:
             echo "No web build to upload"
             exit 1
           fi
+
       - name: Upload APK and web build to release
         uses: softprops/action-gh-release@v1
         with:
@@ -132,12 +150,14 @@ jobs:
             ./build_web_${{ steps.version.outputs.version }}.zip
           name: "[Flutter] v${{ steps.version.outputs.version }}"
           body: "${{ steps.commit.outputs.message }}"
+
       - name: Delete old Flutter release and tag
         run: |
           gh release delete "Flutter" --yes || echo "No Flutter release to delete"
           git push --delete origin Flutter || echo "No Flutter tag to delete"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Create new Flutter release
         uses: softprops/action-gh-release@v1
         with:

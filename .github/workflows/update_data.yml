@@ -42,19 +42,18 @@ jobs:
       
       - name: Update data.json with release notes and timestamp
         run: |
-          python3 << 'EOF'
+          printf '%s' "${{ ste.commit_message.outputs.message }}" > commit_message.txt
+          python3 - << 'PY'
           import json
-          
-          with open('data.json', 'r') as f:
-              data = json.load(f)
-          
-          data['release_notes'] = '''${{ steps.commit_message.outputs.message }}'''
+          with open('data.json', 'r', encoding='utf-8') as f:
+            data = json.load(f)
+          with open('commit_message.txt', 'r', encoding='utf-8') as f:
+            data['release_notes'] = f.read()
           data['published_at'] = '${{ steps.timestamp.outputs.timestamp }}'
-          
-          with open('data.json', 'w') as f:
-              json.dump(data, f, indent=2)
-          EOF
-      
+          with open('data.json', 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=2)
+          PY
+
       - name: Set up git
         run: |
           git config user.name "github-actions[bot]"

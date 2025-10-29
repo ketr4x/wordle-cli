@@ -3,6 +3,6 @@
   "update_url": "https://raw.githubusercontent.com/ketr4x/wordle-cli/master/data.json",
   "repo": "https://github.com/ketr4x/wordle-cli.git",
   "version": "1.1.11",
-  "release_notes": "Merge remote-tracking branch 'origin/master'",
-  "published_at": "2025-10-29T14:54:57Z"
+  "release_notes": "fix: unify server URL retrieval method and improve ranked wordlist retrieval",
+  "published_at": "2025-10-29T17:38:58Z"
 }

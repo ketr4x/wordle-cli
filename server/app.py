@@ -119,7 +119,7 @@ def get_leaderboard():
             Stats.avg_time > 0,
             Stats.avg_time < user_stats.avg_time,
             Stats.matches > 0
-        ).count() + 1 if user_stats.avg_time > 0 else None
+        ).count() + 1 if user_stats.avg_time > 0 and user_stats.matches > 0 else None
 
         user_winrate = user_stats.wins / user_stats.matches if user_stats.matches > 0 else 0
         winrate_position = Stats.query.filter(Stats.matches > 0).all()
@@ -332,7 +332,7 @@ def guess_online():
         if game.status == 2:
             stats.wins += 1
             prev_avg = stats.avg_time or 0.0
-            prev_wins = max(stats.wins -1, 0)
+            prev_wins = max(stats.wins - 1, 0)
             stats.avg_time = (prev_avg * prev_wins + game.time) / stats.wins
 
         if not isinstance(stats.word_freq, dict):

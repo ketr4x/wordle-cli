@@ -55,6 +55,9 @@
 - [**Flutter**] language pack download
 - [**Flutter**] (?) ai mode
 - [**Website**] website redesign
+- [**Server**] leaderboard: matches > 0
+- [**Server**] leaderboard: add wins and make 10 matches a minimum for winrate and avg time
+- Username filter
 - Python releases
 - Icon
 ## Contributing

@@ -1,6 +1,6 @@
 # Wordle CLI
 [![Version](https://img.shields.io/github/v/release/ketr4x/wordle-cli?sort=semver&label=Version)](https://github.com/ketr4x/wordle-cli/releases)
-[![Commits](https://img.shields.io/github/commits-since/ketr4x/wordle-cli/latest?label=Commits%20since%20release)](https://img.shields.io/github/commits-since/ketr4x/wordle-cli/latest)
+[![Commits](https://img.shields.io/github/commits-since/ketr4x/wordle-cli/latest?label=Commits%20since%20release)](https://github.com/ketr4x/wordle-cli/commits/master/)
 ![File Count](https://img.shields.io/github/directory-file-count/ketr4x/wordle-cli/data?label=Languages)
 ![Hackatime Badge](https://hackatime-badge.hackclub.com/U08RQEP53HA/wordle-cli?label=Project%20time)
 ## Features
@@ -54,6 +54,7 @@
 - [**Flutter**] timer fix
 - [**Flutter**] language pack download
 - [**Flutter**] (?) ai mode
+- [**Flutter**] fix server url reset
 - [**Website**] website redesign
 - Python releases
 - Icon

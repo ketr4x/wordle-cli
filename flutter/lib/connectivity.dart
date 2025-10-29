@@ -390,6 +390,26 @@ class _ConnectivityPageState extends State<ConnectivityPage> {
                                 'Failed to connect to server. Please check your server URL and internet connection.'),
                               actions: [
                                 TextButton(
+                                  onPressed: () async {
+                                    await Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsPage()));
+                                    await _loadServerUrl();
+                                    await _loadUsername();
+                                    await _loadPassword();
+                                    setState(() {
+                                      _invalidateLanguageCheckCache();
+                                    });
+                                    _checkLanguagesForServer(force: true);
+                                    if (!context.mounted) return;
+                                    final conn = Provider.of<ConnectionStateProvider>(context, listen: false);
+                                    try {conn.forceCheck();} catch (_) {}
+                                    try {
+                                      final acc = Provider.of<AccountStateProvider>(context, listen: false);
+                                      acc.forceCheck();
+                                    } catch (_) {}
+                                  },
+                                  child: const Text('Settings'),
+                                ),
+                                TextButton(
                                   onPressed: () => Navigator.pop(context),
                                   child: const Text('OK'),
                                 ),
@@ -532,7 +552,7 @@ class _ConnectivityPageState extends State<ConnectivityPage> {
             ),
           ),
           ListTile(
-            title: const Text('Local languages'),
+            title: const Text('Local Languages'),
             subtitle: FutureBuilder<List<String>>(
               future: getLanguagePacks(),
               builder: (context, snapshot) {
@@ -542,11 +562,56 @@ class _ConnectivityPageState extends State<ConnectivityPage> {
                 return const Text('');
               },
             ),
-            /*trailing: IconButton(
-              icon: Icon(
-                TODO
-              ),
-            ),*/
+            trailing: Consumer<ConnectionStateProvider>(
+              builder: (context, provider, child) {
+                return IconButton(
+                  icon: Icon(
+                    provider.connectionState == HttpStatus.ok
+                      ? Icons.cloud_done
+                      : Icons.cloud_off,
+                    color: provider.connectionState == HttpStatus.ok
+                      ? Colors.green
+                      : Colors.red,
+                  ),
+                  onPressed: () {
+                    showAdaptiveDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Languages'),
+                        content: Text(''), // TODO
+                        actions: [
+                          if (provider.connectionState != HttpStatus.ok)
+                            TextButton(
+                              onPressed: () async {
+                                await Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsPage()));
+                                await _loadServerUrl();
+                                await _loadUsername();
+                                await _loadPassword();
+                                setState(() {
+                                  _invalidateLanguageCheckCache();
+                                });
+                                _checkLanguagesForServer(force: true);
+                                if (!context.mounted) return;
+                                final conn = Provider.of<ConnectionStateProvider>(context, listen: false);
+                                try {conn.forceCheck();} catch (_) {}
+                                try {
+                                  final acc = Provider.of<AccountStateProvider>(context, listen: false);
+                                  acc.forceCheck();
+                                } catch (_) {}
+                              },
+                              child: const Text('Settings'),
+                            ),
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('OK'),
+                          ),
+                        ],
+                      )
+                    );
+                  },
+                );
+              },
+            ),
           )
         ],
       )

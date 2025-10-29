@@ -1,7 +1,7 @@
 # Wordle CLI
 [![Version](https://img.shields.io/github/v/release/ketr4x/wordle-cli?sort=semver&label=Version)](https://github.com/ketr4x/wordle-cli/releases)
 [![Commits](https://img.shields.io/github/commits-since/ketr4x/wordle-cli/latest?label=Commits%20since%20release)](https://github.com/ketr4x/wordle-cli/commits/master/)
-![File Count](https://img.shields.io/github/directory-file-count/ketr4x/wordle-cli/data?label=Languages)
+![Languages](https://img.shields.io/github/directory-file-count/ketr4x/wordle-cli/data?label=Languages)
 ![Hackatime Badge](https://hackatime-badge.hackclub.com/U08RQEP53HA/wordle-cli?label=Project%20time)
 ## Features
 - Custom solo game
@@ -16,7 +16,7 @@
 ### Python CLI
 #### Cloning the repository
 - Click the Code button
-- Download zip
+- Download .zip
 - Unpack the file
 - Install python and pip
 - `cd client`

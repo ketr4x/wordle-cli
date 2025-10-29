@@ -300,7 +300,7 @@ class _ConnectivityPageState extends State<ConnectivityPage> {
                                 },
                                 child: const Text('Create account'),
                               ),
-                            if (isUsernameEmpty)
+                            if (provider.connectionState != HttpStatus.ok)
                               TextButton(
                                 onPressed: () async {
                                   await Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsPage()));

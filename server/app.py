@@ -106,18 +106,19 @@ def get_leaderboard():
         return 'Wrong auth', 403
 
     if state == "basic":
-        top_points = Stats.query.order_by(Stats.points.desc()).limit(10).all()
-        top_matches = Stats.query.order_by(Stats.matches.desc()).limit(10).all()
-        top_avg_time = Stats.query.filter(Stats.avg_time > 0).order_by(Stats.avg_time.asc()).limit(10).all()
+        top_points = Stats.query.filter(Stats.matches > 0).order_by(Stats.points.desc()).limit(10).all()
+        top_matches = Stats.query.filter(Stats.matches > 0).order_by(Stats.matches.desc()).limit(10).all()
+        top_avg_time = Stats.query.filter(Stats.avg_time > 0, Stats.matches > 0).order_by(Stats.avg_time.asc()).limit(10).all()
         top_winrate = Stats.query.filter(Stats.matches > 0).all()
         top_winrate = sorted(top_winrate, key=lambda s: s.wins / s.matches if s.matches > 0 else 0, reverse=True)[:10]
 
         user_stats = Stats.query.filter_by(username=user).first()
-        points_position = Stats.query.filter(Stats.points > user_stats.points).count() + 1
-        matches_position = Stats.query.filter(Stats.matches > user_stats.matches).count() + 1
+        points_position = Stats.query.filter(Stats.points > user_stats.points, Stats.matches > 0).count() + 1
+        matches_position = Stats.query.filter(Stats.matches > user_stats.matches, Stats.matches > 0).count() + 1
         avg_time_position = Stats.query.filter(
             Stats.avg_time > 0,
-            Stats.avg_time < user_stats.avg_time
+            Stats.avg_time < user_stats.avg_time,
+            Stats.matches > 0
         ).count() + 1 if user_stats.avg_time > 0 else None
 
         user_winrate = user_stats.wins / user_stats.matches if user_stats.matches > 0 else 0

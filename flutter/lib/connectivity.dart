@@ -95,7 +95,7 @@ class _ConnectivityPageState extends State<ConnectivityPage> {
   }
 
   Future<void> _loadServerUrl() async {
-    final serverUrl = await getConfig("server_url");
+    final serverUrl = await getConfig('server_url');
     setState(() {
       _serverUrl = serverUrl ?? '';
     });

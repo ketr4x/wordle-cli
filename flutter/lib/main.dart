@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wordle/random.dart';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:wordle/utils.dart';
@@ -6,7 +7,15 @@ import 'package:provider/provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await ensureDefaultServerUrl();
+
+  final prefs = await SharedPreferences.getInstance();
+  final serverUrl = (await getConfig('server_url')) ?? '';
+  final isFirstLaunch = prefs.getBool('isFirstLaunch') == true || !prefs.containsKey('isFirstLaunch');
+  if (serverUrl.isEmpty && isFirstLaunch) {
+    await setConfig('server_url', 'https://wordle.ketrax.ovh');
+    await prefs.setBool('isFirstLaunch', false);
+  }
+
   AdaptiveThemeMode? savedThemeMode;
   try {
     savedThemeMode = await AdaptiveTheme.getThemeMode();

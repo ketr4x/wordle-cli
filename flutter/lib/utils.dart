@@ -66,24 +66,9 @@ Future<String?> getConfig(String key) async {
   return prefs.getString(key);
 }
 
-Future<String?> getServerUrl() async {
-  final s = await getConfig('server_url');
-  if (s == null) return null;
-  final trimmed = s.trim();
-  if (trimmed.isEmpty) return null;
-  return trimmed;
-}
-
-Future<void> ensureDefaultServerUrl() async {
-  final current = await getConfig('server_url');
-  if (current == null) {
-    await setConfig('server_url', 'https://wordle.ketrax.ovh');
-  }
-}
-
 Future<List<String>> getLanguagePacks([bool online = false]) async {
   if (online) {
-    final serverUrl = await getServerUrl();
+    final serverUrl = await getConfig('server_url');
     if (serverUrl == null) {
       return [];
     }
@@ -130,7 +115,7 @@ String _extractSha256(String raw) {
 
 Future<String> checkOnlineLanguagePack(String languageCode) async {
   try {
-    final serverUrl = await getServerUrl();
+    final serverUrl = await getConfig('server_url');
     if (serverUrl == null) {
       return "Server URL not configured";
     }
@@ -197,39 +182,38 @@ Future<Map<String, dynamic>> readLanguagePack(String languageCode, [bool online 
 
 Future<Map<String, dynamic>> readOnlineLanguagePack(String languageCode) async {
   try {
-    final serverUrl = await getServerUrl();
+    final serverUrl = await getConfig('server_url');
     if (serverUrl == null) {
       return {'error': 'Server URL is not set up.'};
     }
 
-    final exists = await fileExists(languageCode, true);
-    if (!exists) {
+    final pack = await readLanguagePack(languageCode, true);
+    final rawContent = await readFile(languageCode, true);
+    if (rawContent == null) {
       return {'error': 'File does not exist.'};
     }
-    final content = await readFile(languageCode, true);
-    if (content == null) return {'error': 'File does not exist.'};
-    final localChecksum = sha256.convert(utf8.encode(content)).toString();
 
-    final url2 = '$serverUrl/online/languages/checksum?language=$languageCode';
-    final response2 = await http.get(Uri.parse(url2)).timeout(const Duration(seconds: 7));
+    final localChecksum = sha256.convert(utf8.encode(rawContent)).toString();
+    final url = '$serverUrl/online/languages/checksum?language=$languageCode';
+    final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 7));
 
-    if (response2.statusCode != 200) {
+    if (response.statusCode != 200) {
       return {'error': 'Server did not respond correctly.'};
     }
 
-    final serverChecksum = _extractSha256(response2.body);
+    final serverChecksum = _extractSha256(response.body);
     if (localChecksum == serverChecksum) {
-      return jsonDecode(content);
+      return pack;
     }
-    return {'error': 'Error'};
+    return {'error': 'Language pack invalid.'};
   } catch (e) {
-    return {'error': 'Error'};
+    return {'error': 'File does not exist.'};
   }
 }
 
 Future<String> downloadOnlineLanguagePack(String languageCode) async {
   try {
-    final serverUrl = await getServerUrl();
+    final serverUrl = await getConfig('server_url');
     if (serverUrl == null) {
       return "Server URL not configured";
     }
@@ -983,7 +967,7 @@ class LeaderboardData {
 
 Future<int> checkConnectionState(String? serverUrl) async {
   try {
-    serverUrl ??= await getServerUrl();
+    serverUrl ??= await getConfig('server_url');
     if (serverUrl == null) {
       return HttpStatus.notFound;
     }
@@ -1003,8 +987,12 @@ Future<int> checkConnectionState(String? serverUrl) async {
 
 Future<int> checkAccountState() async {
   try {
-    final serverUrl = await getServerUrl();
+    final serverUrl = await getConfig('server_url');
     if (serverUrl == null) {
+      return HttpStatus.notFound;
+    }
+
+    if (await getConfig("username") == null || await getConfig('password') == null) {
       return HttpStatus.notFound;
     }
 
@@ -1027,7 +1015,7 @@ Future<int> checkAccountState() async {
 
 Future<LeaderboardData?> getLeaderboard(String state, String user, String auth) async {
   try {
-    final serverUrl = await getServerUrl();
+    final serverUrl = await getConfig('server_url');
     if (serverUrl == null) {
       throw Exception('Server URL not configured');
     }

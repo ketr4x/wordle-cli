@@ -54,7 +54,6 @@
 - [**Flutter**] timer fix
 - [**Flutter**] language pack download
 - [**Flutter**] (?) ai mode
-- [**Flutter**] fix server url reset
 - [**Website**] website redesign
 - Python releases
 - Icon

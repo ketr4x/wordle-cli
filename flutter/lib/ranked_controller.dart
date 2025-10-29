@@ -71,7 +71,7 @@ class RankedWordleController extends ChangeNotifier with WidgetsBindingObserver 
     loading = true;
     notifyListeners();
 
-    final serverUrl = await getServerUrl();
+    final serverUrl = await getConfig('server_url');
     final user = await getConfig('username');
     final auth = await getConfig('password');
     final lang = await getConfig('game_lang') ?? "en";
@@ -181,7 +181,7 @@ class RankedWordleController extends ChangeNotifier with WidgetsBindingObserver 
     loading = true;
     notifyListeners();
 
-    final serverUrl = await getServerUrl();
+    final serverUrl = await getConfig('server_url');
     final user = await getConfig('username');
     final auth = await getConfig('password');
     final lang = await getConfig('game_lang') ?? "en";

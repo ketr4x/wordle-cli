@@ -30,6 +30,11 @@ class RankedWordleController extends ChangeNotifier with WidgetsBindingObserver 
 
   static RankedWordleController? _instance;
 
+  Future<void> refresh() async {
+    _initialized = false;
+    await ensureInitialized();
+  }
+
   factory RankedWordleController() {
     _instance ??= RankedWordleController._internal();
     return _instance!;

@@ -109,12 +109,19 @@ class _WordleGameViewState extends State<WordleGameView> {
                             content: Text('The local language pack differs from the server one. Download it or change the server.'),
                             actions: [
                               TextButton(
-                                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ConnectivityPage())),
-                                  child: const Text('Download')
+                                onPressed: () async {
+                                  Navigator.pop(context);
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (context) => const ConnectivityPage())).then((_) {
+                                      widget.controller.refresh();
+                                  });
+                                },
+                                child: const Text('Download')
                               ),
                               TextButton(
-                                  onPressed: () => Navigator.of(context).pop(),
-                                  child: const Text('OK')
+                                onPressed: () => Navigator.of(context).pop(),
+                                child: const Text('OK')
                               )
                             ],
                           )

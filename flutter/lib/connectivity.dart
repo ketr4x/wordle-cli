@@ -23,6 +23,7 @@ class _ConnectivityPageState extends State<ConnectivityPage> {
   bool _loadingLanguagesPressed = false;
   int? _lastConnectionState;
   ConnectionStateProvider? _connProviderRef;
+  // bool _loadingLocalLanguagesPressed = false;
 
   void _invalidateLanguageCheckCache() {
     _lastCheckFuture = null;
@@ -551,36 +552,30 @@ class _ConnectivityPageState extends State<ConnectivityPage> {
               },
             ),
           ),
-          ListTile(
-            title: const Text('Local Languages'),
+          /*ListTile( //TODO
+            title: const Text('Local languages'),
             subtitle: FutureBuilder<List<String>>(
-              future: getLanguagePacks(),
+              future: getLanguagePacks(false),
               builder: (context, snapshot) {
-                if (snapshot.hasData) {
-                  return Text('Languages downloaded: ${snapshot.data!.length}');
-                }
-                return const Text('');
-              },
+                final count = snapshot.data?.length ?? 0;
+                return Text('Downloaded languages: $count');
+              }
             ),
             trailing: Consumer<ConnectionStateProvider>(
-              builder: (context, provider, child) {
+              builder: (context, connProvider, child) {
                 return IconButton(
-                  icon: Icon(
-                    provider.connectionState == HttpStatus.ok
-                      ? Icons.cloud_done
-                      : Icons.cloud_off,
-                    color: provider.connectionState == HttpStatus.ok
-                      ? Colors.green
-                      : Colors.red,
-                  ),
-                  onPressed: () {
-                    showAdaptiveDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: const Text('Languages'),
-                        content: Text(''), // TODO
-                        actions: [
-                          if (provider.connectionState != HttpStatus.ok)
+                  icon: _loadingLocalLanguagesPressed
+                      ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Icon(Icons.download),
+                  onPressed: _loadingLocalLanguagesPressed ? null : () async {
+                    if (connProvider.connectionState != HttpStatus.ok) {
+                      showAdaptiveDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Languages'),
+                          content: const Text(
+                              'Failed to connect to server. Please check your server URL and internet connection.'),
+                          actions: [
                             TextButton(
                               onPressed: () async {
                                 await Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsPage()));
@@ -601,18 +596,28 @@ class _ConnectivityPageState extends State<ConnectivityPage> {
                               },
                               child: const Text('Settings'),
                             ),
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: const Text('OK'),
-                          ),
-                        ],
-                      )
-                    );
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text('OK'),
+                            ),
+                          ],
+                        ),
+                      );
+                      return;
+                    }
+
+                    setState(() {
+                      _loadingLocalLanguagesPressed = true;
+                    });
+
+                    try {
+                      final serverLanguages = await getLanguagePacks(true);
+                    }
                   },
                 );
               },
             ),
-          )
+          )*/
         ],
       )
     );

@@ -27,16 +27,6 @@ jobs:
           restore-keys: |
             gradle-${{ runner.os }}-
 
-      - name: Cache Android SDK
-        uses: actions/cache@v4
-        with:
-          path: |
-            /usr/local/lib/android/sdk
-            ~/.android
-          key: android-sdk-${{ runner.os }}-ndk-cmake
-          restore-keys: |
-            android-sdk-${{ runner.os }}-
-
       - name: Create keystore directory
         run: mkdir -p ./flutter/android/app
 

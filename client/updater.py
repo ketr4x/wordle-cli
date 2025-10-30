@@ -55,9 +55,9 @@ def update():
         input("Press `Enter` to continue...")
         return 3
 
-    lv = version_tuple(local.get("version", "0"))
-    rv = version_tuple(remote.get("version", "0"))
-    print("Local version:", local.get("version"), "- Remote version:", remote.get("version"))
+    lv = version_tuple(local.get("python_version", "0"))
+    rv = version_tuple(remote.get("python_version", "0"))
+    print("Local version:", local.get("python_version"), "- Remote version:", remote.get("python_version"))
 
     if rv <= lv:
         print("Already up to date.")
@@ -65,8 +65,8 @@ def update():
         return 0
 
     print("New version available!")
-    print(f"Updating to {remote.get("version")} from {local.get("version")}")
-    published_at = remote.get("published_at", "")
+    print(f"Updating to {remote.get("python_version")} from {local.get("python_version")}")
+    published_at = remote.get("python_published_at", "")
     if published_at:
         try:
             pub_date = datetime.fromisoformat(published_at.replace('Z', '+00:00'))
@@ -74,7 +74,7 @@ def update():
         except ValueError:
             print(f"The update is released at {published_at}")
     print("Release notes:")
-    print(remote.get("release_notes", "No release notes available."))
+    print(remote.get("python_release_notes", "No release notes available."))
     if is_git_repo():
         updated = git_update("origin/" + remote["branch"])
     else:
@@ -82,7 +82,7 @@ def update():
         updated = pip_update(repo_url, remote["branch"])
 
     if updated:
-        local["version"] = remote.get("version")
+        local["python_version"] = remote.get("python_version")
         try:
             with open("../data.json", "w", encoding="utf-8") as f:
                 json.dump(local, f, indent=2)

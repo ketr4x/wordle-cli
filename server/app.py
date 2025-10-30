@@ -108,33 +108,37 @@ def get_leaderboard():
     if state == "basic":
         top_points = Stats.query.filter(Stats.matches > 0).order_by(Stats.points.desc()).limit(10).all()
         top_matches = Stats.query.filter(Stats.matches > 0).order_by(Stats.matches.desc()).limit(10).all()
-        top_avg_time = Stats.query.filter(Stats.avg_time > 0, Stats.matches > 0).order_by(Stats.avg_time.asc()).limit(10).all()
-        top_winrate = Stats.query.filter(Stats.matches > 0).all()
-        top_winrate = sorted(top_winrate, key=lambda s: s.wins / s.matches if s.matches > 0 else 0, reverse=True)[:10]
+        top_avg_time = Stats.query.filter(Stats.avg_time > 0, Stats.matches >= 10).order_by(Stats.avg_time.asc()).limit(10).all()
+        top_winrate = Stats.query.filter(Stats.matches >= 10).all()
+        top_winrate = sorted(top_winrate, key=lambda s: s.wins / s.matches if s.matches >= 10 else 0, reverse=True)[:10]
+        top_wins = Stats.query.filter(Stats.wins > 0).order_by(Stats.wins.desc()).limit(10).all()
 
         user_stats = Stats.query.filter_by(username=user).first()
-        points_position = Stats.query.filter(Stats.points > user_stats.points, Stats.matches > 0).count() + 1
-        matches_position = Stats.query.filter(Stats.matches > user_stats.matches, Stats.matches > 0).count() + 1
+        points_position = None if Stats.query.filter(Stats.points > user_stats.points, Stats.matches > 0).count() == 0 else Stats.query.filter(Stats.points > user_stats.points, Stats.matches > 0).count() + 1
+        matches_position = None if Stats.query.filter(Stats.matches > user_stats.matches, Stats.matches > 0).count() == 0 else Stats.query.filter(Stats.matches > user_stats.matches, Stats.matches > 0).count() + 1
+        wins_position = None if Stats.query.filter(Stats.wins > user_stats.wins, Stats.wins > 0).count() == 0 else Stats.query.filter(Stats.wins > user_stats.wins, Stats.matches > 0).count() + 1
         avg_time_position = Stats.query.filter(
             Stats.avg_time > 0,
             Stats.avg_time < user_stats.avg_time,
-            Stats.matches > 0
-        ).count() + 1 if user_stats.avg_time > 0 and user_stats.matches > 0 else None
+            Stats.matches >= 10
+        ).count() + 1 if user_stats.avg_time > 0 and user_stats.matches >= 10 else None
 
         user_winrate = user_stats.wins / user_stats.matches if user_stats.matches > 0 else 0
-        winrate_position = Stats.query.filter(Stats.matches > 0).all()
-        winrate_position = sum(1 for s in winrate_position if (s.wins / s.matches) > user_winrate) + 1
+        winrate_position = Stats.query.filter(Stats.matches >= 10).all()
+        winrate_position =  None if sum(1 for s in winrate_position if (s.wins / s.matches) > user_winrate) == 0 else sum(1 for s in winrate_position if (s.wins / s.matches) > user_winrate) + 1
 
         return jsonify({
             'top_points': [{'username': s.username, 'points': s.points} for s in top_points],
             'top_matches': [{'username': s.username, 'matches': s.matches} for s in top_matches],
             'top_avg_time': [{'username': s.username, 'avg_time': s.avg_time} for s in top_avg_time],
             'top_winrate': [{'username': s.username, 'winrate': s.wins / s.matches if s.matches > 0 else 0} for s in top_winrate],
+            'top_wins': [{'username': s.username, 'wins': s.wins} for s in top_wins],
             'user_position': {
                 'points': points_position,
                 'matches': matches_position,
                 'avg_time': avg_time_position,
-                'winrate': winrate_position
+                'winrate': winrate_position,
+                'wins': wins_position
             }
         })
 

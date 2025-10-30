@@ -991,6 +991,7 @@ class LeaderboardData {
   final List<Map<String, dynamic>> topMatches;
   final List<Map<String, dynamic>> topPoints;
   final List<Map<String, dynamic>> topWinrate;
+  final List<Map<String, dynamic>> topWins;
   final Map<String, dynamic> userPosition;
 
   LeaderboardData({
@@ -998,6 +999,7 @@ class LeaderboardData {
     required this.topMatches,
     required this.topPoints,
     required this.topWinrate,
+    required this.topWins,
     required this.userPosition,
   });
 
@@ -1016,6 +1018,7 @@ class LeaderboardData {
       topMatches: parseList('top_matches'),
       topPoints: parseList('top_points'),
       topWinrate: parseList('top_winrate'),
+      topWins: parseList('top_wins'),
       userPosition: Map<String, dynamic>.from(json['user_position'] ?? {}),
     );
   }

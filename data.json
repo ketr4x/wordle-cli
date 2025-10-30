@@ -3,6 +3,6 @@
   "update_url": "https://raw.githubusercontent.com/ketr4x/wordle-cli/master/data.json",
   "repo": "https://github.com/ketr4x/wordle-cli.git",
   "version": "1.1.13",
-  "release_notes": "fix: improve statistics retrieval and connection state handling",
-  "published_at": "2025-10-29T18:54:07Z"
+  "release_notes": "fix: refactor language pack checking and add periodic status updates",
+  "published_at": "2025-10-30T16:58:17Z"
 }

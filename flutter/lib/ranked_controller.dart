@@ -89,7 +89,7 @@ class RankedWordleController extends ChangeNotifier with WidgetsBindingObserver 
       if (pack.containsKey('letters')) {
         final letters = pack['letters'] as List<dynamic>;
         keyboardLayout = letters.cast<String>();
-        if (await checkOnlineLanguagePack(lang) == "Local language file correct") {
+        if (await checkLanguagePack(lang, true) == "Local language file correct") {
           try {
             final url = '$serverUrl/online/start?user=$user&auth=$auth&language=$lang';
             final resp = await http.get(Uri.parse(url));

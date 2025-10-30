@@ -113,7 +113,7 @@ String _extractSha256(String raw) {
   return t.toLowerCase();
 }
 
-Future<String> checkOnlineLanguagePack(String languageCode) async {
+Future<String> checkLanguagePack(String languageCode, [bool online = true]) async {
   try {
     final serverUrl = await getConfig('server_url');
     if (serverUrl == null) {
@@ -136,11 +136,11 @@ Future<String> checkOnlineLanguagePack(String languageCode) async {
       return "Server returned invalid checksum format";
     }
 
-    final exists = await fileExists(languageCode, true);
+    final exists = await fileExists(languageCode, online);
     if (!exists) {
       return "Local file missing";
     }
-    final content = await readFile(languageCode, true);
+    final content = await readFile(languageCode, online);
     if (content == null) return "Local file missing";
     final localChecksum = sha256.convert(utf8.encode(content)).toString();
     if (localChecksum == serverChecksum) {
@@ -430,6 +430,62 @@ class LanguageStateProvider extends ChangeNotifier {
   }
 }
 
+class LocalLanguageStateProvider extends ChangeNotifier {
+  String _status = 'error';
+  Timer? _timer;
+  String get status => _status;
+
+  LocalLanguageStateProvider() {
+    _startPeriodicCheck();
+  }
+
+  void _startPeriodicCheck() {
+    _timer = Timer.periodic(const Duration(seconds: 30), (timer) {
+      _checkStatus();
+    });
+    _checkStatus();
+  }
+
+  Future<void> _checkStatus() async {
+    final data = await checkLanguages();
+    final newStatus = data['status'] as String? ?? 'error';
+    if (_status != newStatus) {
+      _status = newStatus;
+      notifyListeners();
+    }
+  }
+
+  Future<void> forceCheck() async {
+    await _checkStatus();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+}
+
+Future<Map<String, dynamic>> checkLanguages() async {
+  final localLanguages = await getLanguagePacks();
+  List<String> problematic = [];
+  Map<String, String> problemsDetails = {};
+  for (var lang in localLanguages) {
+    final status = await checkLanguagePack(lang, false);
+    if (status != "Local language file correct") {
+      problematic.add(lang);
+      problemsDetails[lang] = status;
+    }
+  }
+
+  return {
+    'status': problematic.isEmpty ? 'all_ok' : 'some_problem',
+    'problematic': problematic,
+    'details': problemsDetails,
+    'localLanguages': localLanguages,
+  };
+}
+
 Future<int> createAccount(String serverUrl, String user, String auth) async {
   final url = '$serverUrl/online/create_user?user=$user&auth=$auth';
   final response = await http.get(Uri.parse(url));
@@ -471,7 +527,7 @@ Future<Map<String, dynamic>> checkLanguagesForServer() async {
   List<String> problematic = [];
   Map<String, String> problemsDetails = {};
   for (var lang in serverLanguages) {
-    final status = await checkOnlineLanguagePack(lang);
+    final status = await checkLanguagePack(lang);
     if (status != "Local language file correct") {
       problematic.add(lang);
       problemsDetails[lang] = status;

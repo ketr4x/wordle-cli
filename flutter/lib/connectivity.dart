@@ -133,7 +133,7 @@ class _ConnectivityPageState extends State<ConnectivityPage> {
       List<String> problematic = [];
       Map<String, String> problemsDetails = {};
       for (var lang in serverLanguages) {
-        final status = await checkOnlineLanguagePack(lang);
+        final status = await checkLanguagePack(lang);
         if (status != "Local language file correct") {
           problematic.add(lang);
           problemsDetails[lang] = status;

@@ -90,6 +90,10 @@ class RankedWordleController extends ChangeNotifier with WidgetsBindingObserver 
       errorMessage = "Server URL is not set. Change the settings.";
       loading = false;
       notifyListeners();
+    } else if (user == null || auth == null) {
+      errorMessage = "Username or password is not correct.";
+      loading = false;
+      notifyListeners();
     } else {
       if (pack.containsKey('letters')) {
         final letters = pack['letters'] as List<dynamic>;
@@ -99,7 +103,13 @@ class RankedWordleController extends ChangeNotifier with WidgetsBindingObserver 
             final url = '$serverUrl/online/start?user=$user&auth=$auth&language=$lang';
             final resp = await http.get(Uri.parse(url));
             if (resp.statusCode != 200) {
-              errorMessage = "Invalid details. Please try again in a minute.";
+              if (resp.statusCode == 400) {
+                errorMessage = "Unallowed username.";
+              } else if (resp.statusCode == 403) {
+                errorMessage = "User blacklisted.";
+              } else {
+                errorMessage = "Invalid details. Please try again in a minute.";
+              }
               loading = false;
               notifyListeners();
               return;

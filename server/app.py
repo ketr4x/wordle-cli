@@ -204,16 +204,29 @@ def create_user():
     if not user or not auth:
         return "Data cannot be null", 400
 
-    fn_create_user(user, auth)
+    user_create = fn_create_user(user, auth)
+    if user_create == 1:
+        return "Unallowed username", 400
+    elif user_create == 2:
+        return "User already exists", 400
+    elif user_create == 3:
+        return "User blacklisted", 403
     return "User created", 200
 
 # User creation function
 def fn_create_user(user, auth):
+    if user in json.load(open('server/filter.json'))["data"]:
+        return 1
+    if User.query.filter_by(username=user).first():
+        return 2
+    if user in json.load(open('server/blocklist.json'))["usernames"]:
+        return 3
     user_table = User(username=user, auth=generate_password_hash(auth))
     db.session.add(user_table)
     stats = Stats(username=user, points=utils.read_config("base_elo"), matches=0, wins=0, avg_time=0, word_freq={}, registered_on=datetime.datetime.now())
     db.session.add(stats)
     db.session.commit()
+    return 0
 
 @app.route('/play', defaults={'path': ''})
 @app.route('/play/<path:path>')
@@ -276,7 +289,10 @@ def start_online():
 
     existing_user = User.query.filter_by(username=user).first()
     if not existing_user:
-        fn_create_user(user, auth)
+        if fn_create_user(user, auth) == 1:
+            return "Unallowed username", 400
+        if fn_create_user(user, auth) == 3:
+            return "User blacklisted", 403
     elif not check_password_hash(existing_user.auth, auth):
         return 'Wrong auth', 400
 

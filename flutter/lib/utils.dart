@@ -503,6 +503,24 @@ Future<void> createAccountUI(String serverUrl, String user, String auth) async {
       textColor: Colors.white,
       fontSize: 16.0,
     );
+  } else if (account == 400) {
+    Fluttertoast.showToast(
+      msg: "Invalid username.",
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      backgroundColor: Colors.green,
+      textColor: Colors.white,
+      fontSize: 16.0,
+    );
+  } else if (account == 403) {
+    Fluttertoast.showToast(
+      msg: "User blacklisted.",
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      backgroundColor: Colors.green,
+      textColor: Colors.white,
+      fontSize: 16.0,
+    );
   } else {
     Fluttertoast.showToast(
       msg: "Failed to create account. Status code: $account",

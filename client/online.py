@@ -54,11 +54,14 @@ def guess_decoder(guesses, formatted_guesses):
         output.append("".join(guess_output))
     return output
 
-
 def game(user, auth, language):
     response = requests.get(f"{utils.read_config('server_url')}/online/start?user={user}&auth={auth}&language={language}")
     if response.status_code != 200:
         print("Invalid details. Please try again in a minute.")
+        if response.status_code == 400:
+            print("Unallowed username")
+        if response.status_code == 403:
+            print("User blacklisted")
         input("Press `Enter` to continue...")
         return None, None, None, None, 1
 
@@ -175,6 +178,11 @@ def game_online():
                 create = requests.get(f"{server}/online/create_user?user={user}&auth={auth}")
                 if create.status_code == 200:
                     print("User created successfully!")
+                if create.status_code == 400:
+                    print("Invalid username. Try another one.")
+                if create.status_code == 403:
+                    print("Username blacklisted.")
+                input("Press `Enter` to continue...")
         elif response.status_code == 403:
             print("Wrong username or password. \nPlease try again.")
             user, auth = None, None

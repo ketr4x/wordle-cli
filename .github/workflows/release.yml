@@ -140,6 +140,7 @@ jobs:
             ./build_web_${{ steps.version.outputs.version }}.zip
           name: "[Flutter] v${{ steps.version.outputs.version }}"
           body: "${{ steps.commit.outputs.message }}"
+          draft: false
 
       - name: Delete old Flutter release and tag
         run: |
@@ -160,3 +161,4 @@ jobs:
             Latest Flutter release for all platforms
             Version: ${{ steps.version.outputs.version }}
             ${{ steps.commit.outputs.message }}
+          draft: false

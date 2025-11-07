@@ -4,8 +4,8 @@
   "repo": "https://github.com/ketr4x/wordle-cli.git",
   "version": "1.1.17",
   "python_version": "1.2.0",
-  "release_notes": "fix: increment the version number",
+  "release_notes": "fix: fix the server communication in flutter releases",
   "python_release_notes": "fix: updater distinguishes between python and flutter",
-  "published_at": "2025-11-06T21:06:36Z",
+  "published_at": "2025-11-07T23:48:06Z",
   "python_published_at": "2025-10-30T19:00:00Z"
 }

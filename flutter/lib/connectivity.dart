@@ -21,9 +21,9 @@ class _ConnectivityPageState extends State<ConnectivityPage> {
   Map<String, dynamic>? _lastCheckResult;
   DateTime? _lastCheckTime;
   bool _loadingLanguagesPressed = false;
+  bool _loadingLocalLanguagesPressed = false;
   int? _lastConnectionState;
   ConnectionStateProvider? _connProviderRef;
-  // bool _loadingLocalLanguagesPressed = false;
 
   void _invalidateLanguageCheckCache() {
     _lastCheckFuture = null;
@@ -169,6 +169,15 @@ class _ConnectivityPageState extends State<ConnectivityPage> {
     List<String> results = [];
     for (var lang in languages) {
       final res = await downloadOnlineLanguagePack(lang);
+      results.add('$lang: $res');
+    }
+    return results;
+  }
+
+  Future<List<String>> _downloadLocalLanguages(List<String> languages) async {
+    List<String> results = [];
+    for (var lang in languages) {
+      final res = await downloadLocalLanguagePack(lang);
       results.add('$lang: $res');
     }
     return results;
@@ -552,72 +561,168 @@ class _ConnectivityPageState extends State<ConnectivityPage> {
               },
             ),
           ),
-          /*ListTile( //TODO
-            title: const Text('Local languages'),
+          ListTile(
+            title: const Text('Local Languages'),
             subtitle: FutureBuilder<List<String>>(
               future: getLanguagePacks(false),
               builder: (context, snapshot) {
-                final count = snapshot.data?.length ?? 0;
-                return Text('Downloaded languages: $count');
-              }
-            ),
-            trailing: Consumer<ConnectionStateProvider>(
-              builder: (context, connProvider, child) {
-                return IconButton(
-                  icon: _loadingLocalLanguagesPressed
-                      ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))
-                      : const Icon(Icons.download),
-                  onPressed: _loadingLocalLanguagesPressed ? null : () async {
-                    if (connProvider.connectionState != HttpStatus.ok) {
-                      showAdaptiveDialog(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: const Text('Languages'),
-                          content: const Text(
-                              'Failed to connect to server. Please check your server URL and internet connection.'),
-                          actions: [
-                            TextButton(
-                              onPressed: () async {
-                                await Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsPage()));
-                                await _loadServerUrl();
-                                await _loadUsername();
-                                await _loadPassword();
-                                setState(() {
-                                  _invalidateLanguageCheckCache();
-                                });
-                                _checkLanguagesForServer(force: true);
-                                if (!context.mounted) return;
-                                final conn = Provider.of<ConnectionStateProvider>(context, listen: false);
-                                try {conn.forceCheck();} catch (_) {}
-                                try {
-                                  final acc = Provider.of<AccountStateProvider>(context, listen: false);
-                                  acc.forceCheck();
-                                } catch (_) {}
-                              },
-                              child: const Text('Settings'),
-                            ),
-                            TextButton(
-                              onPressed: () => Navigator.pop(context),
-                              child: const Text('OK'),
-                            ),
-                          ],
-                        ),
-                      );
-                      return;
-                    }
-
-                    setState(() {
-                      _loadingLocalLanguagesPressed = true;
-                    });
-
-                    try {
-                      final serverLanguages = await getLanguagePacks(true);
-                    }
-                  },
-                );
+                if (snapshot.hasData) {
+                  return Text('Local languages: ${snapshot.data!.length}');
+                }
+                return const Text('');
               },
             ),
-          )*/
+            trailing: Consumer(
+              builder: (context, connProvider, child) {
+                return FutureBuilder<Map<String, dynamic>>(
+                  future: checkLocalLanguages(),
+                  initialData: const {'status': 'loading'},
+                  builder: (context, snapshot) {
+                    final data = snapshot.data ?? {};
+                    final status = data['status'] as String? ?? 'error';
+
+                    final Widget iconWidget = _loadingLocalLanguagesPressed
+                      ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Icon(
+                        status == 'all_ok'
+                          ? Icons.cloud_done
+                          : status == 'some_problem'
+                          ? Icons.file_download
+                          : status == 'loading'
+                          ? Icons.hourglass_bottom
+                          : Icons.cloud_off,
+                        color: status == 'all_ok'
+                          ? Colors.green
+                          : status == 'some_problem'
+                          ? Colors.orange
+                          : status == 'loading'
+                          ? Colors.grey
+                          : Colors.red,
+                        );
+
+                    return IconButton(
+                      icon: iconWidget,
+                      onPressed: _loadingLocalLanguagesPressed
+                        ? null
+                        : () async {
+                          setState(() {
+                            _loadingLocalLanguagesPressed = true;
+                          });
+
+                          try {
+                            final result = await checkLocalLanguages();
+                            final status2 = result['status'] as String? ?? 'error';
+
+                            if (!context.mounted) return;
+                            if (status2 == 'all_ok') {
+                              showAdaptiveDialog(
+                                context: context,
+                                builder: (ctx) => AlertDialog(
+                                  title: const Text('Local Languages'),
+                                  content: const Text('All local languages are correct'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context),
+                                      child: const Text('OK')
+                                    )
+                                  ],
+                                )
+                              );
+                              return;
+                            }
+
+                            final List<String> problematic = List<String>.from(result['problematic'] ?? []);
+                            final Map<String, String> details = Map<String, String>.from(result['details'] ?? {});
+
+                            showAdaptiveDialog(
+                              context: context,
+                              builder: (ctx) => AlertDialog(
+                                title: const Text('Local Languages'),
+                                content: SingleChildScrollView(
+                                  child: ListBody(
+                                    children: [
+                                      const Text('The following languages are missing or invalid:'),
+                                      const SizedBox(height: 8),
+                                      Text(problematic.map((l) => '$l: ${details[l]}').join('\n')),
+                                    ],
+                                  ),
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () async {
+                                      Navigator.pop(ctx);
+                                      await showAdaptiveDialog(
+                                        context: context,
+                                        builder: (downloadCtx) => AlertDialog(
+                                          title: const Text('Downloading local languages'),
+                                          content: FutureBuilder<List<String>>(
+                                            future: _downloadLocalLanguages(problematic),
+                                            builder: (dCtx, dSnap) {
+                                              if (dSnap.connectionState != ConnectionState.done) {
+                                                return const SizedBox(
+                                                  height: 80,
+                                                  child: Center(child: CircularProgressIndicator()),
+                                                );
+                                              }
+                                              final List<String> results = dSnap.data ?? [];
+                                              return SingleChildScrollView(
+                                                child: Text(results.join('\n')),
+                                              );
+                                            },
+                                          ),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () => Navigator.pop(downloadCtx),
+                                              child: const Text('OK')
+                                            )
+                                          ],
+                                        )
+                                      );
+                                      setState(() {});
+                                    },
+                                    child: const Text('Download')
+                                  ),
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(ctx),
+                                    child: const Text('OK'),
+                                  ),
+                                ],
+                              )
+                            );
+                          } catch (e) {
+                            if (!context.mounted) return;
+                            setState(() {
+                              _loadingLanguagesPressed = false;
+                            });
+                            showAdaptiveDialog(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Text('Languages'),
+                                content: Text('Error checking languages: ${e.toString()}'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context),
+                                    child: const Text('OK'),
+                                  ),
+                                ],
+                              ),
+                            );
+                          } finally {
+                            setState(() {
+                              _loadingLocalLanguagesPressed = false;
+                            });
+                          }
+                      }
+                    );
+                  }
+                );
+              }
+            ),
+          )
         ],
       )
     );

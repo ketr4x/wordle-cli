@@ -34,6 +34,12 @@ extension StringCasingExtension on String {
   }
 }
 
+void printDebugInfo(String message) {
+  if (kDebugMode) {
+    print(message);
+  }
+}
+
 void showErrorToast(String message, {bool long = false}) {
   Fluttertoast.showToast(
     msg: message,
@@ -121,7 +127,9 @@ Future<String> checkLanguagePack(String languageCode, [bool online = true]) asyn
     }
 
     final url = '$serverUrl/online/languages/checksum?language=$languageCode';
-    final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 7));
+    final response = await http
+        .get(Uri.parse(url))
+        .timeout(const Duration(seconds: 7));
 
     if (response.statusCode != 200) {
       if (response.statusCode == 400) {
@@ -140,8 +148,10 @@ Future<String> checkLanguagePack(String languageCode, [bool online = true]) asyn
     if (!exists) {
       return "Local file missing";
     }
+
     final content = await readFile(languageCode, online);
     if (content == null) return "Local file missing";
+
     final localChecksum = sha256.convert(utf8.encode(content)).toString();
     if (localChecksum == serverChecksum) {
       return "Local language file correct";
@@ -155,9 +165,6 @@ Future<String> checkLanguagePack(String languageCode, [bool online = true]) asyn
 
 Future<Map<String, dynamic>> readLanguagePack(String languageCode, [bool online = false]) async {
   try {
-    final String response = await rootBundle.loadString('assets/${online ? 'online/' : ''}$languageCode.json');
-    return jsonDecode(response);
-  } catch (e) {
     if (online) {
       final content = await readFile(languageCode, true);
       if (content != null) {
@@ -166,17 +173,27 @@ Future<Map<String, dynamic>> readLanguagePack(String languageCode, [bool online 
       throw Exception('Language pack not found: $languageCode');
     } else {
       if (kIsWeb) {
-        throw Exception('Language pack not found: $languageCode');
+        final String response = await rootBundle.loadString(
+            'assets/${online ? 'online/' : ''}$languageCode.json');
+        printDebugInfo('Read $languageCode from a file');
+        return jsonDecode(response);
       }
       final dir = await getApplicationSupportDirectory();
-      final file = File('${dir.path}${Platform.pathSeparator}$languageCode.json');
+      final file = File(
+          '${dir.path}${Platform.pathSeparator}$languageCode.json');
       if (await file.exists()) {
         final contents = await file.readAsString();
+        printDebugInfo('Read $languageCode from a file');
         return jsonDecode(contents);
       } else {
         throw Exception('Language pack not found: $languageCode');
       }
     }
+  } catch (e) {
+    final String response = await rootBundle.loadString(
+        'assets/${online ? 'online/' : ''}$languageCode.json');
+    printDebugInfo('Read $languageCode from rootBundle');
+    return jsonDecode(response);
   }
 }
 
@@ -234,7 +251,50 @@ Future<String> downloadOnlineLanguagePack(String languageCode) async {
     final localChecksum = sha256.convert(utf8.encode(response.body)).toString();
 
     final url2 = '$serverUrl/online/languages/checksum?language=$languageCode';
-    final response2 = await http.get(Uri.parse(url2)).timeout(const Duration(seconds: 7));
+    final response2 = await http
+        .get(Uri.parse(url2))
+        .timeout(const Duration(seconds: 10));
+
+    if (response2.statusCode != 200) {
+      return "Downloaded - checksum check failed: server responded ${response2.statusCode}";
+    }
+
+    final serverChecksum = _extractSha256(response2.body);
+    if (localChecksum == serverChecksum) {
+      return "Downloaded - file OK";
+    }
+
+    return "Downloaded - checksum mismatch (expected $serverChecksum, got $localChecksum)";
+  } catch (e) {
+    return "Download error: $e";
+  }
+}
+
+Future<String> downloadLocalLanguagePack(String languageCode) async {
+  try {
+    final serverUrl = await getConfig('server_url');
+    if (serverUrl == null) {
+      return "Server URL not configured.";
+    }
+    final url = '$serverUrl/online/languages/download?language=$languageCode';
+    final response = await http
+        .get(Uri.parse(url))
+        .timeout(const Duration(seconds: 10));
+
+    if (response.statusCode != 200) {
+      if (response.statusCode == 400) {
+        return "Language invalid.";
+      }
+      return "Download error";
+    }
+
+    await writeFile(languageCode, response.body, false);
+    final localChecksum = sha256.convert(utf8.encode(response.body)).toString();
+
+    final url2 = '$serverUrl/online/languages/checksum?language=$languageCode';
+    final response2 = await http
+        .get(Uri.parse(url2))
+        .timeout(const Duration(seconds: 10));
 
     if (response2.statusCode != 200) {
       return "Downloaded - checksum check failed: server responded ${response2.statusCode}";
@@ -447,7 +507,7 @@ class LocalLanguageStateProvider extends ChangeNotifier {
   }
 
   Future<void> _checkStatus() async {
-    final data = await checkLanguages();
+    final data = await checkLocalLanguages();
     final newStatus = data['status'] as String? ?? 'error';
     if (_status != newStatus) {
       _status = newStatus;
@@ -466,7 +526,7 @@ class LocalLanguageStateProvider extends ChangeNotifier {
   }
 }
 
-Future<Map<String, dynamic>> checkLanguages() async {
+Future<Map<String, dynamic>> checkLocalLanguages() async {
   final localLanguages = await getLanguagePacks();
   List<String> problematic = [];
   Map<String, String> problemsDetails = {};
@@ -565,20 +625,23 @@ AppBar buildAppBar(BuildContext context, String title) {
     backgroundColor: Theme.of(context).colorScheme.inversePrimary,
     title: Text(title),
     actions: [
-      Consumer3<ConnectionStateProvider, AccountStateProvider, LanguageStateProvider>(
-        builder: (context, connProvider, accProvider, langProvider, child) {
+      Consumer4<ConnectionStateProvider, AccountStateProvider, LanguageStateProvider, LocalLanguageStateProvider>(
+        builder: (context, connProvider, accProvider, langProvider, localLangProvider, child) {
           final langStatus = langProvider.status;
+          final localLangStatus = localLangProvider.status;
           IconData iconData;
           Color iconColor;
 
           if (connProvider.connectionState == HttpStatus.ok &&
               accProvider.connectionState == HttpStatus.ok &&
-              langStatus == 'all_ok') {
+              langStatus == 'all_ok' &&
+              localLangStatus == 'all_ok') {
             iconData = Icons.cloud_done;
             iconColor = Colors.green;
           } else if (connProvider.connectionState == HttpStatus.ok &&
               accProvider.connectionState == HttpStatus.ok &&
-              langStatus == 'some_problem') {
+              (langStatus == 'some_problem' ||
+              localLangStatus == 'some_problem')) {
             iconData = Icons.file_download_off;
             iconColor = Colors.orange;
           } else if (connProvider.connectionState == HttpStatus.ok &&
@@ -601,7 +664,8 @@ AppBar buildAppBar(BuildContext context, String title) {
                 await Future.wait([
                   connProvider.forceCheck(),
                   accProvider.forceCheck(),
-                  langProvider.forceCheck()
+                  langProvider.forceCheck(),
+                  localLangProvider.forceCheck()
                 ]);
               } catch (_) {}
               if (context.mounted) {

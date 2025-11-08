@@ -49,6 +49,7 @@ class MyApp extends StatelessWidget {
           ChangeNotifierProvider(create: (_) => ConnectionStateProvider()),
           ChangeNotifierProvider(create: (_) => AccountStateProvider()),
           ChangeNotifierProvider(create: (_) => LanguageStateProvider()),
+          ChangeNotifierProvider(create: (_) => LocalLanguageStateProvider()),
         ],
         child: MaterialApp(
           title: 'Wordle',

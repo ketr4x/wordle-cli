@@ -177,20 +177,22 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                   children: [
                     buildLeaderboardColumn('WINRATE', '🎯', leaderboardData!.topWinrate, 'winrate', '%'),
                     const SizedBox(width: 8),
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Your Rankings', style: Theme.of(context).textTheme.titleMedium),
-                            const SizedBox(height: 8),
-                            Text('ELO: ${leaderboardData!.userPosition['points'] != null ? '#${leaderboardData!.userPosition['points']}' : 'N/A'}'),
-                            Text('Avg Time: ${leaderboardData!.userPosition['avg_time'] != null ? '#${leaderboardData!.userPosition['avg_time']}' : 'N/A'}'),
-                            Text('Matches: ${leaderboardData!.userPosition['matches'] != null ? '#${leaderboardData!.userPosition['matches']}' : 'N/A'}'),
-                            Text('Wins: ${leaderboardData!.userPosition['wins'] != null ? '#${leaderboardData!.userPosition['wins']}' : 'N/A'}'),
-                            Text('Winrate: ${leaderboardData!.userPosition['winrate'] != null ? '#${leaderboardData!.userPosition['winrate']}' : 'N/A'}'),
-                          ],
+                    Expanded(
+                      child: Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Your Rankings', style: Theme.of(context).textTheme.titleMedium),
+                              const SizedBox(height: 8),
+                              Text('ELO: ${leaderboardData!.userPosition['points'] != null ? '#${leaderboardData!.userPosition['points']}' : 'N/A'}'),
+                              Text('Avg Time: ${leaderboardData!.userPosition['avg_time'] != null ? '#${leaderboardData!.userPosition['avg_time']}' : 'N/A'}'),
+                              Text('Matches: ${leaderboardData!.userPosition['matches'] != null ? '#${leaderboardData!.userPosition['matches']}' : 'N/A'}'),
+                              Text('Wins: ${leaderboardData!.userPosition['wins'] != null ? '#${leaderboardData!.userPosition['wins']}' : 'N/A'}'),
+                              Text('Winrate: ${leaderboardData!.userPosition['winrate'] != null ? '#${leaderboardData!.userPosition['winrate']}' : 'N/A'}'),
+                            ],
+                          ),
                         ),
                       ),
                     ),

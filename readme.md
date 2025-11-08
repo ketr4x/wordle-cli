@@ -52,11 +52,9 @@
 - `heroku local --port 5006 -f Procfile.windows` or `flask --app server/app.py run`
 ## Planned updates
 - [**Flutter**] timer fix
-- [**Flutter**] language pack download
 - [**Flutter**] (?) ai mode
 - [**Website**] website redesign
 - Locales
-- Username filter
 - Python, Windows releases
 - Icon
 ## Contributing

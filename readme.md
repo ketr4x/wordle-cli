@@ -52,10 +52,14 @@
 - `heroku local --port 5006 -f Procfile.windows` or `flask --app server/app.py run`
 ## Planned updates
 - [**Flutter**] timer fix
+- [**Flutter**] add create account popup when it isn't set
+- [**Flutter**] fix start random wordle responsiveness
 - [**Flutter**] (?) ai mode
+- [**Flutter**] fix 'Word must be 5 letters long' appearing multiple times
 - [**Flutter**] stats: present most used words as tiles
 - [**Flutter**] improve multilanguage support (additional characters)
 - [**Website**] website redesign
+- Password and username change
 - Fix release info
 - Locales
 - Python, Windows releases

@@ -94,24 +94,29 @@ def user_check(username):
 @app.route('/online/leaderboard')
 def get_leaderboard():
     state = request.args.get('state')
-    user = request.args.get('user')
-    auth = str(request.args.get('auth'))
+    if not state:
+        return 'Missing required parameter: state', 400
 
-    if not state or not user or not auth:
-        return 'Missing required parameters: state, user and auth', 400
-    existing_user = User.query.filter_by(username=user).first()
-    if not existing_user:
-        return 'User not found', 401
-    if not check_password_hash(existing_user.auth, auth):
-        return 'Wrong auth', 403
+    top_points = Stats.query.filter(Stats.matches > 0).order_by(Stats.points.desc()).limit(10).all()
+    top_matches = Stats.query.filter(Stats.matches > 0).order_by(Stats.matches.desc()).limit(10).all()
+    top_avg_time = Stats.query.filter(Stats.avg_time > 0, Stats.matches >= 10).order_by(Stats.avg_time.asc()).limit(10).all()
+    top_winrate = Stats.query.filter(Stats.matches >= 10).all()
+    top_winrate = sorted(top_winrate, key=lambda s: s.wins / s.matches if s.matches >= 10 else 0, reverse=True)[:10]
+    top_wins = Stats.query.filter(Stats.wins > 0).order_by(Stats.wins.desc()).limit(10).all()
 
-    if state == "basic":
-        top_points = Stats.query.filter(Stats.matches > 0).order_by(Stats.points.desc()).limit(10).all()
-        top_matches = Stats.query.filter(Stats.matches > 0).order_by(Stats.matches.desc()).limit(10).all()
-        top_avg_time = Stats.query.filter(Stats.avg_time > 0, Stats.matches >= 10).order_by(Stats.avg_time.asc()).limit(10).all()
-        top_winrate = Stats.query.filter(Stats.matches >= 10).all()
-        top_winrate = sorted(top_winrate, key=lambda s: s.wins / s.matches if s.matches >= 10 else 0, reverse=True)[:10]
-        top_wins = Stats.query.filter(Stats.wins > 0).order_by(Stats.wins.desc()).limit(10).all()
+    if state == "basic" or state == "user":
+        user = request.args.get('user')
+        auth = str(request.args.get('auth'))
+
+        if not user or not auth:
+            return 'Missing required parameters: user and auth', 400
+
+        existing_user = User.query.filter_by(username=user).first()
+        if not existing_user:
+            return 'User not found', 401
+
+        if not check_password_hash(existing_user.auth, auth):
+            return 'Wrong auth', 403
 
         user_stats = Stats.query.filter_by(username=user).first()
         points_position = None if Stats.query.filter(Stats.points > user_stats.points, Stats.matches > 0).count() == 0 else Stats.query.filter(Stats.points > user_stats.points, Stats.matches > 0).count() + 1
@@ -127,19 +132,39 @@ def get_leaderboard():
         winrate_position = Stats.query.filter(Stats.matches >= 10).all()
         winrate_position =  None if sum(1 for s in winrate_position if (s.wins / s.matches) > user_winrate) == 0 else sum(1 for s in winrate_position if (s.wins / s.matches) > user_winrate) + 1
 
+        if state == "basic":
+            return jsonify({
+                'top_points': [{'username': s.username, 'points': s.points} for s in top_points],
+                'top_matches': [{'username': s.username, 'matches': s.matches} for s in top_matches],
+                'top_avg_time': [{'username': s.username, 'avg_time': s.avg_time} for s in top_avg_time],
+                'top_winrate': [{'username': s.username, 'winrate': s.wins / s.matches if s.matches > 0 else 0} for s in top_winrate],
+                'top_wins': [{'username': s.username, 'wins': s.wins} for s in top_wins],
+                'user_position': {
+                    'points': points_position,
+                    'matches': matches_position,
+                    'avg_time': avg_time_position,
+                    'winrate': winrate_position,
+                    'wins': wins_position
+                }
+            })
+        elif state == "user":
+            return jsonify({
+                'user_position': {
+                    'points': points_position,
+                    'matches': matches_position,
+                    'avg_time': avg_time_position,
+                    'winrate': winrate_position,
+                    'wins': wins_position
+                }
+            })
+
+    elif state == 'full':
         return jsonify({
             'top_points': [{'username': s.username, 'points': s.points} for s in top_points],
             'top_matches': [{'username': s.username, 'matches': s.matches} for s in top_matches],
             'top_avg_time': [{'username': s.username, 'avg_time': s.avg_time} for s in top_avg_time],
             'top_winrate': [{'username': s.username, 'winrate': s.wins / s.matches if s.matches > 0 else 0} for s in top_winrate],
-            'top_wins': [{'username': s.username, 'wins': s.wins} for s in top_wins],
-            'user_position': {
-                'points': points_position,
-                'matches': matches_position,
-                'avg_time': avg_time_position,
-                'winrate': winrate_position,
-                'wins': wins_position
-            }
+            'top_wins': [{'username': s.username, 'wins': s.wins} for s in top_wins]
         })
 
     return "Wrong state", 404

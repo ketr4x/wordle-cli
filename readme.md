@@ -53,6 +53,7 @@
 ## Planned updates
 - [**Flutter**] timer fix
 - [**Flutter**] (?) ai mode
+- [**Flutter**] stats: present most used words as tiles
 - [**Website**] website redesign
 - Locales
 - Python, Windows releases

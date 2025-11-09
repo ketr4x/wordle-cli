@@ -168,19 +168,18 @@ Future<Map<String, dynamic>> readLanguagePack(String languageCode, [bool online 
     if (online) {
       final content = await readFile(languageCode, true);
       if (content != null) {
+        printDebugInfo('Read $languageCode from a file');
         return jsonDecode(content);
       }
       throw Exception('Language pack not found: $languageCode');
     } else {
       if (kIsWeb) {
-        final String response = await rootBundle.loadString(
-            'assets/${online ? 'online/' : ''}$languageCode.json');
+        final String response = await rootBundle.loadString('assets/${online ? 'online/' : ''}$languageCode.json');
         printDebugInfo('Read $languageCode from a file');
         return jsonDecode(response);
       }
       final dir = await getApplicationSupportDirectory();
-      final file = File(
-          '${dir.path}${Platform.pathSeparator}$languageCode.json');
+      final file = File('${dir.path}${Platform.pathSeparator}$languageCode.json');
       if (await file.exists()) {
         final contents = await file.readAsString();
         printDebugInfo('Read $languageCode from a file');
@@ -631,17 +630,18 @@ AppBar buildAppBar(BuildContext context, String title) {
           final localLangStatus = localLangProvider.status;
           IconData iconData;
           Color iconColor;
+          final localLangStatus2 = kIsWeb ? 'all_ok' : localLangStatus;
 
           if (connProvider.connectionState == HttpStatus.ok &&
               accProvider.connectionState == HttpStatus.ok &&
               langStatus == 'all_ok' &&
-              localLangStatus == 'all_ok') {
+              localLangStatus2 == 'all_ok') {
             iconData = Icons.cloud_done;
             iconColor = Colors.green;
           } else if (connProvider.connectionState == HttpStatus.ok &&
               accProvider.connectionState == HttpStatus.ok &&
               (langStatus == 'some_problem' ||
-              localLangStatus == 'some_problem')) {
+              localLangStatus2 == 'some_problem')) {
             iconData = Icons.file_download_off;
             iconColor = Colors.orange;
           } else if (connProvider.connectionState == HttpStatus.ok &&

@@ -25,7 +25,7 @@
 #### Downloading a binary
 - https://github.com/ketr4x/wordle-cli/releases/tag/Python
 - Download the latest release for your platform:
-  - `.exe` for Windows GUI build
+  - `.exe` for Windows CLI build
 - Run it
 ### Flutter version 
 [![Flutter](https://github.com/ketr4x/wordle-cli/actions/workflows/flutter.yml/badge.svg)](https://github.com/ketr4x/wordle-cli/actions/workflows/flutter.yml)
@@ -54,7 +54,9 @@
 - [**Flutter**] timer fix
 - [**Flutter**] (?) ai mode
 - [**Flutter**] stats: present most used words as tiles
+- [**Flutter**] improve multilanguage support (additional characters)
 - [**Website**] website redesign
+- Fix release info
 - Locales
 - Python, Windows releases
 - Icon

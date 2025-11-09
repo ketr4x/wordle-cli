@@ -189,8 +189,7 @@ Future<Map<String, dynamic>> readLanguagePack(String languageCode, [bool online 
       }
     }
   } catch (e) {
-    final String response = await rootBundle.loadString(
-        'assets/${online ? 'online/' : ''}$languageCode.json');
+    final String response = await rootBundle.loadString('assets/${online ? 'online/' : ''}$languageCode.json');
     printDebugInfo('Read $languageCode from rootBundle');
     return jsonDecode(response);
   }
@@ -902,12 +901,7 @@ class WordleKeyboard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (keyboardLayout.length < 26) {
-      return Container(
-        padding: const EdgeInsets.all(8),
-        child: const Center(
-          child: Text('Loading keyboard...'),
-        ),
-      );
+      return Container();
     }
 
     final List<List<String>> rows = [

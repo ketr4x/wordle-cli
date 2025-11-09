@@ -13,8 +13,8 @@ void main() async {
   final isFirstLaunch = prefs.getBool('isFirstLaunch') == true || !prefs.containsKey('isFirstLaunch');
   if (serverUrl.isEmpty && isFirstLaunch) {
     await setConfig('server_url', 'https://wordle.ketrax.ovh');
-    await prefs.setBool('isFirstLaunch', false);
   }
+  await prefs.setBool('isFirstLaunch', false);
 
   AdaptiveThemeMode? savedThemeMode;
   try {
@@ -55,7 +55,7 @@ class MyApp extends StatelessWidget {
           title: 'Wordle',
           theme: theme,
           darkTheme: darkTheme,
-          home: MyHomePage(title: 'Wordle'),
+          home: MyHomePage(),
         ),
       ),
     );
@@ -63,8 +63,7 @@ class MyApp extends StatelessWidget {
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-  final String title;
+  const MyHomePage({super.key});
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();

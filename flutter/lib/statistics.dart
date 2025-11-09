@@ -82,8 +82,31 @@ class _StatsPageState extends State<StatsPage> {
     }
   }
 
+  Widget _buildWord(MapEntry<String, dynamic> entry, BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: EdgeInsetsGeometry.all(8),
+        child: Center(
+          child: Text(
+            "${entry.key} - ${entry.value}",
+            style: TextStyle(fontSize: 16),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final List<MapEntry<String, dynamic>> entries = (wordFreq != null)
+      ? wordFreq!.entries.toList()
+      : <MapEntry<String, dynamic>>[];
+    entries.sort((a, b) {
+      final ai = a.value is int ? a.value as int : int.tryParse(a.value?.toString() ?? '0') ?? 0;
+      final bi = b.value is int ? b.value as int : int.tryParse(b.value?.toString() ?? '0') ?? 0;
+      return bi.compareTo(ai);
+    });
+
     return Scaffold(
       appBar: buildAppBar(context, "Statistics"),
       body: loading
@@ -125,16 +148,23 @@ class _StatsPageState extends State<StatsPage> {
                 Text("ELO: ${points ?? '0'}"),
                 const SizedBox(height: 16),
                 Text("Most used words:", style: Theme.of(context).textTheme.titleMedium),
-                if (wordFreq != null && wordFreq!.isNotEmpty)
-                  ...(() {
-                    final entries = wordFreq!.entries.toList();
-                    entries.sort((a, b) => (b.value as int).compareTo(a.value as int));
-                    return entries
-                      .map((entry) => Text("${entry.key}: ${entry.value}"))
-                      .toList();
-                  })()
-                else
+                if (wordFreq != null && wordFreq!.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: entries.length,
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3,
+                      mainAxisSpacing: 8,
+                      crossAxisSpacing: 8,
+                      childAspectRatio: 2
+                    ),
+                    itemBuilder: (context, index) => _buildWord(entries[index], context)
+                  )
+                ] else ...[
                   const Text("No words recorded yet."),
+                ],
               ],
             ),
           ),

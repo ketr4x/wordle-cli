@@ -17,7 +17,7 @@ Future<List<String>> listFiles([bool online = false]) async {
   final entities = await dir.list().toList();
   return entities
       .whereType<File>()
-      .where((f) => f.path.endsWith('.json'))
+      .where((f) => f.path.endsWith('.json') && !f.path.contains('shared_preferences'))
       .map((f) => p.basenameWithoutExtension(f.path))
       .toList();
 }

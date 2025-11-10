@@ -133,10 +133,18 @@ Future<List<String>> getLanguagePacks([bool online = false]) async {
     try {
       final manifestContent = await rootBundle.loadString('AssetManifest.json');
       final Map<String, dynamic> manifestMap = json.decode(manifestContent);
-      final files = manifestMap.keys
-          .where((k) => k.startsWith('assets/') && k.endsWith('.json'))
+      final manifestFiles = manifestMap.keys
+          .where((k) => k.startsWith('assets/') && k.endsWith('.json') && !k.contains('shared_preferences'))
+          .map((f) => f.split('/').last.replaceAll('.json', ''))
           .toList();
-      return files.map((f) => f.split('/').last.replaceAll('.json', '')).toList();
+      final localFiles = await listFiles();
+      final normalizedLocalFiles = localFiles.map((f) {
+        var name = f.toString();
+        name = name.split(Platform.pathSeparator).last;
+        if (name.endsWith('.json')) name = name.substring(0, name.length - 5);
+        return name;
+      }).toList();
+      return {...manifestFiles, ...normalizedLocalFiles}.toList();
     } catch (e) {
       return listFiles();
     }

@@ -55,7 +55,6 @@
 - [**Flutter**] add create account popup when it isn't set
 - [**Flutter**] (?) ai mode
 - [**Flutter**] autoupdate all popups
-- [**Flutter**] WEB: fix 'Word must be 5 letters long' appearing multiple times
 - [**Flutter**] improve multilanguage support (additional characters)
 - [**Website**] website redesign
 - Password and username change

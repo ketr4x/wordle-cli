@@ -17,6 +17,7 @@ class _SettingsPageState extends State<SettingsPage> {
   String _username = '';
   String _password = '';
   String _serverUrl = '';
+  String _wordleLanguage = '';
   PackageInfo? packageInfo;
   final FocusNode _serverUrlFocusNode = FocusNode();
   late TextEditingController _serverUrlController;
@@ -178,6 +179,59 @@ class _SettingsPageState extends State<SettingsPage> {
                     _serverUrl = value;
                   }
               ),
+            )
+          ),
+          ListTile(
+            title: const Text('Wordle Language'),
+            trailing: SizedBox(
+              width: 200,
+              child: FutureBuilder<List<Object?>>(
+                future: Future.wait([getLanguagePacks(), getConfig('game_lang')]),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState != ConnectionState.done) {
+                    return const SizedBox(
+                      height: 36,
+                      width: 36,
+                      child: Center(
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    );
+                  }
+                  final data = snapshot.data ?? [];
+                  final languages = (data.isNotEmpty && data[0] is List) ? (data[0] as List).cast<String>() : <String>['en'];
+                  final saved = (data.length > 1 && data[1] is String)
+                    ? data[1] as String
+                    : (_wordleLanguage.isNotEmpty
+                      ? _wordleLanguage
+                      : (languages.isNotEmpty
+                        ? languages.first
+                        : 'en'
+                      )
+                    );
+                  final selected = languages.contains(saved)
+                    ? saved
+                    : (languages.isNotEmpty
+                      ? languages.first
+                      : saved
+                    );
+
+                  return DropdownButtonFormField<String>(
+                    initialValue: selected,
+                    decoration: const InputDecoration(isDense: true, contentPadding: EdgeInsetsGeometry.symmetric(vertical: 8)),
+                    items: languages.map((lang) => DropdownMenuItem(
+                      value: lang,
+                      child: Text(lang)
+                    )).toList(),
+                    onChanged: (value) async {
+                      if (value == null) return;
+                      await setConfig('game_lang', value);
+                      setState(() {
+                        _wordleLanguage = value;
+                      });
+                    }
+                  );
+                }
+              )
             )
           ),
           ListTile(

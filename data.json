@@ -4,8 +4,8 @@
   "repo": "https://github.com/ketr4x/wordle-cli.git",
   "version": "1.2.3",
   "python_version": "1.2.0",
-  "release_notes": "Merge remote-tracking branch 'origin/master'",
+  "release_notes": "feat: update game state management and enhance error handling\nfix: multiple fixes",
   "python_release_notes": "fix: updater distinguishes between python and flutter",
-  "published_at": "2025-11-09T20:18:37Z",
+  "published_at": "2025-11-10T02:02:56Z",
   "python_published_at": "2025-10-30T19:00:00Z"
 }

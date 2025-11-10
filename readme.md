@@ -53,10 +53,9 @@
 ## Planned updates
 - [**Flutter**] timer fix
 - [**Flutter**] add create account popup when it isn't set
-- [**Flutter**] fix start random wordle responsiveness
 - [**Flutter**] (?) ai mode
-- [**Flutter**] fix 'Word must be 5 letters long' appearing multiple times
-- [**Flutter**] stats: present most used words as tiles
+- [**Flutter**] autoupdate all popups
+- [**Flutter**] WEB: fix 'Word must be 5 letters long' appearing multiple times
 - [**Flutter**] improve multilanguage support (additional characters)
 - [**Website**] website redesign
 - Password and username change

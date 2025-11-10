@@ -53,7 +53,7 @@ class _WordleGameViewState extends State<WordleGameView> {
         onKeyEvent: c.handleKeyEvent,
         child: GestureDetector(
           onTap: () {
-            if (kIsWeb) _focusNode.requestFocus();
+            _focusNode.requestFocus();
           },
           child: Column(
             children: [

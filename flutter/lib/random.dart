@@ -42,7 +42,6 @@ class RandomWordleController extends ChangeNotifier with WidgetsBindingObserver 
       saveGameState();
     } else if (state == AppLifecycleState.resumed) {
       isActive = true;
-
       if (shouldTick && !gameOver && !ticker.isActive) {
         ticker.start();
       }
@@ -279,7 +278,6 @@ class _WordleGameViewState extends State<WordleGameView> {
   void dispose() {
     widget.controller.removeListener(_onControllerChanged);
     _focusNode.dispose();
-    widget.controller.disposeController();
     super.dispose();
   }
 
@@ -294,7 +292,7 @@ class _WordleGameViewState extends State<WordleGameView> {
     final c = widget.controller;
     final child = GestureDetector(
       onTap: () {
-        if (kIsWeb) _focusNode.requestFocus();
+        _focusNode.requestFocus();
       },
       child: Column(
         children: [
@@ -315,13 +313,23 @@ class _WordleGameViewState extends State<WordleGameView> {
               gameOver: c.gameOver,
             ),
           ),
+          if (c.errorMessage != null)
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                c.errorMessage!,
+                style: const TextStyle(fontSize: 16, color: Colors.red),
+              ),
+            ),
           if (c.resultMessage != null)
             Padding(
               padding: const EdgeInsets.all(12.0),
               child: Text(
                 c.resultMessage!,
                 style: const TextStyle(
-                    fontSize: 20, fontWeight: FontWeight.bold),
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold
+                ),
               ),
             ),
         ],
@@ -329,13 +337,11 @@ class _WordleGameViewState extends State<WordleGameView> {
     );
     return Scaffold(
       appBar: buildAppBar(context, widget.title),
-      body: kIsWeb
-          ? KeyboardListener(
+      body: KeyboardListener(
         focusNode: _focusNode,
         onKeyEvent: c.handleKeyEvent,
         child: child,
-      )
-          : child,
+      ),
       bottomNavigationBar: buildBottomNavigationBar(
         context,
         currentIndex: 0,
@@ -344,14 +350,32 @@ class _WordleGameViewState extends State<WordleGameView> {
   }
 }
 
-class RandomPage extends StatelessWidget {
+class RandomPage extends StatefulWidget {
   const RandomPage({super.key});
+
+  @override
+  State<RandomPage> createState() => _RandomPageState();
+}
+
+class _RandomPageState extends State<RandomPage> {
+  late final RandomWordleController _controller;
+  @override
+  void initState() {
+    super.initState();
+    _controller = RandomWordleController();
+  }
+
+  @override
+  void dispose() {
+    _controller.disposeController();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return WordleGameView(
       title: "Random Wordle",
-      controller: RandomWordleController(),
+      controller: _controller
     );
   }
 }

@@ -55,6 +55,7 @@ class MyApp extends StatelessWidget {
           title: 'Wordle',
           theme: theme,
           darkTheme: darkTheme,
+          navigatorKey: navigatorKey,
           home: MyHomePage(),
         ),
       ),

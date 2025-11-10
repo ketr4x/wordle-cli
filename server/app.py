@@ -158,7 +158,7 @@ def get_leaderboard():
                 }
             })
 
-    elif state == 'full':
+    elif state == 'global':
         return jsonify({
             'top_points': [{'username': s.username, 'points': s.points} for s in top_points],
             'top_matches': [{'username': s.username, 'matches': s.matches} for s in top_matches],

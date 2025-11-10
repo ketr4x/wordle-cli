@@ -19,6 +19,7 @@ import 'statistics.dart';
 import 'connectivity.dart';
 import 'package:crypto/crypto.dart';
 import 'storage.dart';
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 enum GameMode { random, daily, ranked }
 
@@ -41,25 +42,55 @@ void printDebugInfo(String message) {
 }
 
 void showErrorToast(String message, {bool long = false}) {
-  Fluttertoast.showToast(
-    msg: message,
-    toastLength: long ? Toast.LENGTH_LONG : Toast.LENGTH_SHORT,
-    gravity: ToastGravity.BOTTOM,
-    backgroundColor: Colors.red,
-    textColor: Colors.white,
-    fontSize: 16.0,
-  );
+  final bool preferSnackBar = !(Platform.isAndroid || Platform.isIOS);
+  if (preferSnackBar) {
+    final ctx = navigatorKey.currentState?.overlay?.context ?? navigatorKey.currentContext;
+    if (ctx != null) {
+      ScaffoldMessenger.of(ctx).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          duration: const Duration(seconds: 2),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+  } else {
+    Fluttertoast.showToast(
+      msg: message,
+      toastLength: long ? Toast.LENGTH_LONG : Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      backgroundColor: Colors.red,
+      textColor: Colors.white,
+      fontSize: 16.0,
+    );
+  }
 }
 
 void showDailyLimitToast() {
-  Fluttertoast.showToast(
-    msg: "You can play tomorrow.",
-    toastLength: Toast.LENGTH_SHORT,
-    gravity: ToastGravity.BOTTOM,
-    backgroundColor: Colors.orange,
-    textColor: Colors.white,
-    fontSize: 16.0,
-  );
+  final bool preferSnackBar = !(Platform.isAndroid || Platform.isIOS);
+  if (preferSnackBar) {
+    final ctx = navigatorKey.currentState?.overlay?.context ?? navigatorKey.currentContext;
+    if (ctx != null) {
+      ScaffoldMessenger.of(ctx).showSnackBar(
+        SnackBar(
+          content: Text("You can play tomorrow."),
+          duration: const Duration(seconds: 2),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+  } else {
+    Fluttertoast.showToast(
+      msg: "You can play tomorrow.",
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      backgroundColor: Colors.orange,
+      textColor: Colors.white,
+      fontSize: 16.0,
+    );
+  }
 }
 
 Future<void> setConfig(String key, String value) async {

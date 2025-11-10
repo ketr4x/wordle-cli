@@ -279,7 +279,6 @@ class _WordleGameViewState extends State<WordleGameView> {
   void dispose() {
     widget.controller.removeListener(_onControllerChanged);
     _focusNode.dispose();
-    widget.controller.disposeController();
     super.dispose();
   }
 
@@ -299,7 +298,7 @@ class _WordleGameViewState extends State<WordleGameView> {
         onKeyEvent: c.handleKeyEvent,
         child: GestureDetector(
           onTap: () {
-            if (kIsWeb) _focusNode.requestFocus();
+            _focusNode.requestFocus();
           },
           child: Column(
             children: [
@@ -320,17 +319,25 @@ class _WordleGameViewState extends State<WordleGameView> {
                   gameOver: c.gameOver,
                 ),
               ),
+              if (c.errorMessage != null)
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(
+                    c.errorMessage!,
+                    style: const TextStyle(fontSize: 16, color: Colors.red),
+                  ),
+                ),
               if (c.resultMessage != null)
                 Padding(
-                  padding: const EdgeInsets.all(12.0),
+                  padding: EdgeInsetsGeometry.all(12),
                   child: Text(
                     c.resultMessage!,
                     style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
-                ),
+                )
             ],
           ),
-        ),
+        )
       ),
       bottomNavigationBar: buildBottomNavigationBar(
         context,
@@ -340,14 +347,32 @@ class _WordleGameViewState extends State<WordleGameView> {
   }
 }
 
-class DailyPage extends StatelessWidget {
+class DailyPage extends StatefulWidget {
   const DailyPage({super.key});
+
+  @override
+  State<DailyPage> createState() => _DailyPageState();
+}
+
+class _DailyPageState extends State<DailyPage> {
+  late final DailyWordleController _controller;
+  @override
+  void initState() {
+    super.initState();
+    _controller = DailyWordleController();
+  }
+
+  @override
+  void dispose() {
+    _controller.disposeController();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return WordleGameView(
-      title: "Daily Wordle",
-      controller: DailyWordleController(),
+        title: "Daily Wordle",
+        controller: _controller
     );
   }
 }

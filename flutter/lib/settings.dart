@@ -186,7 +186,7 @@ class _SettingsPageState extends State<SettingsPage> {
             trailing: SizedBox(
               width: 200,
               child: FutureBuilder<List<Object?>>(
-                future: Future.wait([getLanguagePacks(), getConfig('game_lang')]),
+                future: Future.wait([getLanguagePacks(false), getConfig('game_lang')]),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState != ConnectionState.done) {
                     return const SizedBox(
@@ -212,8 +212,9 @@ class _SettingsPageState extends State<SettingsPage> {
                     ? saved
                     : (languages.isNotEmpty
                       ? languages.first
-                      : saved
+                      : 'en'
                     );
+                  print('$languages, $saved, $selected');
 
                   return DropdownButtonFormField<String>(
                     initialValue: selected,

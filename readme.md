@@ -57,6 +57,9 @@
 - [**Flutter**] autoupdate all popups
 - [**Flutter**] improve multilanguage support (additional characters)
 - [**Website**] website redesign
+- [**Flutter**] fix checking local lang from assets
+- [**Flutter**] fix null in leaderboards
+- [**Flutter**] web: fix connection on debug builds
 - Password and username change
 - Fix release info
 - Locales

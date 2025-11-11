@@ -2,7 +2,7 @@
   "branch": "master",
   "update_url": "https://raw.githubusercontent.com/ketr4x/wordle-cli/master/data.json",
   "repo": "https://github.com/ketr4x/wordle-cli.git",
-  "version": "1.2.4",
+  "version": "1.2.5",
   "python_version": "1.2.0",
   "release_notes": "feat: add local wordle language selection feature",
   "python_release_notes": "fix: updater distinguishes between python and flutter",

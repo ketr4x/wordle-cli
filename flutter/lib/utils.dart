@@ -146,7 +146,7 @@ Future<List<String>> getLanguagePacks([bool online = false]) async {
       }).toList();
       return {...manifestFiles, ...normalizedLocalFiles}.toList();
     } catch (e) {
-      return listFiles();
+      return listFiles(false);
     }
   }
 }
@@ -181,6 +181,15 @@ Future<String> checkLanguagePack(String languageCode, [bool online = true]) asyn
 
     if (!RegExp(r'^[a-f0-9]{64}$').hasMatch(serverChecksum)) {
       return "Server returned invalid checksum format";
+    }
+
+    if (!online) {
+      final content = await rootBundle.loadString('assets/${online ? 'online/' : ''}$languageCode.json');
+      final localChecksum = sha256.convert(utf8.encode(content)).toString();
+      if (localChecksum == serverChecksum) {
+        return "Local language file correct";
+      }
+      printDebugInfo('$localChecksum, $serverChecksum'); // TODO: fix this
     }
 
     final exists = await fileExists(languageCode, online);

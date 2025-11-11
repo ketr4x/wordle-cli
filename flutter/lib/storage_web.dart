@@ -6,6 +6,13 @@ Future<List<String>> listFiles([bool online = false]) async {
   final prefix = online ? 'online_' : '';
   final out = <String>[];
   for (final k in keys) {
+    if (!online && k.startsWith('online_')) {
+      continue;
+    }
+    if (online && !k.startsWith('online_')) {
+      continue;
+    }
+
     if (k.startsWith(prefix) && k.endsWith('.json')) {
       final name = k.substring(prefix.length, k.length - 5);
       out.add(name);

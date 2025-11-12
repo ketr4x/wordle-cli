@@ -4,8 +4,8 @@
   "repo": "https://github.com/ketr4x/wordle-cli.git",
   "version": "1.2.6",
   "python_version": "1.2.0",
-  "release_notes": "fix: fix web language selection issue",
+  "release_notes": "Merge remote-tracking branch 'origin/master'",
   "python_release_notes": "fix: updater distinguishes between python and flutter",
-  "published_at": "2025-11-11T00:03:41Z",
+  "published_at": "2025-11-12T18:20:58Z",
   "python_published_at": "2025-10-30T19:00:00Z"
 }

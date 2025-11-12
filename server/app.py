@@ -412,7 +412,7 @@ def languages_download():
     if not language or language not in utils.languages():
         return 'Language invalid', 400
 
-    return send_from_directory("data", f'{language}.json')
+    return open(f'data/{language}.json')
 
 # Game start endpoint
 @app.route('/online/start')

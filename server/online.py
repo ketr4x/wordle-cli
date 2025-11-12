@@ -1,6 +1,9 @@
 import random
 from collections import Counter
-from server import utils
+try:
+    from . import utils
+except Exception:
+    import utils
 
 # Random word generation
 def generate_word(language):

@@ -18,13 +18,16 @@ def languages():
     ))
 
 def wordlist(language):
-    return json.load(open(f'data/{language}.json'))["wordlist"]
+    with open(f'data/{language}.json') as f:
+        return json.load(f)["wordlist"]
 
 def solutions(language):
-    return json.load(open(f'data/{language}.json'))["solutions"]
+    with open(f'data/{language}.json') as f:
+        return json.load(f)["solutions"]
 
 def letters(language):
-    return json.load(open(f'data/{language}.json'))["letters"]
+    with open(f'data/{language}.json') as f:
+        return json.load(f)["letters"]
 
 # Get words with length of 5
 def filtered(language):

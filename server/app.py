@@ -5,6 +5,9 @@ from flask_sqlalchemy import SQLAlchemy
 import os
 from dotenv import load_dotenv
 from flask import jsonify
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+from sqlalchemy.exc import IntegrityError
 try:
     from . import utils, online
 except Exception:
@@ -13,8 +16,10 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import datetime
 from sqlalchemy.ext.mutable import MutableDict
 import json
+import logging
 
 # Initialization
+logging.basicConfig(level=logging.INFO)
 load_dotenv()
 app = Flask(__name__)
 db_url = os.environ.get('DATABASE_URL')
@@ -22,17 +27,23 @@ if db_url and db_url.startswith('postgres://'):
     db_url = db_url.replace('postgres://', 'postgresql://', 1)
 app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 db = SQLAlchemy(app)
+limiter = Limiter(
+    key_func=get_remote_address,
+    app=app,
+    default_limits=[],
+    storage_uri=os.environ.get("RATELIMIT_STORAGE_URI", "memory://")
+)
 
 # User DB
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
+    username = db.Column(db.String(80), index=True, unique=True, nullable=False)
     auth = db.Column(db.String(256), nullable=False)
 
 # Game DB
 class Game(db.Model):
     game_id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), nullable=False)
+    username = db.Column(db.String(80), index=True, nullable=False)
     language = db.Column(db.String(80), nullable=False)
     start_time = db.Column(db.DateTime, nullable=False)
     word = db.Column(db.String(5), nullable=True)
@@ -46,7 +57,7 @@ class Game(db.Model):
 # Stats DB
 class Stats(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), nullable=False)
+    username = db.Column(db.String(80), index=True, nullable=False)
     points = db.Column(db.Integer, nullable=True)
     matches = db.Column(db.Integer, nullable=True)
     wins = db.Column(db.Integer, nullable=True)
@@ -70,9 +81,14 @@ def server_check():
 
 # User auth check
 @app.route('/online/auth_check')
+@limiter.limit(utils.read_config('rate_limit_auth_per_ip'), key_func=get_remote_address)
 def auth_check():
-    user = request.args.get('user')
-    auth = str(request.args.get('auth'))
+    user = (request.args.get('user') or '').strip()
+    auth = (request.args.get('auth') or '').strip()
+
+    if not user or not auth:
+        return 'Missing required parameters: user and auth', 400
+
     existing_user = User.query.filter_by(username=user).first()
     if existing_user:
         if check_password_hash(existing_user.auth, auth):
@@ -83,7 +99,9 @@ def auth_check():
 
 # User existence check
 @app.route('/online/user_check/<username>')
+@limiter.limit(utils.read_config('rate_limit_check_per_ip'), key_func=get_remote_address)
 def user_check(username):
+    username = (username or '').strip()
     user = User.query.filter_by(username=username).first()
     if user:
         return 'User found', 200
@@ -92,6 +110,7 @@ def user_check(username):
 
 # Backend leaderboard endpoint
 @app.route('/online/leaderboard')
+@limiter.limit(utils.read_config('rate_limit_leaderboard_per_ip'), key_func=get_remote_address)
 def get_leaderboard():
     state = request.args.get('state')
     if not state:
@@ -105,8 +124,8 @@ def get_leaderboard():
     top_wins = Stats.query.filter(Stats.wins > 0).order_by(Stats.wins.desc()).limit(10).all()
 
     if state == "basic" or state == "user":
-        user = request.args.get('user')
-        auth = str(request.args.get('auth'))
+        user = (request.args.get('user') or '').strip()
+        auth = (request.args.get('auth') or '').strip()
 
         if not user or not auth:
             return 'Missing required parameters: user and auth', 400
@@ -171,9 +190,10 @@ def get_leaderboard():
 
 # Backend stats endpoint
 @app.route('/online/stats')
+@limiter.limit(utils.read_config('rate_limit_stats_per_ip'), key_func=get_remote_address)
 def get_stats():
-    user = request.args.get('user')
-    auth = str(request.args.get('auth'))
+    user = (request.args.get('user') or '').strip()
+    auth = (request.args.get('auth') or '').strip()
 
     if not user or not auth:
         return 'Missing required parameters: user and auth', 400
@@ -222,9 +242,10 @@ def update_elo(current_elo, won):
 
 # User creation endpoint
 @app.route('/online/create_user')
+@limiter.limit(utils.read_config('rate_limit_create_per_ip'), key_func=get_remote_address)
 def create_user():
-    user = str(request.args.get('user'))
-    auth = str(request.args.get('auth'))
+    user = (request.args.get('user') or '').strip()
+    auth = (request.args.get('auth') or '').strip()
 
     if not user or not auth:
         return "Data cannot be null", 400
@@ -236,22 +257,113 @@ def create_user():
         return "User already exists", 400
     elif user_create == 3:
         return "User blacklisted", 403
+    elif user_create == -1:
+        return "Failed to create user", 500
     return "User created", 200
 
 # User creation function
 def fn_create_user(user, auth):
-    if user in json.load(open('server/filter.json'))["data"]:
+    try:
+        with open('server/filter.json', 'r', encoding='utf-8') as f:
+            filter_data = json.load(f).get('data', [])
+    except (FileNotFoundError, json.JSONDecodeError):
+        filter_data = []
+    if user in filter_data:
         return 1
+
     if User.query.filter_by(username=user).first():
         return 2
-    if user in json.load(open('server/blocklist.json'))["usernames"]:
+
+    try:
+        with open('server/blocklist.json', 'r', encoding='utf-8') as f:
+            blocklist_data = json.load(f).get('usernames', [])
+    except (FileNotFoundError, json.JSONDecodeError):
+        blocklist_data = []
+    if user in blocklist_data:
         return 3
+
     user_table = User(username=user, auth=generate_password_hash(auth))
-    db.session.add(user_table)
     stats = Stats(username=user, points=utils.read_config("base_elo"), matches=0, wins=0, avg_time=0, word_freq={}, registered_on=datetime.datetime.now())
-    db.session.add(stats)
-    db.session.commit()
+    try:
+        db.session.add(user_table)
+        db.session.add(stats)
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        return -1
     return 0
+
+@app.route('/online/change_data/<option>')
+@limiter.limit(utils.read_config('rate_limit_change_data_per_ip'), key_func=get_remote_address)
+def change_data(option):
+    user = (request.args.get('user') or '').strip()
+    auth = (request.args.get('auth') or '').strip()
+
+    if not user or not auth:
+        return 'Missing required parameters: user and auth', 400
+
+    existing_user = User.query.filter_by(username=user).first()
+    if not existing_user:
+        return 'User not found', 401
+
+    if not check_password_hash(existing_user.auth, auth):
+        return 'Wrong auth', 403
+
+    if option == 'user':
+        new_user = (request.args.get('new_user') or '').strip()
+        if not new_user:
+            return 'Missing required parameters: new_user', 400
+
+        if new_user == user:
+            return 'New username cannot be the same', 400
+        if User.query.filter_by(username=new_user).count() != 0:
+            return 'Username already exists', 400
+
+        try:
+            with open('server/filter.json', 'r', encoding='utf-8') as f:
+                filter_data = json.load(f).get('data', [])
+        except (FileNotFoundError, json.JSONDecodeError):
+            filter_data = []
+        if new_user in filter_data:
+            return "Unallowed username", 400
+
+        try:
+            with open('server/blocklist.json', 'r', encoding='utf-8') as f:
+                blocklist_data = json.load(f).get('usernames', [])
+        except (FileNotFoundError, json.JSONDecodeError):
+            blocklist_data = []
+        if new_user in blocklist_data:
+            return "User blacklisted", 403
+
+        db.session.begin_nested()
+        try:
+            Game.query.filter_by(username=user).update({'username': new_user}, synchronize_session=True)
+            Stats.query.filter_by(username=user).update({'username': new_user}, synchronize_session=True)
+            existing_user.username = new_user
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+            return "Failed to change the username", 400
+        return "Changed the username successfully", 200
+
+    if option == 'auth':
+        new_auth = (request.args.get('new_auth') or '').strip()
+        if not new_auth:
+            return "Missing required parameters: new_auth", 400
+
+        if new_auth == auth:
+            return "New password cannot be the same", 400
+
+        db.session.begin_nested()
+        try:
+            existing_user.auth = generate_password_hash(new_auth)
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+            return "Failed to change the password", 400
+        return "Changed the password successfully", 200
+
+    return "Invalid option", 404
 
 @app.route('/play', defaults={'path': ''})
 @app.route('/play/<path:path>')
@@ -261,8 +373,8 @@ def play(path):
         flutter_build_dir = os.path.abspath(os.path.join(str(app.static_folder), 'play'))
 
     requested = path or 'index.html'
-    target_path = os.path.abspath(os.path.join(flutter_build_dir, requested))
-    base_path = os.path.abspath(flutter_build_dir)
+    target_path = os.path.realpath(os.path.join(flutter_build_dir, requested))
+    base_path = os.path.realpath(flutter_build_dir)
 
     if not (target_path == base_path or target_path.startswith(base_path + os.sep)):
         return 'Invalid path', 400
@@ -300,28 +412,30 @@ def languages_download():
     if not language or language not in utils.languages():
         return 'Language invalid', 400
 
-    return open(f'data/{language}.json')
+    return send_from_directory("data", f'{language}.json')
 
 # Game start endpoint
 @app.route('/online/start')
+@limiter.limit(utils.read_config('rate_limit_start_per_ip'), key_func=get_remote_address)
 def start_online():
-    user = request.args.get('user')
-    auth = str(request.args.get('auth'))
-    language = request.args.get('language')
+    user = (request.args.get('user') or '').strip()
+    auth = (request.args.get('auth') or '').strip()
+    language = (request.args.get('language') or '').strip()
 
     if not user or not auth:
         return 'Missing required parameters: user and auth', 400
 
     existing_user = User.query.filter_by(username=user).first()
     if not existing_user:
-        if fn_create_user(user, auth) == 1:
+        user_create = fn_create_user(user, auth)
+        if user_create == 1:
             return "Unallowed username", 400
-        if fn_create_user(user, auth) == 3:
+        elif user_create == 3:
             return "User blacklisted", 403
     elif not check_password_hash(existing_user.auth, auth):
         return 'Wrong auth', 400
 
-    if language not in utils.languages():
+    if not language or language not in utils.languages():
         return 'Language invalid', 400
 
     word = online.generate_word(language)
@@ -333,10 +447,11 @@ def start_online():
 
 # Take a guess endpoint
 @app.route('/online/guess')
+@limiter.limit(utils.read_config('rate_limit_guess_per_ip'), key_func=get_remote_address)
 def guess_online():
-    user = str(request.args.get('user'))
-    auth = str(request.args.get('auth'))
-    guess = str(request.args.get('guess'))
+    user = (request.args.get('user') or '').strip()
+    auth = (request.args.get('auth') or '').strip()
+    guess = (request.args.get('guess') or '').strip()
 
     if not user or not auth or not guess:
         return 'Missing required parameters: user, auth and guess', 401
@@ -371,7 +486,7 @@ def guess_online():
     db.session.commit()
 
     if game.guess_number >= 6 or game.word in game.guesses or game.status != 1:
-        stats = Stats.query.filter_by(username=user).first()
+        stats = Stats.query.filter_by(username=user).with_for_update().first()
         stats.points = update_elo(stats.points, game.status == 2)
         stats.matches += 1
         if game.status == 2:
@@ -383,7 +498,8 @@ def guess_online():
         if not isinstance(stats.word_freq, dict):
             stats.word_freq = {}
         for each_guess in game.guesses:
-            stats.word_freq[each_guess] = stats.word_freq.get(each_guess, 0) + 1
+            if isinstance(each_guess, str) and len(each_guess) <= 5:
+                stats.word_freq[each_guess] = stats.word_freq.get(each_guess, 0) + 1
         db.session.commit()
 
     return jsonify({
@@ -397,9 +513,10 @@ def guess_online():
 
 # Check what was the word after the game has ended
 @app.route('/online/word')
+@limiter.limit(utils.read_config('rate_limit_word_per_ip'), key_func=get_remote_address)
 def get_word():
-    user = str(request.args.get('user'))
-    auth = str(request.args.get('auth'))
+    user = (request.args.get('user') or '').strip()
+    auth = (request.args.get('auth') or '').strip()
 
     if not user or not auth:
         return 'Missing required parameters: user, auth and guess', 401
@@ -410,7 +527,8 @@ def get_word():
         return 'User not found', 401
     if not check_password_hash(existing_user.auth, auth):
         return 'Wrong auth', 403
-
+    if not game:
+        return "Game doesn't exist", 404
     if game.status != 1:
         return game.word
     return "Game has not ended", 403

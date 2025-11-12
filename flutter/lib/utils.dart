@@ -189,7 +189,7 @@ Future<String> checkLanguagePack(String languageCode, [bool online = true]) asyn
       if (localChecksum == serverChecksum) {
         return "Local language file correct";
       }
-      printDebugInfo('$localChecksum, $serverChecksum'); // TODO: fix this
+      printDebugInfo('Checksums: local:$localChecksum, server:$serverChecksum'); // TODO: fix this
     }
 
     final exists = await fileExists(languageCode, online);

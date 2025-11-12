@@ -61,7 +61,7 @@
 - [**Flutter**] web: fix connection on debug builds
 - [**Flutter**] web: fix local language download
 - [**Flutter**] add ranked language chooser
-- Password and username change
+- [**Flutter**] Password and username change
 - Fix release info
 - Locales
 - Python, Windows releases

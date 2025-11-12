@@ -58,8 +58,9 @@
 - [**Flutter**] improve multilanguage support (additional characters)
 - [**Website**] website redesign
 - [**Flutter**] fix checking local lang from assets
-- [**Flutter**] fix null in leaderboards
 - [**Flutter**] web: fix connection on debug builds
+- [**Flutter**] web: fix local language download
+- [**Flutter**] add ranked language chooser
 - Password and username change
 - Fix release info
 - Locales

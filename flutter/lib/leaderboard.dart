@@ -168,7 +168,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                   children: [
                     buildLeaderboardColumn('MATCHES', '🎮', leaderboardData!.topMatches, 'matches', null),
                     const SizedBox(width: 8),
-                    buildLeaderboardColumn('WINS', '🎮', leaderboardData!.topMatches, 'wins', null),
+                    buildLeaderboardColumn('WINS', '🎮', leaderboardData!.topWins, 'wins', null),
                   ],
                 ),
                 const SizedBox(height: 24),

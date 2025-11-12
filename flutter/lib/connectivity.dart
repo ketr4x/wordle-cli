@@ -476,7 +476,7 @@ class _ConnectivityPageState extends State<ConnectivityPage> {
                               final Map<String, String> details = Map<String, String>.from(result['details'] ?? {});
 
                               return AlertDialog(
-                                title: const Text('Languages'),
+                                title: const Text('Ranked Languages'),
                                 content: SingleChildScrollView(
                                   child: ListBody(
                                     children: [

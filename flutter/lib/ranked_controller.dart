@@ -79,7 +79,7 @@ class RankedWordleController extends ChangeNotifier with WidgetsBindingObserver 
     final serverUrl = await getConfig('server_url');
     final user = await getConfig('username');
     final auth = await getConfig('password');
-    final lang = await getConfig('game_lang') ?? "en";
+    final lang = await getConfig('ranked_game_lang') ?? "en";
     final pack = await readOnlineLanguagePack(lang);
 
     if (kDebugMode) {
@@ -199,7 +199,7 @@ class RankedWordleController extends ChangeNotifier with WidgetsBindingObserver 
     final serverUrl = await getConfig('server_url');
     final user = await getConfig('username');
     final auth = await getConfig('password');
-    final lang = await getConfig('game_lang') ?? "en";
+    final lang = await getConfig('ranked_game_lang') ?? "en";
 
     final pack = await readOnlineLanguagePack(lang);
     final answers = pack['solutions'] as List<dynamic>;

@@ -18,6 +18,7 @@ class _SettingsPageState extends State<SettingsPage> {
   String _password = '';
   String _serverUrl = '';
   String _wordleLanguage = '';
+  String _rankedLanguage = '';
   PackageInfo? packageInfo;
   final FocusNode _serverUrlFocusNode = FocusNode();
   late TextEditingController _serverUrlController;
@@ -189,11 +190,14 @@ class _SettingsPageState extends State<SettingsPage> {
                 future: Future.wait([getLanguagePacks(false), getConfig('game_lang')]),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState != ConnectionState.done) {
-                    return const SizedBox(
-                      height: 36,
-                      width: 36,
-                      child: Center(
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                    return Container(
+                      alignment: AlignmentGeometry.centerRight,
+                      child: const SizedBox(
+                        height: 36,
+                        width: 36,
+                        child: Center(
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
                       ),
                     );
                   }
@@ -202,19 +206,18 @@ class _SettingsPageState extends State<SettingsPage> {
                   final saved = (data.length > 1 && data[1] is String)
                     ? data[1] as String
                     : (_wordleLanguage.isNotEmpty
-                      ? _wordleLanguage
-                      : (languages.isNotEmpty
-                        ? languages.first
-                        : 'en'
-                      )
+                    ? _wordleLanguage
+                    : (languages.isNotEmpty
+                    ? languages.first
+                    : 'en')
                     );
                   final selected = languages.contains(saved)
                     ? saved
                     : (languages.isNotEmpty
-                      ? languages.first
-                      : 'en'
+                    ? languages.first
+                    : 'en'
                     );
-                  print('$languages, $saved, $selected');
+                  printDebugInfo('$languages, $saved, $selected');
 
                   return DropdownButtonFormField<String>(
                     initialValue: selected,
@@ -226,6 +229,62 @@ class _SettingsPageState extends State<SettingsPage> {
                     onChanged: (value) async {
                       if (value == null) return;
                       await setConfig('game_lang', value);
+                      setState(() {
+                        _wordleLanguage = value;
+                      });
+                    }
+                  );
+                }
+              )
+            )
+          ),
+          ListTile(
+            title: const Text('Ranked Language'),
+            trailing: SizedBox(
+              width: 200,
+              child: FutureBuilder<List<Object?>>(
+                future: Future.wait([getLanguagePacks(true), getConfig('ranked_game_lang')]),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState != ConnectionState.done) {
+                    return Container(
+                      alignment: AlignmentGeometry.centerRight,
+                      child: const SizedBox(
+                        height: 36,
+                        width: 36,
+                        child: Center(
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      ),
+                    );
+                  }
+                  final data = snapshot.data ?? [];
+                  final languages = (data.isNotEmpty && data[0] is List) ? (data[0] as List).cast<String>() : <String>['en'];
+                  final saved = (data.length > 1 && data[1] is String)
+                    ? data[1] as String
+                    : (_rankedLanguage.isNotEmpty
+                    ? _rankedLanguage
+                    : (languages.isNotEmpty
+                    ? languages.first
+                    : 'en')
+                  );
+                  final selected = languages.contains(saved)
+                    ? saved
+                    : (languages.isNotEmpty
+                    ? languages.first
+                    : 'en'
+                  );
+                  printDebugInfo('$languages, $saved, $selected');
+
+                  return DropdownButtonFormField<String>(
+                    initialValue: selected,
+                    decoration: const InputDecoration(isDense: true, contentPadding: EdgeInsetsGeometry.symmetric(vertical: 8)),
+                    items: languages.map((lang) => DropdownMenuItem(
+                      value: lang,
+                      child: Text(lang)
+                    )).toList(),
+                    onChanged: (value) async {
+                      if (value == null) return;
+                      await setConfig('ranked_game_lang', value);
                       setState(() {
                         _wordleLanguage = value;
                       });

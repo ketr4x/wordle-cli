@@ -354,7 +354,6 @@ def change_data(option):
         if new_auth == auth:
             return "New password cannot be the same", 400
 
-        db.session.begin_nested()
         try:
             existing_user.auth = generate_password_hash(new_auth)
             db.session.commit()

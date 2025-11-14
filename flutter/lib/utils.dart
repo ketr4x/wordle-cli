@@ -67,6 +67,30 @@ void showErrorToast(String message, {bool long = false}) {
   }
 }
 
+void showToast(String message, {bool long = false}) {
+  final bool preferSnackBar = !(Platform.isAndroid || Platform.isIOS);
+  if (preferSnackBar) {
+    final ctx = navigatorKey.currentState?.overlay?.context ?? navigatorKey.currentContext;
+    if (ctx != null) {
+      ScaffoldMessenger.of(ctx).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+  } else {
+    Fluttertoast.showToast(
+      msg: message,
+      toastLength: long ? Toast.LENGTH_LONG : Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      textColor: Colors.white,
+      fontSize: 16.0,
+    );
+  }
+}
+
 void showDailyLimitToast() {
   final bool preferSnackBar = !(Platform.isAndroid || Platform.isIOS);
   if (preferSnackBar) {

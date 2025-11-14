@@ -75,6 +75,7 @@ class _SettingsPageState extends State<SettingsPage> {
       packageInfo = info;
     });
   }
+
   Future<void> _loadUsername() async {
     final username = await getConfig("username");
     setState(() {
@@ -94,7 +95,7 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<void> _loadServerUrl() async {
     final serverUrl = await getConfig("server_url");
     setState(() {
-      _serverUrl = serverUrl ?? 'https://wordle.ketrax.ovh';
+      _serverUrl = serverUrl ?? '';
       _serverUrlController.text = _serverUrl;
     });
   }
@@ -106,11 +107,11 @@ class _SettingsPageState extends State<SettingsPage> {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: const Text('Settings'),
       ),
-      body: Column(
-        children: [
-          ListTile(
-            title: const Text('Dark Mode'),
-            trailing: Switch.adaptive(
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            SwitchListTile(
+              title: const Text('Dark Mode'),
               value: AdaptiveTheme.of(context).mode.isDark,
               onChanged: (value) {
                 if (value) {
@@ -120,208 +121,208 @@ class _SettingsPageState extends State<SettingsPage> {
                 }
               },
             ),
-          ),
-          ListTile(
-            title: const Text('Username'),
-            trailing: SizedBox(
-              width: 200,
-              child: TextField(
-                controller: _usernameController,
-                decoration: InputDecoration(
-                  hintText: _username.isNotEmpty ? _username : 'Enter your username',
+            ListTile(
+              title: const Text('Username'),
+              trailing: SizedBox(
+                width: 200,
+                child: TextField(
+                  controller: _usernameController,
+                  decoration: InputDecoration(
+                    hintText: _username.isNotEmpty ? _username : 'Enter your username',
+                  ),
+                  onChanged: (value) async {
+                    setState(() {
+                      _username = value;
+                    });
+                    final connProvider = Provider.of<ConnectionStateProvider>(context, listen: false);
+                    final accProvider = Provider.of<AccountStateProvider>(context, listen: false);
+                    await setConfig("username", value);
+                    connProvider.forceCheck();
+                    accProvider.forceCheck();
+                  },
                 ),
-                onChanged: (value) async {
-                  setState(() {
-                    _username = value;
-                  });
-                  final connProvider = Provider.of<ConnectionStateProvider>(context, listen: false);
-                  final accProvider = Provider.of<AccountStateProvider>(context, listen: false);
-                  await setConfig("username", value);
-                  connProvider.forceCheck();
-                  accProvider.forceCheck();
-                },
-              ),
-            )
-          ),
-          ListTile(
-            title: const Text('Password'),
-            trailing: SizedBox(
-              width: 200,
-              child: TextField(
-                controller: _passwordController,
-                decoration: InputDecoration(
-                  hintText: _password.isNotEmpty ? '••••••••' : 'Enter your password',
-                ),
-                obscureText: true,
-                onChanged: (value) async {
-                  setState(() {
-                    _password = value;
-                  });
-                  final connProvider = Provider.of<ConnectionStateProvider>(context, listen: false);
-                  final accProvider = Provider.of<AccountStateProvider>(context, listen: false);
-                  await setConfig("password", value);
-                  connProvider.forceCheck();
-                  accProvider.forceCheck();
-                },
-              ),
-            )
-          ),
-          ListTile(
-            title: const Text('Server URL'),
-            trailing: SizedBox(
-              width: 200,
-              child: TextField(
-                controller: _serverUrlController,
-                focusNode: _serverUrlFocusNode,
-                decoration: InputDecoration(
-                  hintText: _serverUrl.isNotEmpty ? _serverUrl : 'like wordle.ketrax.ovh',
-                ),
-                  onChanged: (value) {
-                    _serverUrl = value;
-                  }
-              ),
-            )
-          ),
-          ListTile(
-            title: const Text('Wordle Language'),
-            trailing: SizedBox(
-              width: 200,
-              child: FutureBuilder<List<Object?>>(
-                future: Future.wait([getLanguagePacks(false), getConfig('game_lang')]),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState != ConnectionState.done) {
-                    return Container(
-                      alignment: AlignmentGeometry.centerRight,
-                      child: const SizedBox(
-                        height: 36,
-                        width: 36,
-                        child: Center(
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                      ),
-                    );
-                  }
-                  final data = snapshot.data ?? [];
-                  final languages = (data.isNotEmpty && data[0] is List) ? (data[0] as List).cast<String>() : <String>['en'];
-                  final saved = (data.length > 1 && data[1] is String)
-                    ? data[1] as String
-                    : (_wordleLanguage.isNotEmpty
-                    ? _wordleLanguage
-                    : (languages.isNotEmpty
-                    ? languages.first
-                    : 'en')
-                    );
-                  final selected = languages.contains(saved)
-                    ? saved
-                    : (languages.isNotEmpty
-                    ? languages.first
-                    : 'en'
-                    );
-                  printDebugInfo('$languages, $saved, $selected');
-
-                  return DropdownButtonFormField<String>(
-                    initialValue: selected,
-                    decoration: const InputDecoration(isDense: true, contentPadding: EdgeInsetsGeometry.symmetric(vertical: 8)),
-                    items: languages.map((lang) => DropdownMenuItem(
-                      value: lang,
-                      child: Text(lang)
-                    )).toList(),
-                    onChanged: (value) async {
-                      if (value == null) return;
-                      await setConfig('game_lang', value);
-                      setState(() {
-                        _wordleLanguage = value;
-                      });
-                    }
-                  );
-                }
               )
-            )
-          ),
-          ListTile(
-            title: const Text('Ranked Language'),
-            trailing: SizedBox(
-              width: 200,
-              child: FutureBuilder<List<Object?>>(
-                future: Future.wait([getLanguagePacks(true), getConfig('ranked_game_lang')]),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState != ConnectionState.done) {
-                    return Container(
-                      alignment: AlignmentGeometry.centerRight,
-                      child: const SizedBox(
-                        height: 36,
-                        width: 36,
-                        child: Center(
-                          child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            ListTile(
+              title: const Text('Password'),
+              trailing: SizedBox(
+                width: 200,
+                child: TextField(
+                  controller: _passwordController,
+                  decoration: InputDecoration(
+                    hintText: _password.isNotEmpty ? '•'*_password.length : 'Enter your password',
+                  ),
+                  obscureText: true,
+                  onChanged: (value) async {
+                    setState(() {
+                      _password = value;
+                    });
+                    final connProvider = Provider.of<ConnectionStateProvider>(context, listen: false);
+                    final accProvider = Provider.of<AccountStateProvider>(context, listen: false);
+                    await setConfig("password", value);
+                    connProvider.forceCheck();
+                    accProvider.forceCheck();
+                  },
+                ),
+              )
+            ),
+            ListTile(
+              title: const Text('Server URL'),
+              trailing: SizedBox(
+                width: 200,
+                child: TextField(
+                  controller: _serverUrlController,
+                  focusNode: _serverUrlFocusNode,
+                  decoration: InputDecoration(
+                    hintText: _serverUrl.isNotEmpty ? _serverUrl : 'like wordle.ketrax.ovh',
+                  ),
+                    onChanged: (value) {
+                      _serverUrl = value;
+                    }
+                ),
+              )
+            ),
+            ListTile(
+              title: const Text('Wordle Language'),
+              trailing: SizedBox(
+                width: 200,
+                child: FutureBuilder<List<Object?>>(
+                  future: Future.wait([getLanguagePacks(false), getConfig('game_lang')]),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState != ConnectionState.done) {
+                      return Container(
+                        alignment: AlignmentGeometry.centerRight,
+                        child: const SizedBox(
+                          height: 36,
+                          width: 36,
+                          child: Center(
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
                         ),
-                      ),
+                      );
+                    }
+                    final data = snapshot.data ?? [];
+                    final languages = (data.isNotEmpty && data[0] is List) ? (data[0] as List).cast<String>() : <String>['en'];
+                    final saved = (data.length > 1 && data[1] is String)
+                      ? data[1] as String
+                      : (_wordleLanguage.isNotEmpty
+                      ? _wordleLanguage
+                      : (languages.isNotEmpty
+                      ? languages.first
+                      : 'en')
+                      );
+                    final selected = languages.contains(saved)
+                      ? saved
+                      : (languages.isNotEmpty
+                      ? languages.first
+                      : 'en'
+                      );
+                    printDebugInfo('$languages, $saved, $selected');
+        
+                    return DropdownButtonFormField<String>(
+                      initialValue: selected,
+                      decoration: const InputDecoration(isDense: true, contentPadding: EdgeInsetsGeometry.symmetric(vertical: 8)),
+                      items: languages.map((lang) => DropdownMenuItem(
+                        value: lang,
+                        child: Text(lang)
+                      )).toList(),
+                      onChanged: (value) async {
+                        if (value == null) return;
+                        await setConfig('game_lang', value);
+                        setState(() {
+                          _wordleLanguage = value;
+                        });
+                      }
                     );
                   }
-                  final data = snapshot.data ?? [];
-                  final languages = (data.isNotEmpty && data[0] is List) ? (data[0] as List).cast<String>() : <String>['en'];
-                  final saved = (data.length > 1 && data[1] is String)
-                    ? data[1] as String
-                    : (_rankedLanguage.isNotEmpty
-                    ? _rankedLanguage
-                    : (languages.isNotEmpty
-                    ? languages.first
-                    : 'en')
-                  );
-                  final selected = languages.contains(saved)
-                    ? saved
-                    : (languages.isNotEmpty
-                    ? languages.first
-                    : 'en'
-                  );
-                  printDebugInfo('$languages, $saved, $selected');
-
-                  return DropdownButtonFormField<String>(
-                    initialValue: selected,
-                    decoration: const InputDecoration(isDense: true, contentPadding: EdgeInsetsGeometry.symmetric(vertical: 8)),
-                    items: languages.map((lang) => DropdownMenuItem(
-                      value: lang,
-                      child: Text(lang)
-                    )).toList(),
-                    onChanged: (value) async {
-                      if (value == null) return;
-                      await setConfig('ranked_game_lang', value);
-                      setState(() {
-                        _wordleLanguage = value;
-                      });
-                    }
-                  );
-                }
+                )
               )
+            ),
+            ListTile(
+              title: const Text('Ranked Language'),
+              trailing: SizedBox(
+                width: 200,
+                child: FutureBuilder<List<Object?>>(
+                  future: Future.wait([getLanguagePacks(true), getConfig('ranked_game_lang')]),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState != ConnectionState.done) {
+                      return Container(
+                        alignment: AlignmentGeometry.centerRight,
+                        child: const SizedBox(
+                          height: 36,
+                          width: 36,
+                          child: Center(
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
+                      );
+                    }
+                    final data = snapshot.data ?? [];
+                    final languages = (data.isNotEmpty && data[0] is List) ? (data[0] as List).cast<String>() : <String>['en'];
+                    final saved = (data.length > 1 && data[1] is String)
+                      ? data[1] as String
+                      : (_rankedLanguage.isNotEmpty
+                      ? _rankedLanguage
+                      : (languages.isNotEmpty
+                      ? languages.first
+                      : 'en')
+                    );
+                    final selected = languages.contains(saved)
+                      ? saved
+                      : (languages.isNotEmpty
+                      ? languages.first
+                      : 'en'
+                    );
+                    printDebugInfo('$languages, $saved, $selected');
+        
+                    return DropdownButtonFormField<String>(
+                      initialValue: selected,
+                      decoration: const InputDecoration(isDense: true, contentPadding: EdgeInsetsGeometry.symmetric(vertical: 8)),
+                      items: languages.map((lang) => DropdownMenuItem(
+                        value: lang,
+                        child: Text(lang)
+                      )).toList(),
+                      onChanged: (value) async {
+                        if (value == null) return;
+                        await setConfig('ranked_game_lang', value);
+                        setState(() {
+                          _rankedLanguage = value;
+                        });
+                      }
+                    );
+                  }
+                )
+              )
+            ),
+            ListTile(
+              title: const Text('About'),
+              trailing: Text(packageInfo?.version ?? ''),
+              onTap: () {
+                showAboutDialog(
+                  context: context,
+                  applicationName: 'Wordix',
+                  applicationVersion: packageInfo?.version ?? 'Unknown',
+                  /*applicationIcon: Image.asset( TODO: add app icon
+                    'assets/app_icon.png',
+                    width: 48,
+                    height: 48,
+                  ),*/
+                  applicationLegalese: 'Copyright ketr4x, 2025. '
+                    '\nLicensed under BSD-3-Clause License.',
+                );
+              },
+            ),
+            ListTile(
+              title: const Text('GitHub'),
+              onTap: () async {
+                final url = Uri.parse('https://github.com/ketr4x/wordle-cli');
+                if (await canLaunchUrl(url)) {
+                  await launchUrl(url, mode: LaunchMode.externalApplication);
+                }
+              },
             )
-          ),
-          ListTile(
-            title: const Text('About'),
-            trailing: Text(packageInfo?.version ?? ''),
-            onTap: () {
-              showAboutDialog(
-                context: context,
-                applicationName: 'Wordix',
-                applicationVersion: packageInfo?.version ?? 'Unknown',
-                /*applicationIcon: Image.asset( TODO: add app icon
-                  'assets/app_icon.png',
-                  width: 48,
-                  height: 48,
-                ),*/
-                applicationLegalese: 'Copyright ketr4x, 2025. '
-                  '\nLicensed under BSD-3-Clause License.',
-              );
-            },
-          ),
-          ListTile(
-            title: const Text('GitHub'),
-            onTap: () async {
-              final url = Uri.parse('https://github.com/ketr4x/wordle-cli');
-              if (await canLaunchUrl(url)) {
-                await launchUrl(url, mode: LaunchMode.externalApplication);
-              }
-            },
-          )
-        ],
+          ],
+        ),
       )
     );
   }

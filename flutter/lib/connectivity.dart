@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'settings.dart';
 import 'utils.dart';
 import 'dart:io';
+import 'account.dart';
 
 class ConnectivityPage extends StatefulWidget {
   const ConnectivityPage({super.key});
@@ -332,6 +333,20 @@ class _ConnectivityPageState extends State<ConnectivityPage> {
                                 },
                                 child: const Text('Settings'),
                               ),
+                          if (provider.connectionState == HttpStatus.ok && connection.connectionState == HttpStatus.ok)
+                            TextButton(
+                              onPressed: () async {
+                                await Navigator.push(context, MaterialPageRoute(builder: (context) => const AccountDetailsPage()));
+                                await _loadUsername();
+                                await _loadPassword();
+                                if (!context.mounted) return;
+                                try {
+                                  final acc = Provider.of<AccountStateProvider>(context, listen: false);
+                                  acc.forceCheck();
+                                } catch (_) {}
+                              },
+                              child: const Text('Change...'),
+                            ),
                           TextButton(
                             onPressed: () => Navigator.pop(context),
                             child: const Text('OK'),

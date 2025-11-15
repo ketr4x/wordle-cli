@@ -71,7 +71,7 @@ class _AccountDetailsPageState extends State<AccountDetailsPage> {
       }
 
       final response = (mode == 'everything' || mode == 'username') ? (await http.get(Uri.parse('$url/user?user=$_username&auth=$_password&new_user=$_newUsername')).timeout(const Duration(seconds: 7))) : http.Response('', 400);
-      final response2 = (mode == 'everything' || mode == 'password') ? (await http.get(Uri.parse('$url/auth?user=$_username&auth=$_password&new_auth=$_newPassword')).timeout(const Duration(seconds: 7))) : http.Response('', 400);
+      final response2 = (mode == 'everything' || mode == 'password') ? (await http.get(Uri.parse('$url/auth?user=${mode == 'password' ? _username : _newUsername}&auth=$_password&new_auth=$_newPassword')).timeout(const Duration(seconds: 7))) : http.Response('', 400);
 
       if (response.statusCode == 200 && response2.statusCode == 200) {
         return 'Changed the username and password successfully';

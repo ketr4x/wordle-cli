@@ -4,13 +4,16 @@ import time
 from statistics import stats
 from configuration import configuration
 from leaderboard import leaderboard
+from account import account
 
 def connection():
     server_url = utils.read_config('server_url')
     if not server_url:
-        print("Server URL not set. Set it up in the configuration.")
-        input("Press `Enter` to continue...")
-        return
+        if server_check() != 1:
+            return
+        server_url = utils.read_config('server_url')
+    user, auth = auth_check()
+    create_user(user, auth, server_url)
     while True:
         server_status = requests.get(f"{server_url}/server_check")
         account_status = requests.get(f"{server_url}/online/auth_check?user={utils.read_config('username')}&auth={utils.read_config('password')}")
@@ -35,9 +38,17 @@ def connection():
         for language, status in language_status.items():
             print(f"{language} - {status}")
 
-        choice = input("Press `Enter` to refresh or Q to quit: ").lower()
+        choice = input("Press `Enter` to refresh, A for creating the account, C for changing the details or Q to quit: ").lower()
         if choice == "q":
             return
+        if choice == "c":
+            if account_status.status_code == 200:
+                account()
+            else:
+                configuration()
+        if choice == "a":
+            user, auth = auth_check()
+            create_user(user, auth, server_url)
 
 # Translates the data received from the server for strings with the formatted guesses
 def guess_decoder(guesses, formatted_guesses):
@@ -108,14 +119,73 @@ def game(user, auth, language):
 
     return letters, formatted_guesses, guess_number, decoded_guesses, game_status, game_time
 
-def game_online():
+def create_user(user, auth, server):
+    response = requests.get(f"{server}/online/auth_check?user={user}&auth={auth}")
+    while response.status_code != 200:
+        utils.clear_screen()
+        if response.status_code == 401:
+            inp = input("Account does not exist. Do you want to create one? (Y/N): ").strip().lower()
+            if inp == "y":
+                create = requests.get(f"{server}/online/create_user?user={user}&auth={auth}")
+                if create.status_code == 200:
+                    print("User created successfully!")
+                if create.status_code == 400:
+                    print("Invalid username. Try another one.")
+                if create.status_code == 403:
+                    print("Username blacklisted.")
+                input("Press `Enter` to continue...")
+            else:
+                return None
+        elif response.status_code == 403:
+            print("Wrong username or password. \nPlease try again.")
+            user, auth = None, None
+            while not user or not auth:
+                while not user:
+                    user = input("Please enter your username: ")
+                    if not user:
+                        print("Please specify your username")
+                while not auth:
+                    auth = input("Please enter your password: ")
+                    if not auth:
+                        print("Please specify your password")
+            print("Checking details...")
+        else:
+            print("An error has occurred. Please try again in a few minutes.")
+            input("Press `Enter` to continue...")
+            return 1
+        response = requests.get(f"{server}/online/auth_check?user={user}&auth={auth}")
+
+    utils.write_config("username", user)
+    utils.write_config("password", auth)
+    return response
+
+def auth_check():
     user = utils.read_config("username")
     auth = utils.read_config("password")
+
+    while not user or not auth:
+        while not user:
+            user = input("Please enter your username: ")
+            if not user:
+                print("Please specify your username")
+        while not auth:
+            auth = input("Please enter your password: ")
+            if not auth:
+                print("Please specify your password")
+    return user, auth
+
+def version_check():
     server = utils.read_config("server_url")
+    server_version = requests.get(f"{server}/online/version").text
+    loaded = utils.json_decode(open("../data.json", "r", encoding="utf-8").read())
+    if server_version != loaded["version"]:
+        print("Version mismatch. Update your client or notify the server owner.")
+        input("Press `Enter` to continue...")
+        return "mismatch"
+    return None
 
-    utils.clear_screen()
-    print("Welcome to ranked!\n")
-
+def server_check():
+    server = ""
     while not server:
         server = input("Please enter your full server address (i.e., https://wordle.ketrax.ovh): ").strip()
         try:
@@ -132,13 +202,13 @@ def game_online():
             if response.text != "Server is running":
                 print(f"Server did not respond correctly. Please try again.")
                 server = None
-        except (requests.exceptions.ConnectionError, 
-                requests.exceptions.MissingSchema, 
+        except (requests.exceptions.ConnectionError,
+                requests.exceptions.MissingSchema,
                 requests.exceptions.Timeout,
                 requests.exceptions.RequestException) as e:
             print(f"Could not connect to server: {e}")
             server = None
-        
+
         if server:
             utils.write_config("server_url", server)
 
@@ -152,56 +222,24 @@ def game_online():
         print(f"Cannot connect to server ({server}): {e}")
         input("Press `Enter` to continue...")
         return None
+    return 1
 
-    server_version = requests.get(f"{server}/online/version").text
-    loaded = utils.json_decode(open("../data.json", "r", encoding="utf-8").read())
-    if server_version != loaded["version"]:
-        print("Version mismatch. Update your client or notify the server owner.")
-        input("Press `Enter` to continue...")
+def game_online():
+    server = utils.read_config("server_url")
+
+    utils.clear_screen()
+    print("Welcome to ranked!\n")
+
+    if server_check() != 1:
         return None
 
-    while not user or not auth:
-        user = input("Please enter your username: ")
-        if not user:
-            print("Please specify your username")
-        auth = input("Please enter your password: ")
-        if not auth:
-            print("Please specify your password")
+    if version_check() == "mismatch":
+        return None
+
+    user, auth = auth_check()
     print("Checking details...")
 
-    response = requests.get(f"{server}/online/auth_check?user={user}&auth={auth}")
-    while response.status_code != 200:
-        utils.clear_screen()
-        if response.status_code == 401:
-            inp = input("Account does not exist. Do you want to create one? (Y/N): ").strip().lower()
-            if inp == "y":
-                create = requests.get(f"{server}/online/create_user?user={user}&auth={auth}")
-                if create.status_code == 200:
-                    print("User created successfully!")
-                if create.status_code == 400:
-                    print("Invalid username. Try another one.")
-                if create.status_code == 403:
-                    print("Username blacklisted.")
-                input("Press `Enter` to continue...")
-        elif response.status_code == 403:
-            print("Wrong username or password. \nPlease try again.")
-            user, auth = None, None
-            while not user or not auth:
-                user = input("Please enter your username: ")
-                if not user:
-                    print("Please specify your username")
-                auth = input("Please enter your password: ")
-                if not auth:
-                    print("Please specify your password")
-            print("Checking details...")
-        else:
-            print("An error has occurred. Please try again in a few minutes.")
-            input("Press `Enter` to continue...")
-            return 1
-        response = requests.get(f"{server}/online/auth_check?user={user}&auth={auth}")
-
-    utils.write_config("username", user)
-    utils.write_config("password", auth)
+    response = create_user(user, auth, server)
 
     language = utils.read_config("language")
     languages_response = requests.get(f"{server}/online/languages")

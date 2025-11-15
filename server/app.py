@@ -337,8 +337,8 @@ def change_data(option):
 
         db.session.begin_nested()
         try:
-            Game.query.filter_by(username=user).update({'username': new_user}, synchronize_session=True)
-            Stats.query.filter_by(username=user).update({'username': new_user}, synchronize_session=True)
+            Game.query.filter_by(username=user).update({'username': new_user}, synchronize_session='auto')
+            Stats.query.filter_by(username=user).update({'username': new_user}, synchronize_session='auto')
             existing_user.username = new_user
             db.session.commit()
         except IntegrityError:

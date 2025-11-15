@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:universal_html/parsing.dart';
 import 'package:wordle/utils.dart';
 import 'package:provider/provider.dart';
 
@@ -79,7 +80,7 @@ class _AccountDetailsPageState extends State<AccountDetailsPage> {
         if (response.statusCode == 200 || response2.statusCode == 200) {
           return (response.statusCode == 200 ? 'Changed the username successfully' : 'Changed the password successfully');
         } else {
-          return 'Failed to change the account details. $_password, $_newPassword, $_username, $_newUsername';
+          return 'Failed to change the account details: ${response.body} ${response2.body}';
         }
       }
     } catch (e) {
@@ -169,6 +170,10 @@ class _AccountDetailsPageState extends State<AccountDetailsPage> {
                   String result = await applyChanges();
                   setState(() {
                     _result = result;
+                    if (result.contains('Changed')) {
+                      _password = _newPassword;
+                      _username = _newUsername;
+                    }
                   });
                   if (_result.contains('Failed to change the account details.')) {
                     showErrorToast(_result, long: true);

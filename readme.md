@@ -53,7 +53,7 @@
 ## Planned updates
 - [**Flutter**] timer fix
 - [**Flutter**] add create account popup when it isn't set
-- [**Flutter**] (?) ai mode
+- [**Flutter**] ai mode
 - [**Flutter**] autoupdate all popups
 - [**Flutter**] improve multilanguage support (additional characters)
 - [**Website**] website redesign

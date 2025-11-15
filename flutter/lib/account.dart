@@ -58,7 +58,7 @@ class _AccountDetailsPageState extends State<AccountDetailsPage> {
   Future<void> _loadServerUrl() async {
     final serverUrl = await getConfig("server_url");
     setState(() {
-      _serverUrl = serverUrl ?? 'https://wordle.ketrax.ovh';
+      _serverUrl = serverUrl!;
     });
   }
 

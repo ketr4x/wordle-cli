@@ -6,13 +6,17 @@ import requests
 
 # Courtesy of HackClub - do not abuse https://ai.hackclub.com/
 def start_ai_client(language):
-    models_raw = requests.get(
-        url="https://ai.hackclub.com/proxy/v1/models",
-        headers={"Authorization": f"Bearer {utils.read_config("ai_api_key")}"}
-    ).json()["data"]
-    models = []
-    for model in models_raw:
-        models.append(model["id"])
+    if not utils.read_config("ai_model"):
+        models_raw = requests.get(
+            url="https://ai.hackclub.com/proxy/v1/models",
+            headers={"Authorization": f"Bearer {utils.read_config("ai_api_key")}"}
+        ).json()["data"]
+        models = []
+        for model in models_raw:
+            models.append(model["id"])
+        models.remove("google/gemini-2.5-flash-image")
+    else:
+        models = []
 
     client = OpenAI(
         api_key=utils.read_config("ai_api_key"),
@@ -28,17 +32,20 @@ def start_ai_client(language):
             }
         ]
     )
-    print(response.choices[0].message.content)
     return json.loads(str(response.choices[0].message.content))
 
 def check_guess(language, word):
-    models_raw = requests.get(
-        url="https://ai.hackclub.com/proxy/v1/models",
-        headers={"Authorization": f"Bearer {utils.read_config("ai_api_key")}"}
-    ).json()["data"]
-    models = []
-    for model in models_raw:
-        models.append(model["id"])
+    if not utils.read_config("ai_model"):
+        models_raw = requests.get(
+            url="https://ai.hackclub.com/proxy/v1/models",
+            headers={"Authorization": f"Bearer {utils.read_config("ai_api_key")}"}
+        ).json()["data"]
+        models = []
+        for model in models_raw:
+            models.append(model["id"])
+        models.remove("google/gemini-2.5-flash-image")
+    else:
+        models = [utils.read_config("ai_model")]
 
     client = OpenAI(
         api_key=utils.read_config("ai_api_key"),
@@ -99,6 +106,10 @@ def settings():
     return length, language, tries
 
 def game_ai():
+    if not utils.read_config("ai_api_key"):
+        print("Please set up your API key.")
+        input("\nPress `Enter` to continue...")
+        return
     length, language, tries = settings()
     ai_payload = start_ai_client(language)
     word = ai_payload["word"]

@@ -60,7 +60,7 @@
 - [**Flutter**] fix checking local lang from assets
 - [**Flutter**] web: fix connection on debug builds
 - [**Flutter**] web: fix local language download (connectivity.dart)
-- [**Flutter**] Password and username change
+- [**Python**] Password and username change
 - [**Flutter**] implement ratelimiter
 - [**Python**] implement ratelimiter
 - Fix release info

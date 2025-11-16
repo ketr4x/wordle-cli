@@ -17,6 +17,7 @@ class _AccountDetailsPageState extends State<AccountDetailsPage> {
   String _newPassword = '';
   String _serverUrl = '';
   String _result = '';
+  String _resultDeletion = '';
   late TextEditingController _usernameController;
   late TextEditingController _passwordController;
 
@@ -65,25 +66,60 @@ class _AccountDetailsPageState extends State<AccountDetailsPage> {
   Future<String> applyChanges() async {
     try {
       final url = '$_serverUrl/online/change_data';
-      String mode = (_password == _newPassword && _username == _newUsername) ? 'nothing' : (_password != _newPassword && _username != _newUsername) ? 'everything' : (_password != _newPassword) ? 'password' : 'username';
-      if (mode == 'nothing') {
+      bool usernameChanged = _username != _newUsername;
+      bool passwordChanged = _password != _newPassword;
+
+      if (!usernameChanged && !passwordChanged) {
         return 'Nothing to change.';
       }
 
-      final response = (mode == 'everything' || mode == 'username') ? (await http.get(Uri.parse('$url/user?user=$_username&auth=$_password&new_user=$_newUsername')).timeout(const Duration(seconds: 7))) : http.Response('', 400);
-      final response2 = (mode == 'everything' || mode == 'password') ? (await http.get(Uri.parse('$url/auth?user=${mode == 'password' ? _username : _newUsername}&auth=$_password&new_auth=$_newPassword')).timeout(const Duration(seconds: 7))) : http.Response('', 400);
+      http.Response? usernameResponse;
+      http.Response? passwordResponse;
 
-      if (response.statusCode == 200 && response2.statusCode == 200) {
-        return 'Changed the username and password successfully';
-      } else {
-        if (response.statusCode == 200 || response2.statusCode == 200) {
-          return (response.statusCode == 200 ? 'Changed the username successfully' : 'Changed the password successfully');
+      if (usernameChanged) {
+        usernameResponse = await http.get(Uri.parse('$url/user?user=$_username&auth=$_password&new_user=$_newUsername')).timeout(const Duration(seconds: 7));
+      }
+
+      if (passwordChanged) {
+        final user = usernameChanged ? _newUsername : _username;
+        passwordResponse = await http.get(Uri.parse('$url/auth?user=$user&auth=$_password&new_auth=$_newPassword')).timeout(const Duration(seconds: 7));
+      }
+
+      bool usernameSuccess = usernameResponse?.statusCode == 200;
+      bool passwordSuccess = passwordResponse?.statusCode == 200;
+
+      if (usernameChanged && passwordChanged) {
+        if (usernameSuccess && passwordSuccess) {
+          return 'Changed the username and password successfully';
+        } else if (usernameSuccess) {
+          return 'Changed the username successfully, but failed to change password: ${passwordResponse?.body}';
+        } else if (passwordSuccess) {
+          return 'Changed the password successfully, but failed to change username: ${usernameResponse?.body}';
         } else {
-          return 'Failed to change the account details: ${response.body} ${response2.body}';
+          return 'Failed to change the account details: ${usernameResponse?.body} ${passwordResponse?.body}';
         }
+      } else if (usernameChanged) {
+        return usernameSuccess ? 'Changed the username successfully' : 'Failed to change the username: ${usernameResponse?.body}';
+      } else {
+        return passwordSuccess ? 'Changed the password successfully' : 'Failed to change the password: ${passwordResponse?.body}';
       }
     } catch (e) {
       return 'Failed to change the account details: $e';
+    }
+  }
+
+  Future<String> deleteAccount() async {
+    try {
+      final url = '$_serverUrl/online/delete_account';
+      final response = await http.get(Uri.parse('$url/user?user=$_username&auth=$_password&new_user=$_newUsername')).timeout(const Duration(seconds: 7));
+
+      if (response.statusCode == 200) {
+        return 'Account deleted successfully';
+      } else {
+        return 'Failed to delete the account: ${response.body}';
+      }
+    } catch (e) {
+      return 'Failed to delete the account: $e';
     }
   }
 
@@ -162,24 +198,48 @@ class _AccountDetailsPageState extends State<AccountDetailsPage> {
                 ),
               )
             ),
-            Padding(
-              padding: EdgeInsetsGeometry.symmetric(vertical: 16),
-              child: ElevatedButton(
-                onPressed: () async {
-                  String result = await applyChanges();
-                  setState(() {
-                    _result = result;
-                    if (result.contains('Changed')) {
-                      _password = _newPassword;
-                      _username = _newUsername;
-                    }
-                  });
-                  if (_result.contains('Failed to change the account details.')) {
-                    showErrorToast(_result, long: true);
-                  }
-                },
-                child: Text('Apply')
-              )
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      String result = await applyChanges();
+                      setState(() {
+                        _result = result;
+                        if (result.contains('Changed')) {
+                          _password = _newPassword;
+                          _username = _newUsername;
+                        }
+                      });
+                      if (_result.contains('Failed to change the account details.')) {
+                        showErrorToast(_result, long: true);
+                      }
+                    },
+                    child: Text('Apply')
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      String resultDeletion = await deleteAccount();
+                      setState(() {
+                        _resultDeletion = resultDeletion;
+                        if (resultDeletion == "Account deleted successfully.") {
+                          _password = '';
+                          _username = '';
+                        }
+                      });
+                      if (_result.contains('Failed')) {
+                        showErrorToast(_resultDeletion, long: true);
+                      }
+                    },
+                    child: Text('Delete the account')
+                  ),
+                ),
+              ],
             ),
             if (_result != '')
               Padding(
@@ -187,6 +247,14 @@ class _AccountDetailsPageState extends State<AccountDetailsPage> {
                 child: Text(
                   _result,
                   style: TextStyle(fontSize: 16, color: (_result.contains('Failed to change the account details.') ? Colors.red : Theme.of(context).colorScheme.onSurface)),
+                ),
+              ),
+            if (_resultDeletion != '')
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                  _resultDeletion,
+                  style: TextStyle(fontSize: 16, color: (_resultDeletion.contains('Failed to delete the account') ? Colors.red : Theme.of(context).colorScheme.onSurface)),
                 ),
               ),
           ],

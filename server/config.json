@@ -9,6 +9,7 @@
   "rate_limit_stats_per_ip": "10/minute",
   "rate_limit_create_per_ip": "10/hour",
   "rate_limit_change_data_per_ip": "5/hour",
+  "rate_limit_delete_user_per_ip": "5/hour",
   "rate_limit_start_per_ip": "5/minute",
   "rate_limit_guess_per_ip": "60/minute",
   "rate_limit_word_per_ip": "5/minute"

@@ -293,6 +293,33 @@ def fn_create_user(user, auth):
         return -1
     return 0
 
+@app.route('/online/delete_account')
+@limiter.limit(utils.read_config('rate_limit_delete_user_per_ip'), key_func=get_remote_address)
+def change_data():
+    user = (request.args.get('user') or '').strip()
+    auth = (request.args.get('auth') or '').strip()
+
+    if not user or not auth:
+        return 'Missing required parameters: user and auth', 400
+
+    existing_user = User.query.filter_by(username=user).first()
+    if not existing_user:
+        return 'User not found', 401
+
+    if not check_password_hash(existing_user.auth, auth):
+        return 'Wrong auth', 403
+
+    db.session.begin_nested()
+    try:
+        User.query.filter_by(username=user).delete(synchronize_session='auto')
+        Game.query.filter_by(username=user).delete(synchronize_session='auto')
+        Stats.query.filter_by(username=user).delete(synchronize_session='auto')
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        return "Failed to delete the account", 400
+    return "Deleted the account successfully", 200
+
 @app.route('/online/change_data/<option>')
 @limiter.limit(utils.read_config('rate_limit_change_data_per_ip'), key_func=get_remote_address)
 def change_data(option):

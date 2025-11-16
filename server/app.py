@@ -295,7 +295,7 @@ def fn_create_user(user, auth):
 
 @app.route('/online/delete_account')
 @limiter.limit(utils.read_config('rate_limit_delete_user_per_ip'), key_func=get_remote_address)
-def change_data():
+def delete_account():
     user = (request.args.get('user') or '').strip()
     auth = (request.args.get('auth') or '').strip()
 

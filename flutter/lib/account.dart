@@ -111,10 +111,10 @@ class _AccountDetailsPageState extends State<AccountDetailsPage> {
   Future<String> deleteAccount() async {
     try {
       final url = '$_serverUrl/online/delete_account';
-      final response = await http.get(Uri.parse('$url/user?user=$_username&auth=$_password&new_user=$_newUsername')).timeout(const Duration(seconds: 7));
+      final response = await http.get(Uri.parse('$url?user=$_username&auth=$_password')).timeout(const Duration(seconds: 7));
 
       if (response.statusCode == 200) {
-        return 'Account deleted successfully';
+        return 'Account deleted successfully.';
       } else {
         return 'Failed to delete the account: ${response.body}';
       }

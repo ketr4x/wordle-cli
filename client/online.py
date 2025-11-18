@@ -33,7 +33,11 @@ def connection():
         print("Connection status:")
         print(f"{"Active" if server_status.status_code == 200 else "Inactive. Check your configuration and connection"}")
         print("Account status:")
-        print(f"{"Online" if account_status.status_code == 200 else "Invalid password" if account_status.status_code == 403 else "Invalid username" if account_status.status_code == 401 else "Server offline"}")
+        print(f"{"Online" if account_status.status_code == 200 
+        else "Invalid password" if account_status.status_code == 403 
+        else "Invalid username" if account_status.status_code == 401 
+        else "Username or password is blank" if account_status.status_code == 400 
+        else "Server offline"}")
         print("Language status:")
         for language, status in language_status.items():
             print(f"{language} - {status}")

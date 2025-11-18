@@ -360,7 +360,7 @@ class _ConnectivityPageState extends State<ConnectivityPage> {
             ),
           ),
           ListTile(
-            title: const Text('Languages'),
+            title: const Text('Ranked Languages'),
             subtitle: FutureBuilder<List<String>>(
               future: getLanguagePacks(true),
               builder: (context, snapshot) {

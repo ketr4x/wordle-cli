@@ -4,23 +4,24 @@ from openai import OpenAI
 import utils
 import requests
 
-# Courtesy of HackClub - do not abuse https://ai.hackclub.com/
+disabled_models = ["google/gemini-2.5-flash-image"]
+
 def start_ai_client(language):
     if not utils.read_config("ai_model"):
         models_raw = requests.get(
-            url="https://ai.hackclub.com/proxy/v1/models",
+            url=f"{utils.read_config("ai_url")}/models",
             headers={"Authorization": f"Bearer {utils.read_config("ai_api_key")}"}
         ).json()["data"]
         models = []
         for model in models_raw:
             models.append(model["id"])
-        models.remove("google/gemini-2.5-flash-image")
+        models.remove(disabled_models)
     else:
         models = []
 
     client = OpenAI(
         api_key=utils.read_config("ai_api_key"),
-        base_url="https://ai.hackclub.com/proxy/v1"
+        base_url=utils.read_config("ai_url")
     )
     response = client.chat.completions.create(
         model=(random.choice(models) if models else "google/gemini-2.5-flash"),
@@ -43,7 +44,7 @@ def check_guess(language, word):
         models = []
         for model in models_raw:
             models.append(model["id"])
-        models.remove("google/gemini-2.5-flash-image")
+        models.remove(disabled_models)
     else:
         models = [utils.read_config("ai_model")]
 
@@ -79,8 +80,9 @@ def game(word, tries, language, letters):
             print("Current guesses:")
             for i in formatted_guesses:
                 print(i)
+            print()
 
-        print(f"\nRemaining guesses: {tries-len(guesses)}")
+        print(f"Remaining guesses: {tries-len(guesses)}")
         print(f"Unused letters: {utils.format_unused_letters(letters)}")
 
         guess = input(f"\nWrite your {utils.ordinal(len(guesses)+1)} guess: ").lower()

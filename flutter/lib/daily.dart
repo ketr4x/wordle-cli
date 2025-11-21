@@ -371,8 +371,8 @@ class _DailyPageState extends State<DailyPage> {
   @override
   Widget build(BuildContext context) {
     return WordleGameView(
-        title: "Daily Wordle",
-        controller: _controller
+      title: "Daily Wordle",
+      controller: _controller
     );
   }
 }

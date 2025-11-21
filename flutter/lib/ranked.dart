@@ -101,23 +101,65 @@ class _WordleGameViewState extends State<WordleGameView> {
                 if (c.errorMessage == 'Language pack invalid.' || c.errorMessage == 'File does not exist.') ...[
                   Builder(
                     builder: (context) {
+                      final capturedError = c.errorMessage;
                       WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (capturedError == null || !context.mounted) return;
+                        c.errorMessage = null;
                         showAdaptiveDialog(
                           context: context,
-                          builder: (context) => AlertDialog(
+                          barrierDismissible: false,
+                          builder: (dialogContext) => AlertDialog(
                             title: const Text('Invalid language pack'),
                             content: Text('The local language pack differs from the server one. Download it or change the server.'),
                             actions: [
                               TextButton(
                                 onPressed: () async {
-                                  Navigator.pop(context);
+                                  Navigator.pop(dialogContext);
                                   Navigator.push(
                                     context,
-                                    MaterialPageRoute(builder: (context) => const ConnectivityPage())).then((_) {
-                                      widget.controller.refresh();
+                                    MaterialPageRoute(builder: (_) => const ConnectivityPage())
+                                  ).then((_) {
+                                    c.refresh();
                                   });
                                 },
                                 child: const Text('Download')
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(),
+                                child: const Text('OK')
+                              )
+                            ],
+                          )
+                        );
+                      });
+                      return const SizedBox.shrink();
+                    }
+                  )
+                ] else if (c.errorMessage == 'Username or password is not correct.') ...[
+                  Builder(
+                    builder: (context) {
+                      final capturedError = c.errorMessage;
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (capturedError == null || !context.mounted) return;
+                        c.errorMessage = null;
+                        showAdaptiveDialog(
+                          context: context,
+                          barrierDismissible: false,
+                          builder: (dialogContext) => AlertDialog(
+                            title: const Text('Invalid account details'),
+                            content: Text('The account details are incorrect. Log in or change the server.'),
+                            actions: [
+                              TextButton(
+                                onPressed: () async {
+                                  Navigator.pop(dialogContext);
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (_) => const ConnectivityPage())
+                                  ).then((_) {
+                                    c.refresh();
+                                  });
+                                },
+                                child: const Text('Settings')
                               ),
                               TextButton(
                                 onPressed: () => Navigator.of(context).pop(),

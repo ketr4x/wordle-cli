@@ -81,10 +81,7 @@ class RankedWordleController extends ChangeNotifier with WidgetsBindingObserver 
     final auth = await getConfig('password');
     final lang = await getConfig('ranked_game_lang') ?? "en";
     final pack = await readOnlineLanguagePack(lang);
-
-    if (kDebugMode) {
-      print('pack: $pack');
-    }
+    printDebugInfo('pack: $pack');
 
     if (serverUrl == null) {
       errorMessage = "Server URL is not set. Change the settings.";

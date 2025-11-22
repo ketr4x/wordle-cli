@@ -13,7 +13,7 @@ class RankedWordleController extends ChangeNotifier with WidgetsBindingObserver 
   List<List<LetterStatus>> formattedGuesses = [];
   String currentGuess = '';
   Map<String, LetterStatus> letterStatuses = {};
-  List<String> keyboardLayout = [];
+  List<List<String>> keyboardRows = [];
   bool gameOver = false;
   String? resultMessage;
   String? errorMessage;
@@ -92,9 +92,14 @@ class RankedWordleController extends ChangeNotifier with WidgetsBindingObserver 
       loading = false;
       notifyListeners();
     } else {
-      if (pack.containsKey('letters')) {
-        final letters = pack['letters'] as List<dynamic>;
-        keyboardLayout = letters.cast<String>();
+      if (pack.containsKey('rows')) {
+        keyboardRows = (pack['rows'] as List<dynamic>? ?? [])
+          .map<List<String>>((row) {
+            if (row is List) {
+              return row.map((e) => e?.toString() ?? '').toList();
+            }
+            return <String>[];
+        }).toList();
         if (await checkLanguagePack(lang, true) == "Local language file correct") {
           try {
             final url = '$serverUrl/online/start?user=$user&auth=$auth&language=$lang';

@@ -63,7 +63,7 @@ class _WordleGameViewState extends State<WordleGameView> {
                   currentGuess: c.currentGuess,
                   answer: c.answer,
                   letterStatuses: c.letterStatuses,
-                  keyboardLayout: c.keyboardLayout,
+                  keyboardRows: c.keyboardRows,
                   onLetterTap: c.gameOver ? (_) {} : c.onLetterTap,
                   onEnterTap: c.gameOver ? () {} : c.onEnterTap,
                   onBackspaceTap: c.gameOver ? () {} : c.onBackspaceTap,

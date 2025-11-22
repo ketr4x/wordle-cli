@@ -103,7 +103,7 @@ Click the gear icon in the app or on the website
 - [**Flutter**] autoupdate all popups
 - [**Flutter**] improve multilanguage support (additional characters)
 - [**Website**] website redesign
-- [**Flutter**] fix checking local lang from assets
+- [**Flutter**] android: fix checking local lang from assets
 - [**Flutter**] web: fix connection on debug builds
 - [**Flutter**] web: fix local language download (connectivity.dart)
 - [**Python**] local language download

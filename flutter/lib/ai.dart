@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'utils.dart';
 
-class RandomWordleController extends ChangeNotifier with WidgetsBindingObserver {
+class AIWordleController extends ChangeNotifier with WidgetsBindingObserver {
   String? answer;
   List<String> guesses = [];
   String currentGuess = '';
@@ -20,7 +20,7 @@ class RandomWordleController extends ChangeNotifier with WidgetsBindingObserver 
   bool shouldTick = false;
   bool isActive = true;
 
-  RandomWordleController() {
+  AIWordleController() {
     ticker = Ticker(_onTick);
     WidgetsBinding.instance.addObserver(this);
     restoreGameState();
@@ -147,8 +147,8 @@ class RandomWordleController extends ChangeNotifier with WidgetsBindingObserver 
       ticker.stop();
       shouldTick = false;
       resultMessage = guesses.last.toLowerCase() == answer!.toLowerCase()
-        ? 'You win!'
-        : 'You lose! Answer: ${answer!}';
+          ? 'You win!'
+          : 'You lose! Answer: ${answer!}';
     }
     notifyListeners();
     saveGameState();
@@ -232,7 +232,7 @@ class RandomWordleController extends ChangeNotifier with WidgetsBindingObserver 
           return row.map((e) => e?.toString() ?? '').toList();
         }
         return <String>[];
-      }).toList();
+    }).toList();
     guesses = savedGuesses;
     currentGuess = savedCurrentGuess ?? '';
     answer = savedAnswer;
@@ -262,7 +262,7 @@ class RandomWordleController extends ChangeNotifier with WidgetsBindingObserver 
 
 class WordleGameView extends StatefulWidget {
   final String title;
-  final RandomWordleController controller;
+  final AIWordleController controller;
 
   const WordleGameView({super.key, required this.title, required this.controller});
 
@@ -347,6 +347,7 @@ class _WordleGameViewState extends State<WordleGameView> {
     );
     return Scaffold(
       appBar: buildAppBar(context, widget.title),
+      drawer: buildDrawer(context),
       body: KeyboardListener(
         focusNode: _focusNode,
         onKeyEvent: c.handleKeyEvent,
@@ -360,19 +361,19 @@ class _WordleGameViewState extends State<WordleGameView> {
   }
 }
 
-class RandomPage extends StatefulWidget {
-  const RandomPage({super.key});
+class AIPage extends StatefulWidget {
+  const AIPage({super.key});
 
   @override
-  State<RandomPage> createState() => _RandomPageState();
+  State<AIPage> createState() => _AIPageState();
 }
 
-class _RandomPageState extends State<RandomPage> {
-  late final RandomWordleController _controller;
+class _AIPageState extends State<AIPage> {
+  late final AIWordleController _controller;
   @override
   void initState() {
     super.initState();
-    _controller = RandomWordleController();
+    _controller = AIWordleController();
   }
 
   @override
@@ -384,8 +385,8 @@ class _RandomPageState extends State<RandomPage> {
   @override
   Widget build(BuildContext context) {
     return WordleGameView(
-      title: "Random Wordle",
-      controller: _controller
+        title: "AI Wordle",
+        controller: _controller
     );
   }
 }

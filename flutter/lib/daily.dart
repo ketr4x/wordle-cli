@@ -10,7 +10,7 @@ class DailyWordleController extends ChangeNotifier with WidgetsBindingObserver {
   List<String> guesses = [];
   String currentGuess = '';
   Map<String, LetterStatus> letterStatuses = {};
-  List<String> keyboardLayout = [];
+  List<List<String>> keyboardRows = [];
   bool gameOver = false;
   String? resultMessage;
   String? errorMessage;
@@ -52,11 +52,16 @@ class DailyWordleController extends ChangeNotifier with WidgetsBindingObserver {
   Future<void> initializeGame() async {
     final lang = await getConfig("game_lang") ?? "en";
     final pack = await readLanguagePack(lang);
-    final letters = pack['letters'] as List<dynamic>;
     final answerWord = await getRandomAnswer(daily: true);
 
+    keyboardRows = (pack['rows'] as List<dynamic>? ?? [])
+      .map<List<String>>((row) {
+        if (row is List) {
+          return row.map((e) => e?.toString() ?? '').toList();
+        }
+        return <String>[];
+    }).toList();
     answer = answerWord;
-    keyboardLayout = letters.cast<String>();
     guesses.clear();
     currentGuess = '';
     letterStatuses.clear();
@@ -221,12 +226,17 @@ class DailyWordleController extends ChangeNotifier with WidgetsBindingObserver {
 
     final lang = await getConfig("game_lang") ?? "en";
     final pack = await readLanguagePack(lang);
-    final letters = pack['letters'] as List<dynamic>;
 
+    keyboardRows = (pack['rows'] as List<dynamic>? ?? [])
+      .map<List<String>>((row) {
+        if (row is List) {
+          return row.map((e) => e?.toString() ?? '').toList();
+        }
+        return <String>[];
+    }).toList();
     guesses = savedGuesses;
     currentGuess = savedCurrentGuess ?? '';
     answer = savedAnswer;
-    keyboardLayout = letters.cast<String>();
     gameOver = savedGameOver ?? false;
     resultMessage = (savedResultMessage?.isEmpty ?? true) ? null : savedResultMessage;
     errorMessage = null;
@@ -293,6 +303,7 @@ class _WordleGameViewState extends State<WordleGameView> {
     final c = widget.controller;
     return Scaffold(
       appBar: buildAppBar(context, widget.title),
+      drawer: buildDrawer(context),
       body: KeyboardListener(
         focusNode: _focusNode,
         onKeyEvent: c.handleKeyEvent,
@@ -308,7 +319,7 @@ class _WordleGameViewState extends State<WordleGameView> {
                   currentGuess: c.currentGuess,
                   answer: c.answer,
                   letterStatuses: c.letterStatuses,
-                  keyboardLayout: c.keyboardLayout,
+                  keyboardRows: c.keyboardRows,
                   onLetterTap: c.gameOver ? (_) {} : c.onLetterTap,
                   onEnterTap: c.gameOver ? () {} : c.onEnterTap,
                   onBackspaceTap: c.gameOver ? () {} : c.onBackspaceTap,

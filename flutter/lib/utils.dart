@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'ai.dart';
 import 'daily.dart';
 import 'leaderboard.dart';
 import 'random.dart';
@@ -19,6 +20,7 @@ import 'statistics.dart';
 import 'connectivity.dart';
 import 'package:crypto/crypto.dart';
 import 'storage.dart';
+
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 enum GameMode { random, daily, ranked }
@@ -762,11 +764,38 @@ AppBar buildAppBar(BuildContext context, String title) {
   );
 }
 
+Drawer buildDrawer(
+  BuildContext context
+) {
+  return Drawer(
+    child: ListView(
+      children: [
+        DrawerHeader(
+          decoration: BoxDecoration(color: Theme.of(context).colorScheme.inversePrimary),
+          child: const Text('Modes')
+        ),
+        ListTile(
+          title: const Text("Daily"),
+          onTap: () {
+            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const DailyPage()));
+          },
+        ),
+        ListTile(
+          title: const Text("AI"),
+          onTap: () {
+            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const AIPage()));
+          },
+        )
+      ],
+    )
+  );
+}
+
 BottomNavigationBar buildBottomNavigationBar(
-    BuildContext context, {
-      required int currentIndex,
-    }
-    ) {
+  BuildContext context, {
+    required int currentIndex,
+  }
+) {
   return BottomNavigationBar(
     type: BottomNavigationBarType.fixed,
     currentIndex: currentIndex,
@@ -803,8 +832,8 @@ BottomNavigationBar buildBottomNavigationBar(
         label: 'Random',
       ),
       BottomNavigationBarItem(
-        icon: Icon(Icons.calendar_today),
-        label: 'Daily',
+        icon: Icon(Icons.gamepad),
+        label: 'Modes',
       ),
       BottomNavigationBarItem(
         icon: Icon(Icons.star),
@@ -897,7 +926,7 @@ class WordleKeyboard extends StatelessWidget {
   final Function(String) onLetterTap;
   final VoidCallback onEnterTap;
   final VoidCallback onBackspaceTap;
-  final List<String> keyboardLayout;
+  final List<List<String>> keyboardRows;
 
   const WordleKeyboard({
     super.key,
@@ -905,7 +934,7 @@ class WordleKeyboard extends StatelessWidget {
     required this.onLetterTap,
     required this.onEnterTap,
     required this.onBackspaceTap,
-    required this.keyboardLayout,
+    required this.keyboardRows,
   });
 
   Color _getKeyColor(String letter, BuildContext context) {
@@ -972,15 +1001,9 @@ class WordleKeyboard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (keyboardLayout.length < 26) {
+    if (keyboardRows.isEmpty) {
       return Container();
     }
-
-    final List<List<String>> rows = [
-      keyboardLayout.sublist(0, 10),
-      keyboardLayout.sublist(10, 19),
-      ['ENTER', ...keyboardLayout.sublist(19, 26), 'BACKSPACE'],
-    ];
 
     return Align(
       alignment: Alignment.center,
@@ -991,7 +1014,7 @@ class WordleKeyboard extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(8),
           child: Column(
-            children: rows.map((row) =>
+            children: keyboardRows.map((row) =>
               Row(
                 children: row.map((key) => _buildKey(key, context)).toList(),
               )
@@ -1008,7 +1031,7 @@ Widget buildGame({
   required String currentGuess,
   String? answer,
   required Map<String, LetterStatus> letterStatuses,
-  required List<String> keyboardLayout,
+  required List<List<String>> keyboardRows,
   required Function(String) onLetterTap,
   required VoidCallback onEnterTap,
   required VoidCallback onBackspaceTap,
@@ -1085,7 +1108,7 @@ Widget buildGame({
           if (!gameOver)
             WordleKeyboard(
               letterStatuses: letterStatuses,
-              keyboardLayout: keyboardLayout,
+              keyboardRows: keyboardRows,
               onLetterTap: onLetterTap,
               onEnterTap: onEnterTap,
               onBackspaceTap: onBackspaceTap,

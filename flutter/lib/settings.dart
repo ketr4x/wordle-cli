@@ -19,11 +19,13 @@ class _SettingsPageState extends State<SettingsPage> {
   String _serverUrl = '';
   String _wordleLanguage = '';
   String _rankedLanguage = '';
+  String _AILanguage = '';
   PackageInfo? packageInfo;
   final FocusNode _serverUrlFocusNode = FocusNode();
   late TextEditingController _serverUrlController;
   late TextEditingController _usernameController;
   late TextEditingController _passwordController;
+  late TextEditingController _AILanguageController;
 
   @override
   void initState() {
@@ -31,9 +33,11 @@ class _SettingsPageState extends State<SettingsPage> {
     _serverUrlController = TextEditingController();
     _usernameController = TextEditingController();
     _passwordController = TextEditingController();
+    _AILanguageController = TextEditingController();
     _loadUsername();
     _loadPassword();
     _loadServerUrl();
+    _loadAILanguage();
     _loadPackageInfo();
     _serverUrlFocusNode.addListener(_onServerUrlFocusChange);
   }
@@ -44,6 +48,7 @@ class _SettingsPageState extends State<SettingsPage> {
     _serverUrlController.dispose();
     _usernameController.dispose();
     _passwordController.dispose();
+    _AILanguageController.dispose();
     super.dispose();
   }
 
@@ -97,6 +102,14 @@ class _SettingsPageState extends State<SettingsPage> {
     setState(() {
       _serverUrl = serverUrl ?? '';
       _serverUrlController.text = _serverUrl;
+    });
+  }
+
+  Future<void> _loadAILanguage() async {
+    final AILanguage = await getConfig("ai_game_lang");
+    setState(() {
+      _AILanguage = AILanguage ?? '';
+      _AILanguageController.text = _AILanguage;
     });
   }
 
@@ -292,6 +305,21 @@ class _SettingsPageState extends State<SettingsPage> {
                     );
                   }
                 )
+              )
+            ),
+            ListTile(
+              title: const Text('AI Language'),
+              trailing: SizedBox(
+                width: 200,
+                child: TextField(
+                  controller: _AILanguageController,
+                  decoration: InputDecoration(
+                    hintText: _AILanguage.isNotEmpty ? _AILanguage : 'like English or en',
+                  ),
+                  onChanged: (value) {
+                    _AILanguage = value;
+                  }
+                ),
               )
             ),
             ListTile(

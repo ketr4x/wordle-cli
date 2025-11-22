@@ -101,7 +101,6 @@ Click the gear icon in the app or on the website
 - [**Flutter**] fix loading the offline languages rootBundle list (settings.dart, connectivity.dart)
 - [**Flutter**] ai mode
 - [**Flutter**] autoupdate all popups
-- [**Flutter**] improve multilanguage support (additional characters)
 - [**Website**] website redesign
 - [**Flutter**] android: fix checking local lang from assets
 - [**Flutter**] web: fix connection on debug builds
@@ -111,6 +110,7 @@ Click the gear icon in the app or on the website
 - [**Python**] implement ratelimiter
 - Fix release info
 - Locales
+- Submit package to PyPi
 - Python, Windows releases
 - Icon
 

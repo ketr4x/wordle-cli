@@ -15,6 +15,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
       - name: Run data migration
         run: python data_migrate.py
       - name: Set up git
@@ -23,6 +26,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
       - name: Commit and push changes
         run: |
+          git pull --rebase origin master || true
           git add flutter/assets/*.json
           git commit -m "Update assets from data migration" || echo "No changes to commit"
-          git push
+          git push origin HEAD:master

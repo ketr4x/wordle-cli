@@ -22,6 +22,7 @@ dependencies:
   crypto: ^3.0.2
   universal_html: ^2.0.8
   path: ^1.9.1
+  dart_openai: ^6.1.1
 
 dev_dependencies:
   flutter_test:

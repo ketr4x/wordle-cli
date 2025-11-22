@@ -1,9 +1,11 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'utils.dart';
+import 'package:dart_openai/dart_openai.dart';
 
 class AIWordleController extends ChangeNotifier with WidgetsBindingObserver {
   String? answer;
@@ -49,18 +51,62 @@ class AIWordleController extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   Future<void> initializeGame() async {
-    final lang = await getConfig("game_lang") ?? "en";
-    final pack = await readLanguagePack(lang);
-    final answerWord = await getRandomAnswer(daily: false);
+    final lang = await getConfig("ai_game_lang") ?? "English";
 
-    keyboardRows = (pack['rows'] as List<dynamic>? ?? [])
+    OpenAI.baseUrl = await getConfig("ai_api_url") ?? OpenAI.baseUrl;
+    final apiKey = await getConfig("ai_api_key");
+    if (apiKey!.isEmpty) {
+      errorMessage = 'Please set up the API key';
+      showErrorToast('Please set up the API key');
+      isActive = false;
+      notifyListeners();
+    }
+    OpenAI.apiKey = apiKey;
+    final model = await getConfig("ai_api_model");
+    if (model!.isEmpty) {
+      errorMessage = 'Please choose the AI model';
+      showErrorToast('Please choose the AI model');
+      isActive = false;
+      notifyListeners();
+    }
+
+    final aiRequest = await OpenAI.instance.chat.create(
+      model: model,
+      messages: [
+        OpenAIChatCompletionChoiceMessageModel(
+          role: OpenAIChatMessageRole.system,
+          content: [
+            OpenAIChatCompletionChoiceMessageContentItemModel.text(
+              'You are a wordle game provider.'
+            )
+          ]
+        ),
+        OpenAIChatCompletionChoiceMessageModel(
+          role: OpenAIChatMessageRole.user,
+          content: [
+            OpenAIChatCompletionChoiceMessageContentItemModel.text(
+              '''
+              Provide a single 5-character $lang word suitable as an answer for a Wordle-style game.
+              Provide a row list for keyboard for $lang language.
+              Reply with a JSON object only, no extra text. Example format for English:
+              {"word":"apple","rows":[["Q","W","E","R","T","Y","U","I","O","P"],["A","S","D","F","G","H","J","K","L"],["ENTER","Z","X","C","V","B","N","M","BACKSPACE"]]}
+              Return the JSON object exactly as shown (word in lowercase).
+              '''
+            )
+          ]
+        )
+      ],
+    );
+
+    final aiRequestDecoded = jsonDecode(aiRequest.choices[0].message.content as String);
+    keyboardRows = (aiRequestDecoded['rows'] as List<dynamic>? ?? [])
       .map<List<String>>((row) {
         if (row is List) {
           return row.map((e) => e?.toString() ?? '').toList();
         }
         return <String>[];
     }).toList();
-    answer = answerWord;
+    answer = aiRequestDecoded['word'] as String;
     guesses.clear();
     currentGuess = '';
     letterStatuses.clear();
@@ -197,36 +243,35 @@ class AIWordleController extends ChangeNotifier with WidgetsBindingObserver {
 
   Future<void> saveGameState() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList('random_guesses', guesses);
-    await prefs.setString('random_currentGuess', currentGuess);
-    if (answer != null) await prefs.setString('random_answer', answer!);
-    await prefs.setInt('random_elapsed', elapsed.inSeconds);
+    await prefs.setStringList('ai_guesses', guesses);
+    await prefs.setString('ai_currentGuess', currentGuess);
+    if (answer != null) await prefs.setString('ai_answer', answer!);
+    await prefs.setInt('ai_elapsed', elapsed.inSeconds);
     if (startTime != null) {
-      await prefs.setInt('random_startTime', startTime!.millisecondsSinceEpoch);
+      await prefs.setInt('ai_startTime', startTime!.millisecondsSinceEpoch);
     }
-    await prefs.setBool('random_gameOver', gameOver);
-    await prefs.setString('random_resultMessage', resultMessage ?? '');
+    await prefs.setBool('ai_gameOver', gameOver);
+    await prefs.setString('ai_resultMessage', resultMessage ?? '');
+    await prefs.setString('ai_rows', jsonEncode(keyboardRows));
   }
 
   Future<void> restoreGameState() async {
     final prefs = await SharedPreferences.getInstance();
-    final savedGuesses = prefs.getStringList('random_guesses');
-    final savedCurrentGuess = prefs.getString('random_currentGuess');
-    final savedAnswer = prefs.getString('random_answer');
-    final savedElapsed = prefs.getInt('random_elapsed');
-    final savedStartTime = prefs.getInt('random_startTime');
-    final savedGameOver = prefs.getBool('random_gameOver');
-    final savedResultMessage = prefs.getString('random_resultMessage');
+    final savedGuesses = prefs.getStringList('ai_guesses');
+    final savedCurrentGuess = prefs.getString('ai_currentGuess');
+    final savedAnswer = prefs.getString('ai_answer');
+    final savedElapsed = prefs.getInt('ai_elapsed');
+    final savedStartTime = prefs.getInt('ai_startTime');
+    final savedGameOver = prefs.getBool('ai_gameOver');
+    final savedResultMessage = prefs.getString('ai_resultMessage');
+    final savedRows = jsonDecode(prefs.getString('ai_rows')!);
 
     if (savedGuesses == null || savedAnswer == null) {
       await initializeGame();
       return;
     }
 
-    final lang = await getConfig("game_lang") ?? "en";
-    final pack = await readLanguagePack(lang);
-
-    keyboardRows = (pack['rows'] as List<dynamic>? ?? [])
+    keyboardRows = (savedRows as List<dynamic>? ?? [])
       .map<List<String>>((row) {
         if (row is List) {
           return row.map((e) => e?.toString() ?? '').toList();
@@ -355,7 +400,7 @@ class _WordleGameViewState extends State<WordleGameView> {
       ),
       bottomNavigationBar: buildBottomNavigationBar(
         context,
-        currentIndex: 0,
+        currentIndex: 1,
       ),
     );
   }

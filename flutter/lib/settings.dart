@@ -19,13 +19,19 @@ class _SettingsPageState extends State<SettingsPage> {
   String _serverUrl = '';
   String _wordleLanguage = '';
   String _rankedLanguage = '';
-  String _AILanguage = '';
+  String _aiLanguage = '';
+  String _aiApiUrl = '';
+  String _aiApiKey = '';
+  String _aiApiModel = '';
   PackageInfo? packageInfo;
   final FocusNode _serverUrlFocusNode = FocusNode();
   late TextEditingController _serverUrlController;
   late TextEditingController _usernameController;
   late TextEditingController _passwordController;
-  late TextEditingController _AILanguageController;
+  late TextEditingController _aiLanguageController;
+  late TextEditingController _aiApiUrlController;
+  late TextEditingController _aiApiKeyController;
+  late TextEditingController _aiApiModelController;
 
   @override
   void initState() {
@@ -33,11 +39,17 @@ class _SettingsPageState extends State<SettingsPage> {
     _serverUrlController = TextEditingController();
     _usernameController = TextEditingController();
     _passwordController = TextEditingController();
-    _AILanguageController = TextEditingController();
+    _aiLanguageController = TextEditingController();
+    _aiApiUrlController = TextEditingController();
+    _aiApiKeyController = TextEditingController();
+    _aiApiModelController = TextEditingController();
     _loadUsername();
     _loadPassword();
     _loadServerUrl();
     _loadAILanguage();
+    _loadAIApiUrl();
+    _loadAIApiKey();
+    _loadAIApiModel();
     _loadPackageInfo();
     _serverUrlFocusNode.addListener(_onServerUrlFocusChange);
   }
@@ -48,7 +60,9 @@ class _SettingsPageState extends State<SettingsPage> {
     _serverUrlController.dispose();
     _usernameController.dispose();
     _passwordController.dispose();
-    _AILanguageController.dispose();
+    _aiLanguageController.dispose();
+    _aiApiUrlController.dispose();
+    _aiApiModelController.dispose();
     super.dispose();
   }
 
@@ -106,11 +120,44 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> _loadAILanguage() async {
-    final AILanguage = await getConfig("ai_game_lang");
+    final aiLanguage = await getConfig("ai_game_lang");
     setState(() {
-      _AILanguage = AILanguage ?? '';
-      _AILanguageController.text = _AILanguage;
+      _aiLanguage = aiLanguage ?? '';
+      _aiLanguageController.text = _aiLanguage;
     });
+  }
+
+  Future<void> _loadAIApiUrl() async {
+    final aiApiUrl = await getConfig("ai_api_url");
+    setState(() {
+      _aiApiUrl = aiApiUrl ?? '';
+      _aiApiUrlController.text = _aiApiUrl;
+    });
+  }
+
+  Future<void> _loadAIApiKey() async {
+    final aiApiKey = await getConfig("ai_api_key");
+    setState(() {
+      _aiApiKey = aiApiKey ?? '';
+      _aiApiKeyController.text = _aiApiKey;
+    });
+  }
+
+  Future<void> _loadAIApiModel() async {
+    final aiApiModel = await getConfig("ai_api_model");
+    setState(() {
+      _aiApiModel = aiApiModel ?? '';
+      _aiApiModelController.text = _aiApiModel;
+    });
+  }
+
+  String maskKey(String key) {
+    if (key.isEmpty) return '';
+    if (key.length <= 8) return List.filled(key.length, '*').join();
+    final first = key.substring(0, 4);
+    final last = key.substring(key.length - 4);
+    final middle = List.filled(key.length - 8, '*').join();
+    return '$first$middle$last';
   }
 
   @override
@@ -312,12 +359,62 @@ class _SettingsPageState extends State<SettingsPage> {
               trailing: SizedBox(
                 width: 200,
                 child: TextField(
-                  controller: _AILanguageController,
+                  controller: _aiLanguageController,
                   decoration: InputDecoration(
-                    hintText: _AILanguage.isNotEmpty ? _AILanguage : 'like English or en',
+                    hintText: _aiLanguage.isNotEmpty ? _aiLanguage : 'like English or en',
                   ),
-                  onChanged: (value) {
-                    _AILanguage = value;
+                  onChanged: (value) async {
+                    _aiLanguage = value;
+                    await setConfig('ai_game_lang', value);
+                  }
+                ),
+              )
+            ),
+            ListTile(
+              title: const Text('AI API URL'),
+              subtitle: const Text('Leave blank for the OpenAI API'),
+              trailing: SizedBox(
+                width: 200,
+                child: TextField(
+                  controller: _aiApiUrlController,
+                  decoration: InputDecoration(
+                    hintText: _aiApiUrl.isNotEmpty ? _aiApiUrl : 'like https://ai.hackclub.com/proxy/v1',
+                  ),
+                  onChanged: (value) async {
+                    _aiApiUrl = value;
+                    await setConfig('ai_api_url', value);
+                  }
+                ),
+              )
+            ),
+            ListTile(
+              title: const Text('AI API key'),
+              trailing: SizedBox(
+                width: 200,
+                child: TextField(
+                  controller: _aiApiKeyController,
+                  decoration: InputDecoration(
+                    hintText: _aiApiKey.isNotEmpty ? maskKey(_aiApiKey) : '',
+                  ),
+                  onChanged: (value) async {
+                    _aiApiKey = value;
+                    await setConfig('ai_api_key', value);
+                  }
+                ),
+              )
+            ),
+            ListTile(
+              title: const Text('AI model'),
+              trailing: SizedBox(
+                width: 200,
+                child: TextField(
+                  controller: _aiApiModelController,
+                  decoration: InputDecoration(
+                    hintText: _aiApiModel.isNotEmpty ? _aiApiModel : 'like google/gemini-2.5-flash',
+                  ),
+                  onChanged: (value) async {
+                    _aiApiKey = value;
+                    await setConfig('ai_api_model', value);
                   }
                 ),
               )

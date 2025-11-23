@@ -99,7 +99,6 @@ Click the gear icon in the app or on the website
 - [**Flutter**] timer fix
 - [**Flutter**] add create account popup when it isn't set
 - [**Flutter**] fix loading the offline languages rootBundle list (settings.dart, connectivity.dart)
-- [**Flutter**] ai mode
 - [**Flutter**] autoupdate all popups
 - [**Website**] website redesign
 - [**Flutter**] android: fix checking local lang from assets

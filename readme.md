@@ -67,8 +67,8 @@ Open `client/config.json` or use the configuration editor
 - `username` — username
 - `password` — password
 - `language` — wordle language
-- `ai_url` — AI API URL (default: `https://ai.hackclub.com/proxy/v1`)
-- `ai_api_key` — API key for the AI game mode
+- `ai_url` — AI API URL (default: `https://ai.hackclub.com/proxy/v1`) (OpenAI-compliant)
+- `ai_api_key` — API key (OpenAI-compliant)
 - `ai_model` (optional) — specify an LLM, i.e. `google/gemini-2.5-flash`
 
 ### Flutter version
@@ -78,6 +78,10 @@ Click the gear icon in the app or on the website
 - Server URL — server URL for ranked
 - Wordle language — language of the words
 - Ranked language — language of the words in ranked
+- AI Language — language of the words in ranked
+- AI API URL — address of the AI server (OpenAI-compliant)
+- AI API key — authorization key (OpenAI-compliant)
+- AI model (optional) — specify an LLM, i.e. `google/gemini-2.5-flash`
 
 ### Server
 - `base_elo` — ELO that the users start with (default: `1000`)

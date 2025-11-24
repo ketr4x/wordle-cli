@@ -38,7 +38,7 @@ def start_ai_client(language):
 def check_guess(language, word):
     if not utils.read_config("ai_model"):
         models_raw = requests.get(
-            url="https://ai.hackclub.com/proxy/v1/models",
+            url=f"{utils.read_config("ai_url")}/models",
             headers={"Authorization": f"Bearer {utils.read_config("ai_api_key")}"}
         ).json()["data"]
         models = []
@@ -50,7 +50,7 @@ def check_guess(language, word):
 
     client = OpenAI(
         api_key=utils.read_config("ai_api_key"),
-        base_url="https://ai.hackclub.com/proxy/v1"
+        base_url=utils.read_config("ai_url")
     )
     response = client.chat.completions.create(
         model=(random.choice(models) if models else "google/gemini-2.5-flash"),

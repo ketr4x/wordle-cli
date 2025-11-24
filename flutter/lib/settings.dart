@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -5,7 +6,7 @@ import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:wordle/utils.dart';
 import 'package:provider/provider.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:dart_openai/dart_openai.dart';
+import 'package:http/http.dart' as http;
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -34,6 +35,15 @@ class _SettingsPageState extends State<SettingsPage> {
   late TextEditingController _aiApiKeyController;
   late TextEditingController _aiApiModelController;
   late Future<List<String>> _aiModelsFuture;
+
+  static const excluded = [
+    'google/gemini-2.5-flash-image',
+    'whisper',
+    'tts',
+    'dall-e',
+    'embedding',
+    'moderation',
+  ];
 
   @override
   void initState() {
@@ -170,9 +180,6 @@ class _SettingsPageState extends State<SettingsPage> {
     final resolvedApiUrl = (storedApiUrl?.trim().isNotEmpty ?? false)
       ? storedApiUrl!.trim()
       : _aiApiUrlController.text.trim();
-    if (resolvedApiUrl.isNotEmpty) {
-      OpenAI.baseUrl = resolvedApiUrl;
-    }
 
     final storedKey = await getConfig('ai_api_key');
     final apiKey = (storedKey?.trim().isNotEmpty ?? false)
@@ -182,13 +189,22 @@ class _SettingsPageState extends State<SettingsPage> {
       return [];
     }
 
-    OpenAI.apiKey = apiKey;
-    final models = await OpenAI.instance.model.list();
-    const excluded = ["google/gemini-2.5-flash-image", 'whisper', 'tts', 'dall-e', 'embedding', 'moderation'];
-    return models
-        .map((model) => model.id)
-        .where((id) => excluded.any((term) => id.toLowerCase().contains(term.toLowerCase())))
-        .toList();
+    try {
+      final response = await http.get(Uri.parse('$resolvedApiUrl/v1/models')).timeout(const Duration(seconds: 7));
+      List<String> models = [];
+      if (response.statusCode == 200) {
+        final modelsRaw = jsonDecode(response.body)["data"];
+        for (final model in modelsRaw) {
+          if (!excluded.contains(model["id"])) models.add(model["id"]);
+        }
+      }
+      printDebugInfo('Loaded ${models.length} models');
+      return models;
+    } catch (error, stack) {
+      printDebugInfo('Failed to load AI models: $error');
+      debugPrintStack(stackTrace: stack);
+      return [];
+    }
   }
 
 
@@ -444,7 +460,7 @@ class _SettingsPageState extends State<SettingsPage> {
               )
             ),
             ListTile(
-              title: const Text('AI Model'),
+              title: const Text('AI model'),
               trailing: SizedBox(
                 width: 200,
                 child: FutureBuilder<List<Object?>>(
@@ -480,6 +496,8 @@ class _SettingsPageState extends State<SettingsPage> {
                     printDebugInfo('$models, $saved, $selected');
 
                     return DropdownButtonFormField<String>(
+                      isExpanded: true,
+                      isDense: true,
                       iconDisabledColor: Theme.of(context).colorScheme.onSurface,
                       initialValue: selected,
                       decoration: const InputDecoration(isDense: true, contentPadding: EdgeInsetsGeometry.symmetric(vertical: 8)),

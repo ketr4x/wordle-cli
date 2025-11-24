@@ -2,7 +2,7 @@
   "branch": "master",
   "update_url": "https://raw.githubusercontent.com/ketr4x/wordle-cli/master/data.json",
   "repo": "https://github.com/ketr4x/wordle-cli.git",
-  "version": "1.2.12",
+  "version": "1.2.13",
   "python_version": "1.2.2",
   "release_notes": "feat: add AI settings entries (kinda broken atm)",
   "python_release_notes": "Added account deletion feature",

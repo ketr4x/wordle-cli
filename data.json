@@ -4,8 +4,8 @@
   "repo": "https://github.com/ketr4x/wordle-cli.git",
   "version": "1.3.0",
   "python_version": "1.2.2",
-  "release_notes": "fix: fix the AI model dropdown by calling the API directly",
+  "release_notes": "feat: add word validation check and loading state for AI game mode",
   "python_release_notes": "Added account deletion feature",
-  "published_at": "2025-11-24T18:28:21Z",
+  "published_at": "2025-11-24T19:08:30Z",
   "python_published_at": "2025-10-30T19:00:00Z"
 }

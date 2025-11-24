@@ -97,7 +97,6 @@ Click the gear icon in the app or on the website
 
 ## Planned updates
 - [**Flutter**] timer fix
-- [**Flutter**] add create account popup when it isn't set
 - [**Flutter**] fix loading the offline languages rootBundle list (settings.dart, connectivity.dart)
 - [**Flutter**] autoupdate all popups
 - [**Website**] website redesign

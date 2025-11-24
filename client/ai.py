@@ -4,7 +4,7 @@ from openai import OpenAI
 import utils
 import requests
 
-disabled_models = ["google/gemini-2.5-flash-image"]
+disabled_models = ["google/gemini-2.5-flash-image", 'whisper', 'tts', 'dall-e', 'embedding', 'moderation']
 
 def start_ai_client(language):
     if not utils.read_config("ai_model"):
@@ -15,7 +15,7 @@ def start_ai_client(language):
         models = []
         for model in models_raw:
             models.append(model["id"])
-        models.remove(disabled_models)
+        models = [model for model in models if model not in disabled_models]
     else:
         models = []
 
@@ -44,7 +44,7 @@ def check_guess(language, word):
         models = []
         for model in models_raw:
             models.append(model["id"])
-        models.remove(disabled_models)
+        models = [model for model in models if model not in disabled_models]
     else:
         models = [utils.read_config("ai_model")]
 

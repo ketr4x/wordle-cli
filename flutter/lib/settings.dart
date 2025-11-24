@@ -5,6 +5,7 @@ import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:wordle/utils.dart';
 import 'package:provider/provider.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:dart_openai/dart_openai.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -32,6 +33,7 @@ class _SettingsPageState extends State<SettingsPage> {
   late TextEditingController _aiApiUrlController;
   late TextEditingController _aiApiKeyController;
   late TextEditingController _aiApiModelController;
+  late Future<List<String>> _aiModelsFuture;
 
   @override
   void initState() {
@@ -43,6 +45,7 @@ class _SettingsPageState extends State<SettingsPage> {
     _aiApiUrlController = TextEditingController();
     _aiApiKeyController = TextEditingController();
     _aiApiModelController = TextEditingController();
+    _aiModelsFuture = getAIModels();
     _loadUsername();
     _loadPassword();
     _loadServerUrl();
@@ -132,6 +135,7 @@ class _SettingsPageState extends State<SettingsPage> {
     setState(() {
       _aiApiUrl = aiApiUrl ?? '';
       _aiApiUrlController.text = _aiApiUrl;
+      _aiModelsFuture = getAIModels();
     });
   }
 
@@ -140,6 +144,7 @@ class _SettingsPageState extends State<SettingsPage> {
     setState(() {
       _aiApiKey = aiApiKey ?? '';
       _aiApiKeyController.text = _aiApiKey;
+      _aiModelsFuture = getAIModels();
     });
   }
 
@@ -159,6 +164,33 @@ class _SettingsPageState extends State<SettingsPage> {
     final middle = List.filled(key.length - 8, '*').join();
     return '$first$middle$last';
   }
+
+  Future<List<String>> getAIModels() async {
+    final storedApiUrl = await getConfig('ai_api_url');
+    final resolvedApiUrl = (storedApiUrl?.trim().isNotEmpty ?? false)
+      ? storedApiUrl!.trim()
+      : _aiApiUrlController.text.trim();
+    if (resolvedApiUrl.isNotEmpty) {
+      OpenAI.baseUrl = resolvedApiUrl;
+    }
+
+    final storedKey = await getConfig('ai_api_key');
+    final apiKey = (storedKey?.trim().isNotEmpty ?? false)
+      ? storedKey!.trim()
+      : _aiApiKeyController.text.trim();
+    if (apiKey.isEmpty) {
+      return [];
+    }
+
+    OpenAI.apiKey = apiKey;
+    final models = await OpenAI.instance.model.list();
+    const excluded = ["google/gemini-2.5-flash-image", 'whisper', 'tts', 'dall-e', 'embedding', 'moderation'];
+    return models
+        .map((model) => model.id)
+        .where((id) => excluded.any((term) => id.toLowerCase().contains(term.toLowerCase())))
+        .toList();
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -280,6 +312,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     printDebugInfo('$languages, $saved, $selected');
         
                     return DropdownButtonFormField<String>(
+                      iconDisabledColor: Theme.of(context).colorScheme.onSurface,
                       initialValue: selected,
                       decoration: const InputDecoration(isDense: true, contentPadding: EdgeInsetsGeometry.symmetric(vertical: 8)),
                       items: languages.map((lang) => DropdownMenuItem(
@@ -336,6 +369,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     printDebugInfo('$languages, $saved, $selected');
         
                     return DropdownButtonFormField<String>(
+                      iconDisabledColor: Theme.of(context).colorScheme.onSurface,
                       initialValue: selected,
                       decoration: const InputDecoration(isDense: true, contentPadding: EdgeInsetsGeometry.symmetric(vertical: 8)),
                       items: languages.map((lang) => DropdownMenuItem(
@@ -378,10 +412,13 @@ class _SettingsPageState extends State<SettingsPage> {
                 child: TextField(
                   controller: _aiApiUrlController,
                   decoration: InputDecoration(
-                    hintText: _aiApiUrl.isNotEmpty ? _aiApiUrl : 'like https://ai.hackclub.com/proxy/v1',
+                    hintText: _aiApiUrl.isNotEmpty ? _aiApiUrl : 'like https://ai.hackclub.com/proxy',
                   ),
                   onChanged: (value) async {
-                    _aiApiUrl = value;
+                    setState(() {
+                      _aiApiUrl = value;
+                      _aiModelsFuture = getAIModels();
+                    });
                     await setConfig('ai_api_url', value);
                   }
                 ),
@@ -397,26 +434,69 @@ class _SettingsPageState extends State<SettingsPage> {
                     hintText: _aiApiKey.isNotEmpty ? maskKey(_aiApiKey) : '',
                   ),
                   onChanged: (value) async {
-                    _aiApiKey = value;
+                    setState(() {
+                      _aiApiKey = value;
+                      _aiModelsFuture = getAIModels();
+                    });
                     await setConfig('ai_api_key', value);
                   }
                 ),
               )
             ),
             ListTile(
-              title: const Text('AI model'),
+              title: const Text('AI Model'),
               trailing: SizedBox(
                 width: 200,
-                child: TextField(
-                  controller: _aiApiModelController,
-                  decoration: InputDecoration(
-                    hintText: _aiApiModel.isNotEmpty ? _aiApiModel : 'like google/gemini-2.5-flash',
-                  ),
-                  onChanged: (value) async {
-                    _aiApiKey = value;
-                    await setConfig('ai_api_model', value);
+                child: FutureBuilder<List<Object?>>(
+                  future: Future.wait([_aiModelsFuture, getConfig('ai_api_model')]),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState != ConnectionState.done) {
+                      return Container(
+                        alignment: AlignmentGeometry.centerRight,
+                        child: const SizedBox(
+                          height: 36,
+                          width: 36,
+                          child: Center(
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
+                      );
+                    }
+                    final data = snapshot.data ?? [];
+                    final models = (data.isNotEmpty && data[0] is List) ? (data[0] as List).cast<String>() : <String>[];
+                    final saved = (data.length > 1 && data[1] is String)
+                      ? data[1] as String
+                      : (_aiApiModel.isNotEmpty
+                      ? _aiApiModel
+                      : (models.isNotEmpty
+                      ? models.first
+                      : '')
+                    );
+                    final selected = models.contains(saved)
+                      ? saved
+                      : models.isNotEmpty
+                      ? models.first
+                      : '';
+                    printDebugInfo('$models, $saved, $selected');
+
+                    return DropdownButtonFormField<String>(
+                      iconDisabledColor: Theme.of(context).colorScheme.onSurface,
+                      initialValue: selected,
+                      decoration: const InputDecoration(isDense: true, contentPadding: EdgeInsetsGeometry.symmetric(vertical: 8)),
+                      items: models.map((model) => DropdownMenuItem(
+                        value: model,
+                        child: Text(model)
+                      )).toList(),
+                      onChanged: (value) async {
+                        if (value == null) return;
+                        await setConfig('ai_api_model', value);
+                        setState(() {
+                          _aiApiModel = value;
+                        });
+                      }
+                    );
                   }
-                ),
+                )
               )
             ),
             ListTile(

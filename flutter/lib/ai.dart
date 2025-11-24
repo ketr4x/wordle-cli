@@ -87,8 +87,7 @@ class AIWordleController extends ChangeNotifier with WidgetsBindingObserver {
           OpenAIChatCompletionChoiceMessageModel(
             role: OpenAIChatMessageRole.system,
             content: [
-              OpenAIChatCompletionChoiceMessageContentItemModel.text(
-                'You are a wordle game provider.')
+              OpenAIChatCompletionChoiceMessageContentItemModel.text('You are a wordle game provider.')
             ]
           ),
           OpenAIChatCompletionChoiceMessageModel(

@@ -1041,6 +1041,7 @@ Widget buildGame({
   GameMode? mode,
   bool gameOver = false,
   List<List<LetterStatus>>? formattedGuesses,
+  bool checking = false
 }) {
   String formatDuration(Duration d) {
     final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
@@ -1105,7 +1106,7 @@ Widget buildGame({
               }
             }),
           ),
-          if (!gameOver)
+          if (!gameOver && !checking)
             WordleKeyboard(
               letterStatuses: letterStatuses,
               keyboardRows: keyboardRows,
@@ -1113,6 +1114,8 @@ Widget buildGame({
               onEnterTap: onEnterTap,
               onBackspaceTap: onBackspaceTap,
             ),
+          if (checking)
+            CircularProgressIndicator(),
           SizedBox(
             height: 48,
             child: Row(

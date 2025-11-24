@@ -24,6 +24,7 @@ class _SettingsPageState extends State<SettingsPage> {
   String _aiLanguage = '';
   String _aiApiUrl = '';
   String _aiApiKey = '';
+  bool _aiKeyVisible = false;
   String _aiApiModel = '';
   PackageInfo? packageInfo;
   final FocusNode _serverUrlFocusNode = FocusNode();
@@ -35,6 +36,8 @@ class _SettingsPageState extends State<SettingsPage> {
   late TextEditingController _aiApiKeyController;
   late TextEditingController _aiApiModelController;
   late Future<List<String>> _aiModelsFuture;
+  late Future<List<Object?>> _wordleLanguagesFuture;
+  late Future<List<Object?>> _rankedLanguagesFuture;
 
   static const excluded = [
     'google/gemini-2.5-flash-image',
@@ -56,6 +59,8 @@ class _SettingsPageState extends State<SettingsPage> {
     _aiApiKeyController = TextEditingController();
     _aiApiModelController = TextEditingController();
     _aiModelsFuture = getAIModels();
+    _wordleLanguagesFuture = Future.wait([getLanguagePacks(false), getConfig('game_lang')]);
+    _rankedLanguagesFuture = Future.wait([getLanguagePacks(true), getConfig('game_lang')]);
     _loadUsername();
     _loadPassword();
     _loadServerUrl();
@@ -166,15 +171,6 @@ class _SettingsPageState extends State<SettingsPage> {
     });
   }
 
-  String maskKey(String key) {
-    if (key.isEmpty) return '';
-    if (key.length <= 8) return List.filled(key.length, '*').join();
-    final first = key.substring(0, 4);
-    final last = key.substring(key.length - 4);
-    final middle = List.filled(key.length - 8, '*').join();
-    return '$first$middle$last';
-  }
-
   Future<List<String>> getAIModels() async {
     final storedApiUrl = await getConfig('ai_api_url');
     final resolvedApiUrl = (storedApiUrl?.trim().isNotEmpty ?? false)
@@ -203,6 +199,7 @@ class _SettingsPageState extends State<SettingsPage> {
     } catch (error, stack) {
       printDebugInfo('Failed to load AI models: $error');
       debugPrintStack(stackTrace: stack);
+      showErrorToast('Failed to load AI models: $error');
       return [];
     }
   }
@@ -295,7 +292,7 @@ class _SettingsPageState extends State<SettingsPage> {
               trailing: SizedBox(
                 width: 200,
                 child: FutureBuilder<List<Object?>>(
-                  future: Future.wait([getLanguagePacks(false), getConfig('game_lang')]),
+                  future: _wordleLanguagesFuture,
                   builder: (context, snapshot) {
                     if (snapshot.connectionState != ConnectionState.done) {
                       return Container(
@@ -352,7 +349,7 @@ class _SettingsPageState extends State<SettingsPage> {
               trailing: SizedBox(
                 width: 200,
                 child: FutureBuilder<List<Object?>>(
-                  future: Future.wait([getLanguagePacks(true), getConfig('ranked_game_lang')]),
+                  future: _rankedLanguagesFuture,
                   builder: (context, snapshot) {
                     if (snapshot.connectionState != ConnectionState.done) {
                       return Container(
@@ -446,13 +443,23 @@ class _SettingsPageState extends State<SettingsPage> {
                 width: 200,
                 child: TextField(
                   controller: _aiApiKeyController,
+                  obscureText: !_aiKeyVisible,
                   decoration: InputDecoration(
-                    hintText: _aiApiKey.isNotEmpty ? maskKey(_aiApiKey) : '',
+                    hintText: _aiApiKey.isEmpty ? 'Enter your API key' : null,
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _aiKeyVisible ? Icons.visibility_off : Icons.visibility
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _aiKeyVisible = !_aiKeyVisible;
+                        });
+                      },
+                    )
                   ),
                   onChanged: (value) async {
                     setState(() {
                       _aiApiKey = value;
-                      _aiModelsFuture = getAIModels();
                     });
                     await setConfig('ai_api_key', value);
                   }

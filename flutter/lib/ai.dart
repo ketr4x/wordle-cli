@@ -22,6 +22,7 @@ class AIWordleController extends ChangeNotifier with WidgetsBindingObserver {
   late final Ticker ticker;
   bool shouldTick = false;
   bool isActive = true;
+  bool isCheckingWord = false;
 
   AIWordleController() {
     ticker = Ticker(_onTick);
@@ -185,7 +186,7 @@ class AIWordleController extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   void onLetterTap(String letter) {
-    if (gameOver || currentGuess.length >= 5) return;
+    if (gameOver || currentGuess.length >= 5 || isCheckingWord) return;
     currentGuess += letter.toLowerCase();
     errorMessage = null;
     if (!shouldTick) {
@@ -201,7 +202,7 @@ class AIWordleController extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   void onBackspaceTap() {
-    if (gameOver || currentGuess.isEmpty) return;
+    if (gameOver || currentGuess.isEmpty || isCheckingWord) return;
     currentGuess = currentGuess.substring(0, currentGuess.length - 1);
     errorMessage = null;
     notifyListeners();
@@ -218,33 +219,45 @@ class AIWordleController extends ChangeNotifier with WidgetsBindingObserver {
       return;
     }
 
-    bool isValid = await isValidAIWord(currentGuess);
-    if (!isValid) {
+    if (isCheckingWord) return;
+    isCheckingWord = true;
+    errorMessage = null;
+    notifyListeners();
+
+    try {
+      bool isValid = await isValidAIWord(currentGuess);
+      if (!isValid) {
+        currentGuess = '';
+        errorMessage = 'Not a valid word';
+        showErrorToast('Not a valid word');
+        notifyListeners();
+        saveGameState();
+        return;
+      }
+
+      guesses.add(currentGuess);
       currentGuess = '';
-      errorMessage = 'Not a valid word';
-      showErrorToast('Not a valid word');
+      errorMessage = null;
+      updateLetterStatuses();
+      if (guesses.last.toLowerCase() == answer!.toLowerCase() ||
+          guesses.length == 6) {
+        gameOver = true;
+        ticker.stop();
+        shouldTick = false;
+        resultMessage = guesses.last.toLowerCase() == answer!.toLowerCase()
+            ? 'You win!'
+            : 'You lose! Answer: ${answer!}';
+      }
       notifyListeners();
       saveGameState();
-      return;
+    } finally {
+      isCheckingWord = false;
+      notifyListeners();
     }
-
-    guesses.add(currentGuess);
-    currentGuess = '';
-    errorMessage = null;
-    updateLetterStatuses();
-    if (guesses.last.toLowerCase() == answer!.toLowerCase() || guesses.length == 6) {
-      gameOver = true;
-      ticker.stop();
-      shouldTick = false;
-      resultMessage = guesses.last.toLowerCase() == answer!.toLowerCase()
-          ? 'You win!'
-          : 'You lose! Answer: ${answer!}';
-    }
-    notifyListeners();
-    saveGameState();
   }
 
   void restartGame() {
+    if (isCheckingWord) return;
     initializeGame();
     saveGameState();
   }
@@ -399,14 +412,15 @@ class _WordleGameViewState extends State<WordleGameView> {
               answer: c.answer,
               letterStatuses: c.letterStatuses,
               keyboardRows: c.keyboardRows,
-              onLetterTap: c.gameOver ? (_) {} : c.onLetterTap,
-              onEnterTap: c.gameOver ? () {} : c.onEnterTap,
-              onBackspaceTap: c.gameOver ? () {} : c.onBackspaceTap,
+              onLetterTap: (c.gameOver || c.isCheckingWord) ? (_) {} : c.onLetterTap,
+              onEnterTap: (c.gameOver || c.isCheckingWord) ? () {} : c.onEnterTap,
+              onBackspaceTap: (c.gameOver || c.isCheckingWord) ? () {} : c.onBackspaceTap,
               elapsed: c.elapsed,
-              onNewGame: c.restartGame,
+              onNewGame: c.isCheckingWord ? () {} : c.restartGame,
               context: context,
               mode: GameMode.random,
               gameOver: c.gameOver,
+              checking: c.isCheckingWord
             ),
           ),
           if (c.errorMessage != null)

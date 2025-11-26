@@ -562,12 +562,19 @@ def get_word():
     return "Game has not ended", 403
 
 @app.route('/ai/models')
+@limiter.limit(utils.read_config('rate_limit_get_ai_models_per_ip'), key_func=get_remote_address)
 def get_ai_model():
     user = (request.args.get('user') or '').strip()
     auth = (request.args.get('auth') or '').strip()
 
     if not user or not auth:
         return 'Missing required parameters: user and auth', 401
+
+    existing_user = User.query.filter_by(username=user).first()
+    if not existing_user:
+        return 'User not found', 401
+    if not check_password_hash(existing_user.auth, auth):
+        return 'Wrong auth', 403
 
     disabled_models = utils.read_config("disabled_models")
     models_raw = requests.get(
@@ -585,6 +592,7 @@ def get_ai_model():
     })
 
 @app.route('/ai/start')
+@limiter.limit(utils.read_config('rate_limit_start_ai_per_ip'), key_func=get_remote_address)
 def start_ai():
     user = (request.args.get('user') or '').strip()
     auth = (request.args.get('auth') or '').strip()
@@ -594,6 +602,12 @@ def start_ai():
 
     if not user or not auth:
         return 'Missing required parameters: user and auth', 401
+
+    existing_user = User.query.filter_by(username=user).first()
+    if not existing_user:
+        return 'User not found', 401
+    if not check_password_hash(existing_user.auth, auth):
+        return 'Wrong auth', 403
 
     if not model or not language or not client:
         return 'Missing required parameters: model, language and client', 400
@@ -626,6 +640,40 @@ def start_ai():
         'rows': (json.loads(str(response.choices[0].message.content))["rows"]) if client == 'flutter' else '',
         'letters': (json.loads(str(response.choices[0].message.content))["letters"]) if client == 'python' else '',
     })
+
+@app.route('/ai/check')
+@limiter.limit(utils.read_config('rate_limit_check_ai_per_ip'), key_func=get_remote_address)
+def check_ai():
+    user = (request.args.get('user') or '').strip()
+    auth = (request.args.get('auth') or '').strip()
+    model = (request.args.get('model') or '').strip()
+    language = (request.args.get('language') or '').strip()
+    guess = (request.args.get('guess') or '').strip()
+
+    if not user or not auth:
+        return 'Missing required parameters: user and auth', 401
+
+    existing_user = User.query.filter_by(username=user).first()
+    if not existing_user:
+        return 'User not found', 401
+    if not check_password_hash(existing_user.auth, auth):
+        return 'Wrong auth', 403
+
+    if not model or not language or not guess:
+        return 'Missing required parameters: model, language and guess', 400
+
+    client = OpenAI(
+        api_key=os.environ.get("AI_KEY", ""),
+        base_url=os.environ.get("AI_URL", "")
+    )
+    response = client.chat.completions.create(
+        model=model,
+        messages=[
+            {"role": "system", "content": "You are a wordle game provider."},
+            {"role": "user", "content": f"Check if the word '{guess}' is a correct 5-character word in {language} for a Wordle-style game. Reply with only True or False and no additional text."}
+        ]
+    )
+    return str(response.choices[0].message.content).lower() == "true"
 
 if __name__ == '__main__':
     app.run(debug=(os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'))

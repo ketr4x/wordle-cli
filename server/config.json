@@ -13,6 +13,9 @@
   "rate_limit_start_per_ip": "5/minute",
   "rate_limit_guess_per_ip": "60/minute",
   "rate_limit_word_per_ip": "5/minute",
+  "rate_limit_get_ai_models_per_ip": "10/minute",
+  "rate_limit_start_ai_per_ip": "5/minute",
+  "rate_limit_check_ai_per_ip": "30/minute",
   "disabled_models": [
     "google/gemini-2.5-flash-image",
     "whisper",

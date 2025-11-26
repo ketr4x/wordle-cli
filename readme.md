@@ -99,7 +99,17 @@ Click the gear icon in the app or on the website
 - `rate_limit_start_per_ip` - rate at which clients can start new games (default: `5/minute`)
 - `rate_limit_guess_per_ip` - rate at which clients can make guesses (default: `60/minute`)
 - `rate_limit_word_per_ip` - rate at which clients can request the answer (default: `5/minute`)
+- `rate_limit_get_ai_models_per_ip` - rate at which clients can check available AI models (default: `10/minute`)
+- `rate_limit_start_ai_per_ip` - rate at which clients can request the answer (default: `5/minute`)
+- `rate_limit_check_ai_per_ip` - rate at which clients can make AI guesses (default: `30/minute`)
 - `disabled_models` - list of disabled models (default: `["google/gemini-2.5-flash-image","whisper","tts","dall-e","embedding","moderation"]`)
+
+## AI
+### HackClub AI
+If you are 18 or below, you can use the endpoint `https://ai.hackclub.com/proxy` for Flutter or `https://ai.hackclub.com/proxy/v1` for Python.
+You can get the API key at https://ai.hackclub.com/dashboard.
+### OpenAI
+The API URL is `https://api.openai.com`. You can get the API key at https://platform.openai.com/settings/organization/api-keys.
 
 ## Planned updates
 - [**Flutter**] timer fix

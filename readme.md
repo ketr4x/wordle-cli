@@ -15,6 +15,7 @@
 - A Flutter GUI and a Python CLI
 
 ## Installation
+> For the best experience, consider using the Android build
 ### Python CLI
 #### Cloning the repository
 - Click the Code button
@@ -106,6 +107,7 @@ Click the gear icon in the app or on the website
 - [**Website**] website redesign
 - [**Flutter**] android: fix checking local lang from assets
 - [**Flutter**] web: fix connection on debug builds
+- [**Flutter**] web: fix ai mode (implement server-side ai)
 - [**Flutter**] web: fix local language download (connectivity.dart)
 - [**Python**] local language download
 - [**Flutter**] implement ratelimiter

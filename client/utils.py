@@ -96,3 +96,30 @@ def clear_screen():
 def read_data(param):
     data = open('../data.json').read()
     return json.loads(data)[param]
+
+def is_from_pypi():
+    try:
+        from importlib import metadata
+    except Exception:
+        import importlib_metadata as metadata
+
+    try:
+        dist = metadata.distribution("wordle-cli")
+    except metadata.PackageNotFoundError:
+        return False
+
+    for file in dist.files or []:
+        if file.name.endswith(".egg-link"):
+            return False
+
+    try:
+        direct = dist.read_text("direct_url.json")
+    except Exception:
+        direct = None
+
+    if direct:
+        info = json.loads(direct)
+        if info.get("vcs") or "dir" in info or (info.get("url") and (info["url"].startswith("file:") or "git+" in info["url"])):
+            return False
+        return True
+    return True

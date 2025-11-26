@@ -229,7 +229,7 @@ class _SettingsPageState extends State<SettingsPage> {
             ListTile(
               title: const Text('Username'),
               trailing: SizedBox(
-                width: 200,
+                width: 220,
                 child: TextField(
                   controller: _usernameController,
                   decoration: InputDecoration(
@@ -251,7 +251,7 @@ class _SettingsPageState extends State<SettingsPage> {
             ListTile(
               title: const Text('Password'),
               trailing: SizedBox(
-                width: 200,
+                width: 220,
                 child: TextField(
                   controller: _passwordController,
                   decoration: InputDecoration(
@@ -274,7 +274,7 @@ class _SettingsPageState extends State<SettingsPage> {
             ListTile(
               title: const Text('Server URL'),
               trailing: SizedBox(
-                width: 200,
+                width: 220,
                 child: TextField(
                   controller: _serverUrlController,
                   focusNode: _serverUrlFocusNode,
@@ -290,7 +290,7 @@ class _SettingsPageState extends State<SettingsPage> {
             ListTile(
               title: const Text('Wordle Language'),
               trailing: SizedBox(
-                width: 200,
+                width: 220,
                 child: FutureBuilder<List<Object?>>(
                   future: _wordleLanguagesFuture,
                   builder: (context, snapshot) {
@@ -347,7 +347,7 @@ class _SettingsPageState extends State<SettingsPage> {
             ListTile(
               title: const Text('Ranked Language'),
               trailing: SizedBox(
-                width: 200,
+                width: 220,
                 child: FutureBuilder<List<Object?>>(
                   future: _rankedLanguagesFuture,
                   builder: (context, snapshot) {
@@ -404,11 +404,11 @@ class _SettingsPageState extends State<SettingsPage> {
             ListTile(
               title: const Text('AI Language'),
               trailing: SizedBox(
-                width: 200,
+                width: 220,
                 child: TextField(
                   controller: _aiLanguageController,
                   decoration: InputDecoration(
-                    hintText: _aiLanguage.isNotEmpty ? _aiLanguage : 'like English or en',
+                    hintText: _aiLanguage.isNotEmpty ? _aiLanguage : 'i.e. English or en',
                   ),
                   onChanged: (value) async {
                     _aiLanguage = value;
@@ -421,11 +421,11 @@ class _SettingsPageState extends State<SettingsPage> {
               title: const Text('AI API URL'),
               subtitle: const Text('Leave blank for the OpenAI API'),
               trailing: SizedBox(
-                width: 200,
+                width: 220,
                 child: TextField(
                   controller: _aiApiUrlController,
                   decoration: InputDecoration(
-                    hintText: _aiApiUrl.isNotEmpty ? _aiApiUrl : 'like https://ai.hackclub.com/proxy',
+                    hintText: _aiApiUrl.isNotEmpty ? _aiApiUrl : 'https://ai.hackclub.com/proxy',
                   ),
                   onChanged: (value) async {
                     setState(() {
@@ -440,22 +440,24 @@ class _SettingsPageState extends State<SettingsPage> {
             ListTile(
               title: const Text('AI API key'),
               trailing: SizedBox(
-                width: 200,
+                width: 220,
                 child: TextField(
                   controller: _aiApiKeyController,
                   obscureText: !_aiKeyVisible,
                   decoration: InputDecoration(
                     hintText: _aiApiKey.isEmpty ? 'Enter your API key' : null,
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _aiKeyVisible ? Icons.visibility_off : Icons.visibility
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _aiKeyVisible = !_aiKeyVisible;
-                        });
-                      },
-                    )
+                    suffixIcon: _aiApiKey.isNotEmpty
+                      ? IconButton(
+                        icon: Icon(
+                          _aiKeyVisible ? Icons.visibility_off : Icons.visibility
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _aiKeyVisible = !_aiKeyVisible;
+                          });
+                        },
+                      )
+                      : SizedBox.shrink()
                   ),
                   onChanged: (value) async {
                     setState(() {
@@ -469,7 +471,7 @@ class _SettingsPageState extends State<SettingsPage> {
             ListTile(
               title: const Text('AI model'),
               trailing: SizedBox(
-                width: 200,
+                width: 220,
                 child: FutureBuilder<List<Object?>>(
                   future: Future.wait([_aiModelsFuture, getConfig('ai_api_model')]),
                   builder: (context, snapshot) {

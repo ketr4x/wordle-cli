@@ -99,6 +99,7 @@ Click the gear icon in the app or on the website
 - `rate_limit_start_per_ip` - rate at which clients can start new games (default: `5/minute`)
 - `rate_limit_guess_per_ip` - rate at which clients can make guesses (default: `60/minute`)
 - `rate_limit_word_per_ip` - rate at which clients can request the answer (default: `5/minute`)
+- `disabled_models` - list of disabled models (default: `["google/gemini-2.5-flash-image","whisper","tts","dall-e","embedding","moderation"]`)
 
 ## Planned updates
 - [**Flutter**] timer fix

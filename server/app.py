@@ -17,6 +17,8 @@ import datetime
 from sqlalchemy.ext.mutable import MutableDict
 import json
 import logging
+from openai import OpenAI
+import requests
 
 # Initialization
 logging.basicConfig(level=logging.INFO)
@@ -558,6 +560,72 @@ def get_word():
     if game.status != 1:
         return game.word
     return "Game has not ended", 403
+
+@app.route('/ai/models')
+def get_ai_model():
+    user = (request.args.get('user') or '').strip()
+    auth = (request.args.get('auth') or '').strip()
+
+    if not user or not auth:
+        return 'Missing required parameters: user and auth', 401
+
+    disabled_models = utils.read_config("disabled_models")
+    models_raw = requests.get(
+        url=f"{os.environ.get("AI_URL", "")}/models",
+        headers={"Authorization": f"Bearer {os.environ.get("AI_KEY", "")}"}
+    ).json()["data"]
+
+    models = []
+    for model in models_raw:
+        models.append(model["id"])
+    models = [model for model in models if model not in disabled_models]
+
+    return jsonify({
+        'models': models
+    })
+
+@app.route('/ai/start')
+def start_ai():
+    user = (request.args.get('user') or '').strip()
+    auth = (request.args.get('auth') or '').strip()
+    model = (request.args.get('model') or '').strip()
+    language = (request.args.get('language') or '').strip()
+    client = (request.args.get('client') or '').strip()
+
+    if not user or not auth:
+        return 'Missing required parameters: user and auth', 401
+
+    if not model or not language or not client:
+        return 'Missing required parameters: model, language and client', 400
+
+    client = OpenAI(
+        api_key=os.environ.get("AI_KEY", ""),
+        base_url=os.environ.get("AI_URL", "")
+    )
+    response = client.chat.completions.create(
+        model=model,
+        messages=[
+            {"role": "system", "content": "You are a wordle game provider"},
+            {
+                "role": "user",
+                "content":
+                    f'''
+                    Provide a single 5-character {language} word suitable as an answer for a Wordle-style game.
+                    Provide a full letter list for {language} language like a,b,c etc.
+                    Provide a row list for keyboard for {language} language.
+                    Reply with a JSON object only, no extra text. Example format for English:
+                    {"word":"apple","letters":["Q","W","E","R","T","Y","U","I","O","P","A","S","D","F","G","H","J","K","L","Z","X","C","V","B","N","M"],"rows":[["Q","W","E","R","T","Y","U","I","O","P"],["A","S","D","F","G","H","J","K","L"],["ENTER","Z","X","C","V","B","N","M","BACKSPACE"]]}
+                    Return the JSON object exactly as shown.
+                    Do not use tags like ```json.
+                    '''
+            }
+        ]
+    )
+    return jsonify({
+        'word': json.loads(str(response.choices[0].message.content))["word"],
+        'rows': (json.loads(str(response.choices[0].message.content))["rows"]) if client == 'flutter' else '',
+        'letters': (json.loads(str(response.choices[0].message.content))["letters"]) if client == 'python' else '',
+    })
 
 if __name__ == '__main__':
     app.run(debug=(os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'))

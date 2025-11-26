@@ -12,5 +12,13 @@
   "rate_limit_delete_user_per_ip": "5/hour",
   "rate_limit_start_per_ip": "5/minute",
   "rate_limit_guess_per_ip": "60/minute",
-  "rate_limit_word_per_ip": "5/minute"
+  "rate_limit_word_per_ip": "5/minute",
+  "disabled_models": [
+    "google/gemini-2.5-flash-image",
+    "whisper",
+    "tts",
+    "dall-e",
+    "embedding",
+    "moderation"
+  ]
 }

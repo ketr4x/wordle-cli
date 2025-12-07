@@ -4,8 +4,8 @@
   "repo": "https://github.com/ketr4x/wordle-cli.git",
   "version": "1.3.1",
   "python_version": "1.2.2",
-  "release_notes": "feat: add word validation check and loading state for AI game mode",
+  "release_notes": "feat: enhance AI settings UI with tabbed layout for public/custom AI",
   "python_release_notes": "Added account deletion feature",
-  "published_at": "2025-11-24T19:08:30Z",
+  "published_at": "2025-12-07T22:29:21Z",
   "python_published_at": "2025-10-30T19:00:00Z"
 }

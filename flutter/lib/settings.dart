@@ -407,9 +407,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 width: 220,
                 child: TextField(
                   controller: _aiLanguageController,
-                  decoration: InputDecoration(
-                    hintText: _aiLanguage.isNotEmpty ? _aiLanguage : 'i.e. English or en',
-                  ),
+                  decoration: InputDecoration(hintText: _aiLanguage.isNotEmpty ? _aiLanguage : 'i.e. English or en'),
                   onChanged: (value) async {
                     _aiLanguage = value;
                     await setConfig('ai_game_lang', value);
@@ -417,114 +415,149 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
               )
             ),
-            ListTile(
-              title: const Text('AI API URL'),
-              subtitle: const Text('Leave blank for the OpenAI API'),
-              trailing: SizedBox(
-                width: 220,
-                child: TextField(
-                  controller: _aiApiUrlController,
-                  decoration: InputDecoration(
-                    hintText: _aiApiUrl.isNotEmpty ? _aiApiUrl : 'https://ai.hackclub.com/proxy',
-                  ),
-                  onChanged: (value) async {
-                    setState(() {
-                      _aiApiUrl = value;
-                      _aiModelsFuture = getAIModels();
-                    });
-                    await setConfig('ai_api_url', value);
-                  }
-                ),
-              )
-            ),
-            ListTile(
-              title: const Text('AI API key'),
-              trailing: SizedBox(
-                width: 220,
-                child: TextField(
-                  controller: _aiApiKeyController,
-                  obscureText: !_aiKeyVisible,
-                  decoration: InputDecoration(
-                    hintText: _aiApiKey.isEmpty ? 'Enter your API key' : null,
-                    suffixIcon: _aiApiKey.isNotEmpty
-                      ? IconButton(
-                        icon: Icon(
-                          _aiKeyVisible ? Icons.visibility_off : Icons.visibility
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _aiKeyVisible = !_aiKeyVisible;
-                          });
-                        },
-                      )
-                      : SizedBox.shrink()
-                  ),
-                  onChanged: (value) async {
-                    setState(() {
-                      _aiApiKey = value;
-                    });
-                    await setConfig('ai_api_key', value);
-                  }
-                ),
-              )
-            ),
-            ListTile(
-              title: const Text('AI model'),
-              trailing: SizedBox(
-                width: 220,
-                child: FutureBuilder<List<Object?>>(
-                  future: Future.wait([_aiModelsFuture, getConfig('ai_api_model')]),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState != ConnectionState.done) {
-                      return Container(
-                        alignment: AlignmentGeometry.centerRight,
-                        child: const SizedBox(
-                          height: 36,
-                          width: 36,
-                          child: Center(
-                            child: CircularProgressIndicator(strokeWidth: 2),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              child: DefaultTabController(
+                initialIndex: 0,
+                length: 2,
+                child: Column(
+                  children: [
+                    TabBar(
+                      tabs: <Widget>[
+                        Tab(text: 'Public AI', icon: Icon(Icons.public)),
+                        Tab(text: 'Custom', icon: Icon(Icons.private_connectivity)),
+                      ]
+                    ),
+                    SizedBox(
+                      height: 200,
+                      child: TabBarView(
+                        children: <Widget>[
+                          SingleChildScrollView(
+                            child: Column(
+                              children: [
+                                Text('data')
+                              ],
+                            ),
                           ),
-                        ),
-                      );
-                    }
-                    final data = snapshot.data ?? [];
-                    final models = (data.isNotEmpty && data[0] is List) ? (data[0] as List).cast<String>() : <String>[];
-                    final saved = (data.length > 1 && data[1] is String)
-                      ? data[1] as String
-                      : (_aiApiModel.isNotEmpty
-                      ? _aiApiModel
-                      : (models.isNotEmpty
-                      ? models.first
-                      : '')
-                    );
-                    final selected = models.contains(saved)
-                      ? saved
-                      : models.isNotEmpty
-                      ? models.first
-                      : '';
-                    printDebugInfo('$models, $saved, $selected');
-
-                    return DropdownButtonFormField<String>(
-                      isExpanded: true,
-                      isDense: true,
-                      iconDisabledColor: Theme.of(context).colorScheme.onSurface,
-                      initialValue: selected,
-                      decoration: const InputDecoration(isDense: true, contentPadding: EdgeInsetsGeometry.symmetric(vertical: 8)),
-                      items: models.map((model) => DropdownMenuItem(
-                        value: model,
-                        child: Text(model)
-                      )).toList(),
-                      onChanged: (value) async {
-                        if (value == null) return;
-                        await setConfig('ai_api_model', value);
-                        setState(() {
-                          _aiApiModel = value;
-                        });
-                      }
-                    );
-                  }
+                          SingleChildScrollView(
+                            child: Column(
+                              children: [
+                                ListTile(
+                                  title: const Text('AI API URL'),
+                                  subtitle: const Text('Leave blank for the OpenAI API'),
+                                  trailing: SizedBox(
+                                    width: 220,
+                                    child: TextField(
+                                      controller: _aiApiUrlController,
+                                      decoration: InputDecoration(
+                                        hintText: _aiApiUrl.isNotEmpty ? _aiApiUrl : 'https://ai.hackclub.com/proxy',
+                                      ),
+                                      onChanged: (value) async {
+                                        setState(() {
+                                          _aiApiUrl = value;
+                                          _aiModelsFuture = getAIModels();
+                                        });
+                                        await setConfig('ai_api_url', value);
+                                      }
+                                    ),
+                                  )
+                                ),
+                                ListTile(
+                                  title: const Text('AI API key'),
+                                  trailing: SizedBox(
+                                    width: 220,
+                                    child: TextField(
+                                      controller: _aiApiKeyController,
+                                      obscureText: !_aiKeyVisible,
+                                      decoration: InputDecoration(
+                                        hintText: _aiApiKey.isEmpty ? 'Enter your API key' : null,
+                                        suffixIcon: _aiApiKey.isNotEmpty
+                                          ? IconButton(
+                                            icon: Icon(_aiKeyVisible ? Icons.visibility_off : Icons.visibility),
+                                            onPressed: () {
+                                              setState(() {
+                                                _aiKeyVisible = !_aiKeyVisible;
+                                              });
+                                            },
+                                          )
+                                          : SizedBox.shrink()
+                                      ),
+                                      onChanged: (value) async {
+                                        setState(() {
+                                          _aiApiKey = value;
+                                        });
+                                        await setConfig('ai_api_key', value);
+                                      }
+                                    ),
+                                  )
+                                ),
+                                ListTile(
+                                  title: const Text('AI model'),
+                                  trailing: SizedBox(
+                                    width: 220,
+                                    child: FutureBuilder<List<Object?>>(
+                                      future: Future.wait([_aiModelsFuture, getConfig('ai_api_model')]),
+                                      builder: (context, snapshot) {
+                                        if (snapshot.connectionState != ConnectionState.done) {
+                                          return Container(
+                                            alignment: AlignmentGeometry.centerRight,
+                                            child: const SizedBox(
+                                              height: 36,
+                                              width: 36,
+                                              child: Center(
+                                                child: CircularProgressIndicator(strokeWidth: 2),
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                        final data = snapshot.data ?? [];
+                                        final models = (data.isNotEmpty && data[0] is List) ? (data[0] as List).cast<String>() : <String>[];
+                                        final saved = (data.length > 1 && data[1] is String)
+                                          ? data[1] as String
+                                          : (_aiApiModel.isNotEmpty
+                                          ? _aiApiModel
+                                          : (models.isNotEmpty
+                                          ? models.first
+                                          : '')
+                                        );
+                                        final selected = models.contains(saved)
+                                          ? saved
+                                          : models.isNotEmpty
+                                          ? models.first
+                                          : '';
+                                        printDebugInfo('$models, $saved, $selected');
+                            
+                                        return DropdownButtonFormField<String>(
+                                          isExpanded: true,
+                                          isDense: true,
+                                          iconDisabledColor: Theme.of(context).colorScheme.onSurface,
+                                          initialValue: selected,
+                                          decoration: const InputDecoration(isDense: true, contentPadding: EdgeInsetsGeometry.symmetric(vertical: 8)),
+                                          items: models.map((model) => DropdownMenuItem(
+                                            value: model,
+                                            child: Text(model)
+                                          )).toList(),
+                                          onChanged: (value) async {
+                                            if (value == null) return;
+                                            await setConfig('ai_api_model', value);
+                                            setState(() {
+                                              _aiApiModel = value;
+                                            });
+                                          }
+                                        );
+                                      }
+                                    )
+                                  )
+                                ),
+                              ]
+                            ),
+                          )
+                        ]
+                      ),
+                    )
+                  ]
                 )
-              )
+              ),
             ),
             ListTile(
               title: const Text('About'),

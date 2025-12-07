@@ -2,7 +2,7 @@
   "branch": "master",
   "update_url": "https://raw.githubusercontent.com/ketr4x/wordle-cli/master/data.json",
   "repo": "https://github.com/ketr4x/wordle-cli.git",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "python_version": "1.2.2",
   "release_notes": "feat: add word validation check and loading state for AI game mode",
   "python_release_notes": "Added account deletion feature",

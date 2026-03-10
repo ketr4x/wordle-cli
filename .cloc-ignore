@@ -1,0 +1,13 @@
+flutter/build
+flutter/android
+flutter/ios
+flutter/macos
+flutter/linux/flutter
+flutter/windows/flutter
+flutter/web
+__pycache__
+.idea
+data
+data.json
+requirements.txt
+pubspec.lock

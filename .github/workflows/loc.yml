@@ -1,0 +1,65 @@
+name: Count LOC
+
+on:
+  push:
+    branches: [ "master" ]
+  workflow_dispatch:
+
+jobs:
+  count-loc:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install cloc
+        run: sudo apt-get install -y cloc
+
+      - name: Count lines of code
+        id: cloc
+        run: |
+          cloc . \
+            --exclude-list-file=.cloc-ignore \
+            --exclude-ext=png,ico,wasm,otf,ttf,frag,bin,json,lock,md,txt \
+            --json \
+            --out=cloc_output.json
+          TOTAL=$(jq '.SUM.code' cloc_output.json)
+          echo "total=$TOTAL" >> $GITHUB_OUTPUT
+
+      - name: Write LOC to step summary
+        run: |
+          echo "## Lines of Code" >> $GITHUB_STEP_SUMMARY
+          cloc . \
+            --exclude-list-file=.cloc-ignore \
+            --exclude-ext=png,ico,wasm,otf,ttf,frag,bin,json,lock,md,txt \
+            --md \
+            >> $GITHUB_STEP_SUMMARY
+
+      - name: Generate badge JSON
+        run: |
+          TOTAL=${{ steps.cloc.outputs.total }}
+          FORMATTED=$(echo "$TOTAL" | sed ':a;s/\B[0-9]\{3\}\>/,&/;ta')
+          cat > loc_badge.json << EOF
+          {
+            "schemaVersion": 1,
+            "label": "lines of code",
+            "message": "$FORMATTED",
+            "color": "blue"
+          }
+          EOF
+
+      - name: Set up git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Commit badge JSON
+        run: |
+          git add loc_badge.json
+          if git diff --staged --quiet; then
+            echo "No changes to LOC badge, skipping commit."
+          else
+            git commit -m "chore(loc): update LOC badge"
+            git push
+          fi

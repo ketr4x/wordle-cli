@@ -3,6 +3,7 @@
 [![Commits](https://img.shields.io/github/commits-since/ketr4x/wordle-cli/latest?label=Commits%20since%20release)](https://github.com/ketr4x/wordle-cli/commits/master/)
 ![Languages](https://img.shields.io/github/directory-file-count/ketr4x/wordle-cli/data?label=Languages)
 ![Hackatime Badge](https://hackatime-badge.hackclub.com/U08RQEP53HA/wordle-cli?label=Project%20time)
+[![Lines of Code](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/ketr4x/wordle-cli/master/loc_badge.json)](https://github.com/ketr4x/wordle-cli/actions/workflows/loc.yml)
 
 ## Features
 - Custom solo game
